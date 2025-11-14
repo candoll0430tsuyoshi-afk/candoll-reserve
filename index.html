@@ -1,36 +1,162 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Candoll予約フォーム</title>
-</head>
-<body>
-  <h2>いつもお世話になっております。ご予約をお取りしますので、下記メニューからお選びください。</h2>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Candoll 予約フォーム</title>
 
-  <form>
-    <label>メニュー：</label>
-    <select name="menu">
-      <option value="">選択してください</option>
-      <option value="cut">カット</option>
-      <option value="cut_color">カット＋カラー</option>
-      <option value="color">カラー</option>
-      <option value="perm">パーマ</option>
-      <option value="straight">ストレートパーマ</option>
-      <option value="treatment">トリートメント</option>
-      <option value="consult">来店時に相談</option>
+<style>
+    body {
+        font-family: "Hiragino Sans", "Hiragino Kaku Gothic ProN", sans-serif;
+        background: #ffffff;
+        color: #000000;
+        margin: 0;
+        padding: 0;
+        text-align: center;
+    }
+
+    .container {
+        width: 90%;
+        max-width: 420px;
+        margin: 0 auto;
+        padding: 20px 0 40px;
+    }
+
+    /* ロゴ */
+    .logo {
+        width: 120px;
+        margin: 0 auto 10px;
+        display: block;
+    }
+
+    /* 挨拶文 */
+    .greeting {
+        font-size: 13px;
+        line-height: 1.6;
+        margin-bottom: 20px;
+        white-space: pre-line;
+    }
+
+    label {
+        font-size: 18px; /* 大きく */
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 600;
+        text-align: left;
+    }
+
+    select {
+        width: 100%;
+        padding: 12px;
+        font-size: 17px; /* 大きく */
+        border: 1px solid #000;
+        border-radius: 6px;
+        margin-bottom: 20px;
+    }
+
+    /* ボタン */
+    .submit-btn {
+        width: 100%;
+        padding: 18px;
+        background: #000;
+        color: #fff;
+        font-size: 20px;
+        border: none;
+        border-radius: 10px;
+        cursor: pointer;
+        margin-top: 10px;
+    }
+</style>
+</head>
+
+<body>
+<div class="container">
+
+    <img src="logo.png" alt="Candoll Logo" class="logo">
+
+    <div class="greeting">
+        いつもお世話になっております。
+        ご予約内容の入力をお願いいたします。
+    </div>
+
+    <!-- メニュー -->
+    <label for="menu">メニューを選択</label>
+    <select id="menu">
+        <option value="">選択してください</option>
+
+        <optgroup label="組み合わせ">
+            <option>カット＋カラー</option>
+            <option>カット＋リタッチカラー</option>
+            <option>カット＋パーマ</option>
+            <option>カット＋ストレート</option>
+        </optgroup>
+
+        <optgroup label="カット">
+            <option>カット</option>
+            <option>カット（大学生・専門学生）</option>
+            <option>カット（中学生以下）</option>
+            <option>前髪カット</option>
+        </optgroup>
+
+        <optgroup label="カラー">
+            <option>カラー</option>
+            <option>リタッチカラー</option>
+            <option>ダブルカラー</option>
+            <option>アクセントカラー</option>
+            <option>ヘナ</option>
+        </optgroup>
+
+        <optgroup label="パーマ">
+            <option>モイストパーマ</option>
+            <option>ポイントパーマ</option>
+        </optgroup>
+
+        <optgroup label="ストレート">
+            <option>ストレートパーマ</option>
+            <option>ポイントストレートパーマ</option>
+        </optgroup>
+
+        <optgroup label="トリートメント">
+            <option>トリートメント</option>
+        </optgroup>
+
+        <optgroup label="メニュー未定">
+            <option>来店時に相談（２時間枠）</option>
+            <option>来店時に相談（３時間枠）</option>
+        </optgroup>
     </select>
 
-    <br><br>
-    <label>希望日時：</label>
-    <input type="datetime-local" name="datetime" />
+    <!-- 日付選択 -->
+    <label for="date">希望日を選択</label>
+    <select id="date">
+        <option>日付を選択</option>
+    </select>
 
-    <br><br>
-    <label>備考：</label><br>
-    <textarea name="notes" rows="3" cols="30"></textarea>
+    <!-- 時間選択（30分刻み） -->
+    <label for="time">希望時間を選択</label>
+    <select id="time">
+        <option>時間を選択</option>
+        <option>10:00</option>
+        <option>10:30</option>
+        <option>11:00</option>
+        <option>11:30</option>
+        <option>12:00</option>
+        <option>12:30</option>
+        <option>13:00</option>
+        <option>13:30</option>
+        <option>14:00</option>
+        <option>14:30</option>
+        <option>15:00</option>
+        <option>15:30</option>
+        <option>16:00</option>
+        <option>16:30</option>
+        <option>17:00</option>
+        <option>17:30</option>
+        <option>18:00</option>
+    </select>
 
-    <br><br>
-    <button type="submit">予約する</button>
-  </form>
+    <button class="submit-btn">予約する</button>
+
+</div>
 </body>
 </html>
