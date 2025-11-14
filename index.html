@@ -80,7 +80,7 @@
     <form id="reserveForm">
         <label for="menu">メニュー</label>
         <div id="menuContainer">
-            <select class="menu-select" required>
+            <select class="menu-select">
                 <option value="">選択してください</option>
 
                 <optgroup label="組み合わせ">
@@ -173,14 +173,15 @@ for (let i = 0; i < 30; i++) {
     dateSelect.appendChild(option);
 }
 
-// メニュー複数選択追加
+// メニュー複数選択（段階的に追加、選択必須にしない）
 const menuContainer = document.getElementById('menuContainer');
 menuContainer.addEventListener('change', function(e){
     if(e.target.classList.contains('menu-select') && e.target.value !== ''){
         const selects = menuContainer.querySelectorAll('.menu-select');
-        if(selects.length < 2){
+        if(selects.length < 4){  // 最大4つまで
             const newSelect = e.target.cloneNode(true);
             newSelect.value = '';
+            newSelect.required = false; // 選択必須ではない
             menuContainer.appendChild(newSelect);
         }
     }
