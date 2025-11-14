@@ -22,14 +22,12 @@
         padding: 20px 0 40px;
     }
 
-    /* ロゴ */
     .logo {
         width: 120px;
         margin: 0 auto 10px;
         display: block;
     }
 
-    /* 挨拶文 */
     .greeting {
         font-size: 13px;
         line-height: 1.6;
@@ -38,7 +36,7 @@
     }
 
     label {
-        font-size: 18px; /* 大きく */
+        font-size: 18px;
         display: block;
         margin-bottom: 8px;
         font-weight: 600;
@@ -48,13 +46,12 @@
     select {
         width: 100%;
         padding: 12px;
-        font-size: 17px; /* 大きく */
+        font-size: 17px;
         border: 1px solid #000;
         border-radius: 6px;
         margin-bottom: 20px;
     }
 
-    /* ボタン */
     .submit-btn {
         width: 100%;
         padding: 18px;
@@ -79,84 +76,114 @@
         ご予約内容の入力をお願いいたします。
     </div>
 
-    <!-- メニュー -->
-    <label for="menu">メニューを選択</label>
-    <select id="menu">
-        <option value="">選択してください</option>
+    <form id="reserveForm">
+        <label for="menu">メニューを選択</label>
+        <select id="menu" required>
+            <option value="">選択してください</option>
 
-        <optgroup label="組み合わせ">
-            <option>カット＋カラー</option>
-            <option>カット＋リタッチカラー</option>
-            <option>カット＋パーマ</option>
-            <option>カット＋ストレート</option>
-        </optgroup>
+            <optgroup label="組み合わせ">
+                <option value="カット＋カラー">カット＋カラー</option>
+                <option value="カット＋リタッチカラー">カット＋リタッチカラー</option>
+                <option value="カット＋パーマ">カット＋パーマ</option>
+                <option value="カット＋ストレート">カット＋ストレート</option>
+            </optgroup>
 
-        <optgroup label="カット">
-            <option>カット</option>
-            <option>カット（大学生・専門学生）</option>
-            <option>カット（中学生以下）</option>
-            <option>前髪カット</option>
-        </optgroup>
+            <optgroup label="カット">
+                <option value="カット">カット</option>
+                <option value="カット（大学生・専門学生）">カット（大学生・専門学生）</option>
+                <option value="カット（中学生以下）">カット（中学生以下）</option>
+                <option value="前髪カット">前髪カット</option>
+            </optgroup>
 
-        <optgroup label="カラー">
-            <option>カラー</option>
-            <option>リタッチカラー</option>
-            <option>ダブルカラー</option>
-            <option>アクセントカラー</option>
-            <option>ヘナ</option>
-        </optgroup>
+            <optgroup label="カラー">
+                <option value="カラー">カラー</option>
+                <option value="リタッチカラー">リタッチカラー</option>
+                <option value="ダブルカラー">ダブルカラー</option>
+                <option value="アクセントカラー">アクセントカラー</option>
+                <option value="ヘナ">ヘナ</option>
+            </optgroup>
 
-        <optgroup label="パーマ">
-            <option>モイストパーマ</option>
-            <option>ポイントパーマ</option>
-        </optgroup>
+            <optgroup label="パーマ">
+                <option value="モイストパーマ">モイストパーマ</option>
+                <option value="ポイントパーマ">ポイントパーマ</option>
+            </optgroup>
 
-        <optgroup label="ストレート">
-            <option>ストレートパーマ</option>
-            <option>ポイントストレートパーマ</option>
-        </optgroup>
+            <optgroup label="ストレート">
+                <option value="ストレートパーマ">ストレートパーマ</option>
+                <option value="ポイントストレートパーマ">ポイントストレートパーマ</option>
+            </optgroup>
 
-        <optgroup label="トリートメント">
-            <option>トリートメント</option>
-        </optgroup>
+            <optgroup label="トリートメント">
+                <option value="トリートメント">トリートメント</option>
+            </optgroup>
 
-        <optgroup label="メニュー未定">
-            <option>来店時に相談（２時間枠）</option>
-            <option>来店時に相談（３時間枠）</option>
-        </optgroup>
-    </select>
+            <optgroup label="メニュー未定">
+                <option value="来店時に相談（２時間枠）">来店時に相談（２時間枠）</option>
+                <option value="来店時に相談（３時間枠）">来店時に相談（３時間枠）</option>
+            </optgroup>
+        </select>
 
-    <!-- 日付選択 -->
-    <label for="date">希望日を選択</label>
-    <select id="date">
-        <option>日付を選択</option>
-    </select>
+        <label for="date">希望日を選択</label>
+        <select id="date" required>
+            <option value="">日付を選択</option>
+        </select>
 
-    <!-- 時間選択（30分刻み） -->
-    <label for="time">希望時間を選択</label>
-    <select id="time">
-        <option>時間を選択</option>
-        <option>10:00</option>
-        <option>10:30</option>
-        <option>11:00</option>
-        <option>11:30</option>
-        <option>12:00</option>
-        <option>12:30</option>
-        <option>13:00</option>
-        <option>13:30</option>
-        <option>14:00</option>
-        <option>14:30</option>
-        <option>15:00</option>
-        <option>15:30</option>
-        <option>16:00</option>
-        <option>16:30</option>
-        <option>17:00</option>
-        <option>17:30</option>
-        <option>18:00</option>
-    </select>
+        <label for="time">希望時間を選択</label>
+        <select id="time" required>
+            <option value="">時間を選択</option>
+            <option value="10:00">10:00</option>
+            <option value="10:30">10:30</option>
+            <option value="11:00">11:00</option>
+            <option value="11:30">11:30</option>
+            <option value="12:00">12:00</option>
+            <option value="12:30">12:30</option>
+            <option value="13:00">13:00</option>
+            <option value="13:30">13:30</option>
+            <option value="14:00">14:00</option>
+            <option value="14:30">14:30</option>
+            <option value="15:00">15:00</option>
+            <option value="15:30">15:30</option>
+            <option value="16:00">16:00</option>
+            <option value="16:30">16:30</option>
+            <option value="17:00">17:00</option>
+            <option value="17:30">17:30</option>
+            <option value="18:00">18:00</option>
+        </select>
 
-    <button class="submit-btn">予約する</button>
-
+        <button class="submit-btn" type="submit">予約する</button>
+    </form>
 </div>
+
+<script>
+// --- 日付を 30 日分自動生成 ---
+const dateSelect = document.getElementById("date");
+
+for (let i = 0; i < 30; i++) {
+    const d = new Date();
+    d.setDate(d.getDate() + i);
+
+    const y = d.getFullYear();
+    const m = (d.getMonth() + 1).toString().padStart(2, "0");
+    const day = d.getDate().toString().padStart(2, "0");
+
+    const option = document.createElement("option");
+    option.value = `${y}-${m}-${day}`;
+    option.textContent = `${y}/${m}/${day}`;
+
+    dateSelect.appendChild(option);
+}
+
+// --- フォーム送信処理 ---
+document.getElementById("reserveForm").addEventListener("submit", function (e) {
+    e.preventDefault();
+
+    const menu = document.getElementById("menu").value;
+    const date = document.getElementById("date").value;
+    const time = document.getElementById("time").value;
+
+    alert(`予約内容:\nメニュー: ${menu}\n日付: ${date}\n時間: ${time}`);
+});
+</script>
+
 </body>
 </html>
