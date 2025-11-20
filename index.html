@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Candoll 予約フォーム</title>
 <style>
 body { font-family:"Hiragino Sans",sans-serif; background:#fff; color:#000; text-align:center; margin:0; padding:0;}
@@ -10,7 +10,12 @@ body { font-family:"Hiragino Sans",sans-serif; background:#fff; color:#000; text
 .logo { width:120px; margin:0 auto 20px; display:block;}
 .greeting { font-size:16px; line-height:1.6; margin-bottom:20px;}
 label { font-size:18px; display:block; margin-bottom:8px; font-weight:600;}
-select { width:100%; padding:12px; font-size:17px; border:1px solid #000; border-radius:6px; margin-bottom:20px;}
+.menu-select { width:100%; padding:12px; font-size:17px; border:1px solid #000; border-radius:6px; margin-bottom:20px;}
+.date-select { width:100%; padding:12px; font-size:17px; border:1px solid #000; border-radius:6px; margin-bottom:20px;}
+.time-table { display:flex; flex-wrap:wrap; justify-content:center; gap:5px; margin-top:10px;}
+.time-btn { padding:10px 14px; border-radius:6px; border:1px solid #000; cursor:pointer; min-width:70px;}
+.time-btn.available { background:#d4edda; color:#155724; } /* 空き⭕ */
+.time-btn.booked { background:#f8d7da; color:#721c24; cursor:not-allowed; } /* 埋まり❌ */
 .submit-btn { width:100%; padding:18px; background:#000; color:#fff; font-size:20px; border:none; border-radius:10px; cursor:pointer; margin-top:10px;}
 </style>
 <script src="https://static.line-scdn.net/liff/edge/versions/2.21.0/sdk.js"></script>
@@ -18,54 +23,41 @@ select { width:100%; padding:12px; font-size:17px; border:1px solid #000; border
 <body>
 <div class="container">
 <img src="logo.png" alt="Candoll Logo" class="logo">
-<div class="greeting">
-いつもお世話になっております。<br>
-ご予約内容をお選び下さい。
-</div>
+<div class="greeting">いつもお世話になっております。<br>ご予約内容をお選び下さい。</div>
 
 <form id="reserveForm">
 <label for="menu">メニュー</label>
-<div id="menuContainer">
-<select class="menu-select">
+<select id="menu" class="menu-select">
 <option value="">選択してください</option>
-<optgroup label="組み合わせ">
-<option value="カット＋カラー">カット＋カラー</option>
-<option value="カット＋リタッチカラー">カット＋リタッチカラー</option>
-<option value="カット＋パーマ">カット＋パーマ</option>
-<option value="カット＋ストレート">カット＋ストレート</option>
-</optgroup>
-<optgroup label="カット">
-<option value="カット">カット</option>
-<option value="カット（大学生・専門学生）">カット（大学生・専門学生）</option>
-<option value="カット（中学生以下）">カット（中学生以下）</option>
-<option value="前髪カット">前髪カット</option>
-</optgroup>
-<!-- 他のメニューも同じ -->
+<option value="カット" data-duration="60">カット（60分）</option>
+<option value="カラー" data-duration="90">カラー（90分）</option>
+<option value="カット＋カラー" data-duration="120">カット＋カラー（120分）</option>
 </select>
-</div>
 
 <label for="date">日付</label>
-<select id="date" required></select>
+<select id="date" class="date-select" required></select>
 
-<label for="time">時間</label>
-<select id="time" required>
-<option value="">時間を選択</option>
-</select>
+<div id="timeContainer">
+<label>時間</label>
+<div class="time-table" id="timeTable"></div>
+</div>
 
 <button class="submit-btn" type="submit">予約する</button>
 </form>
 </div>
 
 <script>
-const LIFF_ID = "あなたのLIFF-ID"; // ←あなたのLIFF IDに書き換え
+const LIFF_ID = "あなたのLIFF-ID"; // ←書き換え
+let selectedTime = null;
 
+// LIFF初期化
 async function init() {
     await liff.init({ liffId: LIFF_ID });
     if (!liff.isLoggedIn()) liff.login();
 }
 init();
 
-// 日付プルダウン自動生成（今日から30日）
+// 日付プルダウン生成（今日から30日）
 const dateSelect = document.getElementById("date");
 const daysOfWeek = ['日','月','火','水','木','金','土'];
 for(let i=0;i<30;i++){
@@ -81,55 +73,70 @@ for(let i=0;i<30;i++){
     dateSelect.appendChild(option);
 }
 
-// メニュー複数選択
-const menuContainer = document.getElementById('menuContainer');
-menuContainer.addEventListener('change', function(e){
-    if(e.target.classList.contains('menu-select') && e.target.value!==''){
-        const selects = menuContainer.querySelectorAll('.menu-select');
-        if(selects.length<4){
-            const newSelect = e.target.cloneNode(true);
-            newSelect.value='';
-            newSelect.required=false;
-            menuContainer.appendChild(newSelect);
-        }
+// 時間表を生成（10:00〜18:00、30分刻み）
+function generateTimeSlots() {
+    const slots = [];
+    for(let h=10;h<=18;h++){
+        slots.push(`${h.toString().padStart(2,'0')}:00`);
+        if(h<18) slots.push(`${h.toString().padStart(2,'0')}:30`);
     }
-});
+    return slots;
+}
 
-// 日付選択で空き時間を取得
+// 日付選択時に空き時間を取得して表示
 dateSelect.addEventListener('change', async function(){
+    selectedTime = null;
     const date = this.value;
+    const menuSelect = document.getElementById('menu');
+    const menuDuration = parseInt(menuSelect.selectedOptions[0]?.dataset.duration || 60);
     if(!date) return;
-    const res = await fetch(`/api/freeTimes?date=${date}`);
-    const data = await res.json();
-    const timeSelect = document.getElementById('time');
-    timeSelect.innerHTML='<option value="">時間を選択</option>';
-    data.freeTimes.forEach(t=>{
-        const opt = document.createElement('option');
-        opt.value=t;
-        opt.textContent=t;
-        timeSelect.appendChild(opt);
+    const res = await fetch(`/api/freeTimes?date=${date}&duration=${menuDuration}`);
+    const data = await res.json(); // { freeTimes: ['10:00', '11:00', ...] }
+
+    const timeTable = document.getElementById('timeTable');
+    timeTable.innerHTML = '';
+    const allSlots = generateTimeSlots();
+    allSlots.forEach(t=>{
+        const btn = document.createElement('button');
+        btn.type='button';
+        btn.textContent = t;
+        if(data.freeTimes.includes(t)){
+            btn.className='time-btn available';
+            btn.onclick=()=> {
+                selectedTime = t;
+                document.querySelectorAll('.time-btn').forEach(b=>b.classList.remove('selected'));
+                btn.classList.add('selected');
+            };
+        } else {
+            btn.className='time-btn booked';
+            btn.disabled = true;
+        }
+        timeTable.appendChild(btn);
     });
 });
 
-// 予約送信
+// フォーム送信
 document.getElementById('reserveForm').addEventListener('submit', async function(e){
     e.preventDefault();
-    const menus = Array.from(menuContainer.querySelectorAll('.menu-select'))
-                  .map(s=>s.value).filter(v=>v!=='');
+    const menuSelect = document.getElementById('menu');
+    const menu = menuSelect.value;
+    if(!menu) return alert('メニューを選択してください');
+    if(!selectedTime) return alert('空き時間を選択してください');
     const date = dateSelect.value;
-    const time = document.getElementById('time').value;
-    if(!date || !time || menus.length===0) return alert('すべて選択してください');
 
     const profile = await liff.getProfile();
 
-    const res = await fetch('/api/reserve', {
+    const duration = parseInt(menuSelect.selectedOptions[0].dataset.duration || 60);
+
+    const res = await fetch('/api/reserve',{
         method:'POST',
         headers:{'Content-Type':'application/json'},
         body: JSON.stringify({
             name: profile.displayName,
-            menus,
+            menu,
             date,
-            time
+            time: selectedTime,
+            duration
         })
     });
     const result = await res.json();
