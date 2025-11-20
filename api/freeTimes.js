@@ -15,7 +15,7 @@ export default async function handler(req, res) {
   });
 
   const calendar = google.calendar({ version: "v3", auth });
-  const calendarId = "あなたのカレンダーID@group.calendar.google.com";
+  const calendarId = "candoll-reserve@candoll.iam.gserviceaccount.com";
 
   // 日付の開始と終了（UTCに注意）
   const start = new Date(`${date}T10:00:00`);
