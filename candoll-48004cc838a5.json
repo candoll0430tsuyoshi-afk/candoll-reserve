@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "candoll",
+  "private_key_id": "48004cc838a52d7fc4928f9c7b39bbf0d9ed26a5",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvwIBADANBgkqhkiG9w0BAQEFAASCBKkwggSlAgEAAoIBAQDUR3pdyPKVgqZg\n3bj7HrFe3JjKig6b6VOVQCXaJs0gDyfYXvTR4sNpsZvb/xxyFNF6ANrm4khgBxDb\n2XDwzMCqe7wQFPi89T/hp77hhwa3owp2EHgXN7j/DAiPcBBXC/ZynZFrtcfXZeze\n3vigHBdK8z01u4bRZTP3LvgcdZzjV/EPwNzBzY+JjAiKQp5Zq6Z+VNfJn1FhwZJg\ntwrpyhB8+E9XZoG8dNV53jDuvN0S8Bsi/x+b9j2xlDlWMxNMtCRyqm/iq+MGtUNb\nq99vrGaFqQhW1vhgWKWN6v0+ZuuhysNbNRJOPACGZuMT0X9yTht48iRCsHY6U/rB\nqgwsGnYPAgMBAAECggEAVJQmLTfjb66em/m7ulKAWUuLlSdsqrJMmyrz6feLwzpG\npe8vnHC9a19Yuk7rBolE7Vdp4JRIQfqOvQnl9gueuE6Un9O7R45v5XjwlOs3wfM0\nN9ZYAugwzW39+yirWgNqLkCZsFC9TxVNS3+LkD+hCDviJ4aQMN4h1lrggHZcDDhE\nDpOaJ9fJUcwL/tUum1ZIzxzkRafc1pc7tB9KfsXOneUFXFWIHGS/ks1XuNjo7yBh\nSnWbc+9GElQgI2t1RWMBDiP0A1jN8XiO0OsWHn+rqGG0O742pyKC7y9tS/IfJiPT\nKLq5ji2peb4n6QpCFkoHA12YP3MsiO//fOINMSnwAQKBgQDrCCq/mJfDzeFiM4G9\nQWlxcgJvlzr+JqBHwpnXfzAUynHA/q28gC8s1MTLmB2Ss1SltylJ2xdA4jligRg/\nqfwRsZO0ibS/EhcWQRmZvF8PH2fdXOE/F0T1HeRBsL9AuMlmw1Btlppodwi1pQpg\nrC0kfU7G/jnFD0adfIpuhcEI9QKBgQDnN6sMQ7NudnABNm2cOhfQShHnOw6nUxcS\nqcVfCxGx74JyGRXnQXq3yV1fAM/mh6w9KHk6XaDtvEZEF4A7UEjzhwAfWrjacWq4\n7rWnfSCxXBWX3Trgct6SJX5L6ZUMjf7q5tDbN9/LH+umxiEM4t9sL1uQbwSxNM/K\nokjtxm+wcwKBgQCALRMLLE/QFA6PfKGLsgmsOc4ER4h/pFcS65j0wkNZg1JoOzxK\nqemQXHT6x3mRUMWgHnSg96AF3ZoIE3lC9xQmHh78fYEaFuaKV3R7uBRrbeg5+/ZH\nbwxHVUbvYFHdHSmRJoFNUq3gvNH+JgSz1hJEbSYyNeERjBQpvQrN3Zn5pQKBgQCd\nj/3r2abIu8UPzntbXusjcZZJsKEHvUOX4EEzx2NDkieegSG/+Ysa+wm519/VBNeG\nxbH26B7mYsqvVCR6RvevnGuk8jnOAkPryh/YBxjkRBAi8QtSMHUjupEaQg7kA0+X\n27qv6J+E2DfJ6nJTSbdfDdaj0kOsToTbXUO9ZOBvqQKBgQCplYnSseq1fGah+iKb\nLFO6szlMODhZozaGrznKsgKfFhCPC6dIOnwkKcAjHfrmdpUJjKRHzaee97iWg7wX\noER4iPNL9MEmkfBdNy63DUfr+keSGCQW50ubqtMDGd4RUJJru2FCjsukT51HQCQa\nXbva5jpaoH1oVXCVZKivbU0X0w==\n-----END PRIVATE KEY-----\n",
+  "client_email": "candoll-reserve@candoll.iam.gserviceaccount.com",
+  "client_id": "108919412382395297417",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/candoll-reserve%40candoll.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}
