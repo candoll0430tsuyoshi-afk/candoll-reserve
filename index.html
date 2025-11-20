@@ -5,57 +5,59 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Candoll 予約フォーム</title>
 <style>
-    body { font-family:"Hiragino Sans",sans-serif; background:#fff; color:#000; text-align:center; margin:0; padding:0;}
-    .container { width:90%; max-width:420px; margin:0 auto; padding:20px 0 40px;}
-    .logo { width:120px; margin:0 auto 20px; display:block;}
-    .greeting { font-size:16px; line-height:1.6; margin-bottom:20px;}
-    label { font-size:18px; display:block; margin-bottom:8px; font-weight:600;}
-    select { width:100%; padding:12px; font-size:17px; border:1px solid #000; border-radius:6px; margin-bottom:20px;}
-    .submit-btn { width:100%; padding:18px; background:#000; color:#fff; font-size:20px; border:none; border-radius:10px; cursor:pointer; margin-top:10px;}
+body { font-family:"Hiragino Sans",sans-serif; background:#fff; color:#000; text-align:center; margin:0; padding:0;}
+.container { width:90%; max-width:420px; margin:0 auto; padding:20px 0 40px;}
+.logo { width:120px; margin:0 auto 20px; display:block;}
+.greeting { font-size:16px; line-height:1.6; margin-bottom:20px;}
+label { font-size:18px; display:block; margin-bottom:8px; font-weight:600;}
+select { width:100%; padding:12px; font-size:17px; border:1px solid #000; border-radius:6px; margin-bottom:20px;}
+.submit-btn { width:100%; padding:18px; background:#000; color:#fff; font-size:20px; border:none; border-radius:10px; cursor:pointer; margin-top:10px;}
 </style>
 <script src="https://static.line-scdn.net/liff/edge/versions/2.21.0/sdk.js"></script>
 </head>
 <body>
 <div class="container">
-    <img src="logo.png" alt="Candoll Logo" class="logo">
-    <div class="greeting">いつもお世話になっております。<br>ご予約内容をお選び下さい。</div>
-    
-    <form id="reserveForm">
-        <label for="menu">メニュー</label>
-        <div id="menuContainer">
-            <select class="menu-select">
-                <option value="">選択してください</option>
-                <optgroup label="組み合わせ">
-                    <option value="カット＋カラー">カット＋カラー</option>
-                    <option value="カット＋リタッチカラー">カット＋リタッチカラー</option>
-                    <option value="カット＋パーマ">カット＋パーマ</option>
-                    <option value="カット＋ストレート">カット＋ストレート</option>
-                </optgroup>
-                <optgroup label="カット">
-                    <option value="カット">カット</option>
-                    <option value="カット（大学生・専門学生）">カット（大学生・専門学生）</option>
-                    <option value="カット（中学生以下）">カット（中学生以下）</option>
-                    <option value="前髪カット">前髪カット</option>
-                </optgroup>
-                <!-- 他のメニューも同じ -->
-            </select>
-        </div>
+<img src="logo.png" alt="Candoll Logo" class="logo">
+<div class="greeting">
+いつもお世話になっております。<br>
+ご予約内容をお選び下さい。
+</div>
 
-        <label for="date">日付</label>
-        <input type="date" id="date" required>
+<form id="reserveForm">
+<label for="menu">メニュー</label>
+<div id="menuContainer">
+<select class="menu-select">
+<option value="">選択してください</option>
+<optgroup label="組み合わせ">
+<option value="カット＋カラー">カット＋カラー</option>
+<option value="カット＋リタッチカラー">カット＋リタッチカラー</option>
+<option value="カット＋パーマ">カット＋パーマ</option>
+<option value="カット＋ストレート">カット＋ストレート</option>
+</optgroup>
+<optgroup label="カット">
+<option value="カット">カット</option>
+<option value="カット（大学生・専門学生）">カット（大学生・専門学生）</option>
+<option value="カット（中学生以下）">カット（中学生以下）</option>
+<option value="前髪カット">前髪カット</option>
+</optgroup>
+<!-- 他のメニューも同じ -->
+</select>
+</div>
 
-        <label for="time">時間</label>
-        <select id="time" required>
-            <option value="">時間を選択</option>
-        </select>
+<label for="date">日付</label>
+<select id="date" required></select>
 
-        <button class="submit-btn" type="submit">予約する</button>
-    </form>
+<label for="time">時間</label>
+<select id="time" required>
+<option value="">時間を選択</option>
+</select>
+
+<button class="submit-btn" type="submit">予約する</button>
+</form>
 </div>
 
 <script>
 const LIFF_ID = "あなたのLIFF-ID"; // ←あなたのLIFF IDに書き換え
-const menuContainer = document.getElementById('menuContainer');
 
 async function init() {
     await liff.init({ liffId: LIFF_ID });
@@ -63,42 +65,58 @@ async function init() {
 }
 init();
 
+// 日付プルダウン自動生成（今日から30日）
+const dateSelect = document.getElementById("date");
+const daysOfWeek = ['日','月','火','水','木','金','土'];
+for(let i=0;i<30;i++){
+    const d = new Date();
+    d.setDate(d.getDate()+i);
+    const y=d.getFullYear();
+    const m=(d.getMonth()+1).toString().padStart(2,'0');
+    const day=d.getDate().toString().padStart(2,'0');
+    const dow = daysOfWeek[d.getDay()];
+    const option = document.createElement('option');
+    option.value=`${y}-${m}-${day}`;
+    option.textContent=`${y}/${m}/${day} (${dow})`;
+    dateSelect.appendChild(option);
+}
+
 // メニュー複数選択
+const menuContainer = document.getElementById('menuContainer');
 menuContainer.addEventListener('change', function(e){
-    if(e.target.classList.contains('menu-select') && e.target.value !== ''){
+    if(e.target.classList.contains('menu-select') && e.target.value!==''){
         const selects = menuContainer.querySelectorAll('.menu-select');
-        if(selects.length < 4){
+        if(selects.length<4){
             const newSelect = e.target.cloneNode(true);
-            newSelect.value = '';
-            newSelect.required = false;
+            newSelect.value='';
+            newSelect.required=false;
             menuContainer.appendChild(newSelect);
         }
     }
 });
 
-// 日付選択後、Googleカレンダー空き時間を取得
-document.getElementById('date').addEventListener('change', async function(){
+// 日付選択で空き時間を取得
+dateSelect.addEventListener('change', async function(){
     const date = this.value;
     if(!date) return;
-
     const res = await fetch(`/api/freeTimes?date=${date}`);
     const data = await res.json();
     const timeSelect = document.getElementById('time');
-    timeSelect.innerHTML = '<option value="">時間を選択</option>';
+    timeSelect.innerHTML='<option value="">時間を選択</option>';
     data.freeTimes.forEach(t=>{
         const opt = document.createElement('option');
-        opt.value = t;
-        opt.textContent = t;
+        opt.value=t;
+        opt.textContent=t;
         timeSelect.appendChild(opt);
     });
 });
 
-// フォーム送信（Googleカレンダーに予約登録）
+// 予約送信
 document.getElementById('reserveForm').addEventListener('submit', async function(e){
     e.preventDefault();
     const menus = Array.from(menuContainer.querySelectorAll('.menu-select'))
-                    .map(s=>s.value).filter(v=>v!=='');
-    const date = document.getElementById('date').value;
+                  .map(s=>s.value).filter(v=>v!=='');
+    const date = dateSelect.value;
     const time = document.getElementById('time').value;
     if(!date || !time || menus.length===0) return alert('すべて選択してください');
 
@@ -106,7 +124,7 @@ document.getElementById('reserveForm').addEventListener('submit', async function
 
     const res = await fetch('/api/reserve', {
         method:'POST',
-        headers: {'Content-Type':'application/json'},
+        headers:{'Content-Type':'application/json'},
         body: JSON.stringify({
             name: profile.displayName,
             menus,
