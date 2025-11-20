@@ -16,7 +16,7 @@ export default async function handler(req, res) {
   });
 
   const calendar = google.calendar({ version: "v3", auth });
-  const calendarId = "あなたのカレンダーID@group.calendar.google.com";
+  const calendarId = "candoll-reserve@candoll.iam.gserviceaccount.com";
 
   // 予約時間と終了時間（ここでは60分固定）
   const startDateTime = new Date(`${date}T${time}:00`);
