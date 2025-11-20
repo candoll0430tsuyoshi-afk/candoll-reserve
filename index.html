@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Candoll 予約フォーム</title>
 <style>
 body { font-family:"Hiragino Sans",sans-serif; background:#fff; color:#000; text-align:center; margin:0; padding:0;}
@@ -14,8 +14,9 @@ label { font-size:18px; display:block; margin-bottom:8px; font-weight:600;}
 .date-select { width:100%; padding:12px; font-size:17px; border:1px solid #000; border-radius:6px; margin-bottom:20px;}
 .time-table { display:flex; flex-wrap:wrap; justify-content:center; gap:5px; margin-top:10px;}
 .time-btn { padding:10px 14px; border-radius:6px; border:1px solid #000; cursor:pointer; min-width:70px;}
-.time-btn.available { background:#d4edda; color:#155724; } /* 空き⭕ */
-.time-btn.booked { background:#f8d7da; color:#721c24; cursor:not-allowed; } /* 埋まり❌ */
+.time-btn.available { background:#d4edda; color:#155724; } 
+.time-btn.booked { background:#f8d7da; color:#721c24; cursor:not-allowed; }
+.time-btn.selected { border:2px solid #000; }
 .submit-btn { width:100%; padding:18px; background:#000; color:#fff; font-size:20px; border:none; border-radius:10px; cursor:pointer; margin-top:10px;}
 </style>
 <script src="https://static.line-scdn.net/liff/edge/versions/2.21.0/sdk.js"></script>
@@ -27,12 +28,45 @@ label { font-size:18px; display:block; margin-bottom:8px; font-weight:600;}
 
 <form id="reserveForm">
 <label for="menu">メニュー</label>
-<select id="menu" class="menu-select">
+<div id="menuContainer">
+<select class="menu-select" id="menu">
 <option value="">選択してください</option>
-<option value="カット" data-duration="60">カット（60分）</option>
-<option value="カラー" data-duration="90">カラー（90分）</option>
-<option value="カット＋カラー" data-duration="120">カット＋カラー（120分）</option>
+<optgroup label="組み合わせ">
+<option value="カット＋カラー" data-duration="120">カット＋カラー</option>
+<option value="カット＋リタッチカラー" data-duration="90">カット＋リタッチカラー</option>
+<option value="カット＋パーマ" data-duration="120">カット＋パーマ</option>
+<option value="カット＋ストレート" data-duration="120">カット＋ストレート</option>
+</optgroup>
+<optgroup label="カット">
+<option value="カット" data-duration="60">カット</option>
+<option value="カット（大学生・専門学生）" data-duration="60">カット（大学生・専門学生）</option>
+<option value="カット（中学生以下）" data-duration="45">カット（中学生以下）</option>
+<option value="前髪カット" data-duration="15">前髪カット</option>
+</optgroup>
+<optgroup label="カラー">
+<option value="カラー" data-duration="90">カラー</option>
+<option value="リタッチカラー" data-duration="60">リタッチカラー</option>
+<option value="ダブルカラー" data-duration="120">ダブルカラー</option>
+<option value="アクセントカラー" data-duration="90">アクセントカラー</option>
+<option value="ヘナ" data-duration="90">ヘナ</option>
+</optgroup>
+<optgroup label="パーマ">
+<option value="モイストパーマ" data-duration="90">モイストパーマ</option>
+<option value="ポイントパーマ" data-duration="60">ポイントパーマ</option>
+</optgroup>
+<optgroup label="ストレート">
+<option value="ストレートパーマ" data-duration="120">ストレートパーマ</option>
+<option value="ポイントストレートパーマ" data-duration="60">ポイントストレートパーマ</option>
+</optgroup>
+<optgroup label="トリートメント">
+<option value="トリートメント" data-duration="30">トリートメント</option>
+</optgroup>
+<optgroup label="メニュー未定">
+<option value="来店時に相談（２時間枠）" data-duration="120">来店時に相談（２時間枠）</option>
+<option value="来店時に相談（３時間枠）" data-duration="180">来店時に相談（３時間枠）</option>
+</optgroup>
 </select>
+</div>
 
 <label for="date">日付</label>
 <select id="date" class="date-select" required></select>
@@ -47,7 +81,7 @@ label { font-size:18px; display:block; margin-bottom:8px; font-weight:600;}
 </div>
 
 <script>
-const LIFF_ID = "あなたのLIFF-ID"; // ←書き換え
+const LIFF_ID = "あなたのLIFF-ID"; 
 let selectedTime = null;
 
 // LIFF初期化
@@ -73,7 +107,7 @@ for(let i=0;i<30;i++){
     dateSelect.appendChild(option);
 }
 
-// 時間表を生成（10:00〜18:00、30分刻み）
+// 時間表生成（10:00〜18:00 30分刻み）
 function generateTimeSlots() {
     const slots = [];
     for(let h=10;h<=18;h++){
@@ -83,7 +117,7 @@ function generateTimeSlots() {
     return slots;
 }
 
-// 日付選択時に空き時間を取得して表示
+// 日付選択で空き時間表示
 dateSelect.addEventListener('change', async function(){
     selectedTime = null;
     const date = this.value;
@@ -91,7 +125,7 @@ dateSelect.addEventListener('change', async function(){
     const menuDuration = parseInt(menuSelect.selectedOptions[0]?.dataset.duration || 60);
     if(!date) return;
     const res = await fetch(`/api/freeTimes?date=${date}&duration=${menuDuration}`);
-    const data = await res.json(); // { freeTimes: ['10:00', '11:00', ...] }
+    const data = await res.json(); // { freeTimes: ['10:00', ...] }
 
     const timeTable = document.getElementById('timeTable');
     timeTable.innerHTML = '';
@@ -125,7 +159,6 @@ document.getElementById('reserveForm').addEventListener('submit', async function
     const date = dateSelect.value;
 
     const profile = await liff.getProfile();
-
     const duration = parseInt(menuSelect.selectedOptions[0].dataset.duration || 60);
 
     const res = await fetch('/api/reserve',{
