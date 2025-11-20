@@ -10,8 +10,7 @@ body { font-family:"Hiragino Sans",sans-serif; background:#fff; color:#000; text
 .logo { width:120px; margin:0 auto 20px; display:block;}
 .greeting { font-size:16px; line-height:1.6; margin-bottom:20px;}
 label { font-size:18px; display:block; margin-bottom:8px; font-weight:600;}
-.menu-select { width:100%; padding:12px; font-size:17px; border:1px solid #000; border-radius:6px; margin-bottom:20px;}
-.date-select { width:100%; padding:12px; font-size:17px; border:1px solid #000; border-radius:6px; margin-bottom:20px;}
+select { width:100%; padding:12px; font-size:17px; border:1px solid #000; border-radius:6px; margin-bottom:20px;}
 .time-table { display:flex; flex-wrap:wrap; justify-content:center; gap:5px; margin-top:10px;}
 .time-btn { padding:10px 14px; border-radius:6px; border:1px solid #000; cursor:pointer; min-width:70px;}
 .time-btn.available { background:#d4edda; color:#155724; } 
@@ -27,49 +26,49 @@ label { font-size:18px; display:block; margin-bottom:8px; font-weight:600;}
 <div class="greeting">いつもお世話になっております。<br>ご予約内容をお選び下さい。</div>
 
 <form id="reserveForm">
-<label for="menu">メニュー</label>
+<label>メニュー</label>
 <div id="menuContainer">
-<select class="menu-select" id="menu">
-<option value="">選択してください</option>
-<optgroup label="組み合わせ">
-<option value="カット＋カラー" data-duration="120">カット＋カラー</option>
-<option value="カット＋リタッチカラー" data-duration="90">カット＋リタッチカラー</option>
-<option value="カット＋パーマ" data-duration="120">カット＋パーマ</option>
-<option value="カット＋ストレート" data-duration="120">カット＋ストレート</option>
-</optgroup>
-<optgroup label="カット">
-<option value="カット" data-duration="60">カット</option>
-<option value="カット（大学生・専門学生）" data-duration="60">カット（大学生・専門学生）</option>
-<option value="カット（中学生以下）" data-duration="45">カット（中学生以下）</option>
-<option value="前髪カット" data-duration="15">前髪カット</option>
-</optgroup>
-<optgroup label="カラー">
-<option value="カラー" data-duration="90">カラー</option>
-<option value="リタッチカラー" data-duration="60">リタッチカラー</option>
-<option value="ダブルカラー" data-duration="120">ダブルカラー</option>
-<option value="アクセントカラー" data-duration="90">アクセントカラー</option>
-<option value="ヘナ" data-duration="90">ヘナ</option>
-</optgroup>
-<optgroup label="パーマ">
-<option value="モイストパーマ" data-duration="90">モイストパーマ</option>
-<option value="ポイントパーマ" data-duration="60">ポイントパーマ</option>
-</optgroup>
-<optgroup label="ストレート">
-<option value="ストレートパーマ" data-duration="120">ストレートパーマ</option>
-<option value="ポイントストレートパーマ" data-duration="60">ポイントストレートパーマ</option>
-</optgroup>
-<optgroup label="トリートメント">
-<option value="トリートメント" data-duration="30">トリートメント</option>
-</optgroup>
-<optgroup label="メニュー未定">
-<option value="来店時に相談（２時間枠）" data-duration="120">来店時に相談（２時間枠）</option>
-<option value="来店時に相談（３時間枠）" data-duration="180">来店時に相談（３時間枠）</option>
-</optgroup>
-</select>
+  <select class="menu-select">
+    <option value="">選択してください</option>
+    <optgroup label="組み合わせ">
+      <option value="カット＋カラー">カット＋カラー</option>
+      <option value="カット＋リタッチカラー">カット＋リタッチカラー</option>
+      <option value="カット＋パーマ">カット＋パーマ</option>
+      <option value="カット＋ストレート">カット＋ストレート</option>
+    </optgroup>
+    <optgroup label="カット">
+      <option value="カット">カット</option>
+      <option value="カット（大学生・専門学生）">カット（大学生・専門学生）</option>
+      <option value="カット（中学生以下）">カット（中学生以下）</option>
+      <option value="前髪カット">前髪カット</option>
+    </optgroup>
+    <optgroup label="カラー">
+      <option value="カラー">カラー</option>
+      <option value="リタッチカラー">リタッチカラー</option>
+      <option value="ダブルカラー">ダブルカラー</option>
+      <option value="アクセントカラー">アクセントカラー</option>
+      <option value="ヘナ">ヘナ</option>
+    </optgroup>
+    <optgroup label="パーマ">
+      <option value="モイストパーマ">モイストパーマ</option>
+      <option value="ポイントパーマ">ポイントパーマ</option>
+    </optgroup>
+    <optgroup label="ストレート">
+      <option value="ストレートパーマ">ストレートパーマ</option>
+      <option value="ポイントストレートパーマ">ポイントストレートパーマ</option>
+    </optgroup>
+    <optgroup label="トリートメント">
+      <option value="トリートメント">トリートメント</option>
+    </optgroup>
+    <optgroup label="メニュー未定">
+      <option value="来店時に相談（２時間枠）">来店時に相談（２時間枠）</option>
+      <option value="来店時に相談（３時間枠）">来店時に相談（３時間枠）</option>
+    </optgroup>
+  </select>
 </div>
 
 <label for="date">日付</label>
-<select id="date" class="date-select" required></select>
+<select id="date" required></select>
 
 <div id="timeContainer">
 <label>時間</label>
@@ -91,26 +90,40 @@ async function init() {
 }
 init();
 
-// 日付プルダウン生成（今日から30日）
+// 日付プルダウン生成
 const dateSelect = document.getElementById("date");
 const daysOfWeek = ['日','月','火','水','木','金','土'];
 for(let i=0;i<30;i++){
-    const d = new Date();
+    const d=new Date();
     d.setDate(d.getDate()+i);
     const y=d.getFullYear();
     const m=(d.getMonth()+1).toString().padStart(2,'0');
     const day=d.getDate().toString().padStart(2,'0');
-    const dow = daysOfWeek[d.getDay()];
-    const option = document.createElement('option');
+    const dow=daysOfWeek[d.getDay()];
+    const option=document.createElement('option');
     option.value=`${y}-${m}-${day}`;
     option.textContent=`${y}/${m}/${day} (${dow})`;
     dateSelect.appendChild(option);
 }
 
-// 時間表生成（10:00〜18:00 30分刻み）
+// メニュー複数選択
+const menuContainer=document.getElementById('menuContainer');
+menuContainer.addEventListener('change', function(e){
+    if(e.target.classList.contains('menu-select') && e.target.value!==''){
+        const selects = menuContainer.querySelectorAll('.menu-select');
+        if(selects.length<4){
+            const newSelect = e.target.cloneNode(true);
+            newSelect.value='';
+            newSelect.required=false;
+            menuContainer.appendChild(newSelect);
+        }
+    }
+});
+
+// 時間表生成
 function generateTimeSlots() {
     const slots = [];
-    for(let h=10;h<=18;h++){
+    for(let h=10; h<=18; h++){
         slots.push(`${h.toString().padStart(2,'0')}:00`);
         if(h<18) slots.push(`${h.toString().padStart(2,'0')}:30`);
     }
@@ -121,29 +134,27 @@ function generateTimeSlots() {
 dateSelect.addEventListener('change', async function(){
     selectedTime = null;
     const date = this.value;
-    const menuSelect = document.getElementById('menu');
-    const menuDuration = parseInt(menuSelect.selectedOptions[0]?.dataset.duration || 60);
     if(!date) return;
-    const res = await fetch(`/api/freeTimes?date=${date}&duration=${menuDuration}`);
+    const res = await fetch(`/api/freeTimes?date=${date}`);
     const data = await res.json(); // { freeTimes: ['10:00', ...] }
 
     const timeTable = document.getElementById('timeTable');
-    timeTable.innerHTML = '';
+    timeTable.innerHTML='';
     const allSlots = generateTimeSlots();
     allSlots.forEach(t=>{
-        const btn = document.createElement('button');
+        const btn=document.createElement('button');
         btn.type='button';
-        btn.textContent = t;
+        btn.textContent=t;
         if(data.freeTimes.includes(t)){
             btn.className='time-btn available';
             btn.onclick=()=> {
-                selectedTime = t;
+                selectedTime=t;
                 document.querySelectorAll('.time-btn').forEach(b=>b.classList.remove('selected'));
                 btn.classList.add('selected');
             };
         } else {
             btn.className='time-btn booked';
-            btn.disabled = true;
+            btn.disabled=true;
         }
         timeTable.appendChild(btn);
     });
@@ -152,24 +163,22 @@ dateSelect.addEventListener('change', async function(){
 // フォーム送信
 document.getElementById('reserveForm').addEventListener('submit', async function(e){
     e.preventDefault();
-    const menuSelect = document.getElementById('menu');
-    const menu = menuSelect.value;
-    if(!menu) return alert('メニューを選択してください');
+    const menus = Array.from(menuContainer.querySelectorAll('.menu-select'))
+                       .map(s=>s.value).filter(v=>v!=='');
+    if(menus.length===0) return alert('メニューを選択してください');
     if(!selectedTime) return alert('空き時間を選択してください');
     const date = dateSelect.value;
 
     const profile = await liff.getProfile();
-    const duration = parseInt(menuSelect.selectedOptions[0].dataset.duration || 60);
 
     const res = await fetch('/api/reserve',{
         method:'POST',
         headers:{'Content-Type':'application/json'},
         body: JSON.stringify({
             name: profile.displayName,
-            menu,
+            menus,
             date,
-            time: selectedTime,
-            duration
+            time: selectedTime
         })
     });
     const result = await res.json();
