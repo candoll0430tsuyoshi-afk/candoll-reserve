@@ -5,212 +5,83 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Candoll 予約フォーム</title>
 <style>
-body {
-    font-family: "Hiragino Sans", "Hiragino Kaku Gothic ProN", sans-serif;
-    background: #fff;
-    color: #000;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-}
-.container {
-    width: 90%;
-    max-width: 420px;
-    margin: 0 auto;
-    padding: 20px 0 40px;
-}
-.logo {
-    width: 120px;
-    margin: 0 auto 20px;
-    display: block;
-}
-.greeting {
-    font-size: 16px;
-    margin-bottom: 20px;
-}
-label {
-    font-size: 18px;
-    display: block;
-    margin-bottom: 8px;
-    font-weight: 600;
-}
-select, .time-btn {
-    width: 100%;
-    padding: 12px;
-    font-size: 17px;
-    border: 1px solid #000;
-    border-radius: 6px;
-    margin-bottom: 10px;
-    cursor: pointer;
-}
-.time-btn {
-    margin-bottom: 5px;
-    background: #fff;
-}
-.submit-btn {
-    width: 100%;
-    padding: 18px;
-    background: #000;
-    color: #fff;
-    font-size: 20px;
-    border: none;
-    border-radius: 10px;
-    cursor: pointer;
-    margin-top: 10px;
-}
+ body { font-family: "Hiragino Sans", sans-serif; background: #fff; padding: 20px; }
+ h1 { font-size: 24px; margin-bottom: 10px; }
+ label { display: block; margin-top: 15px; }
+ select, input { padding: 8px; font-size: 16px; }
+ #timeTable { margin-top: 20px; border-collapse: collapse; width: 100%; }
+ #timeTable th, #timeTable td { border: 1px solid #ccc; padding: 5px; text-align: center; }
+ .ok { background: #c8f7c5; }
+ .ng { background: #f7c5c5; }
 </style>
 </head>
 <body>
-<div class="container">
-    <img src="logo.png" alt="Candoll Logo" class="logo">
-    <div class="greeting">
-        いつもお世話になっております。<br>
-        ご予約内容をお選び下さい。
-    </div>
-    <form id="reserveForm">
-        <label for="menu">メニュー</label>
-        <div id="menuContainer">
-            <select class="menu-select">
-                <option value="">選択してください</option>
-                <optgroup label="組み合わせ">
-                    <option value="カット＋カラー">カット＋カラー</option>
-                    <option value="カット＋リタッチカラー">カット＋リタッチカラー</option>
-                    <option value="カット＋パーマ">カット＋パーマ</option>
-                    <option value="カット＋ストレート">カット＋ストレート</option>
-                </optgroup>
-                <optgroup label="カット">
-                    <option value="カット">カット</option>
-                    <option value="カット（大学生・専門学生）">カット（大学生・専門学生）</option>
-                    <option value="カット（中学生以下）">カット（中学生以下）</option>
-                    <option value="前髪カット">前髪カット</option>
-                </optgroup>
-                <optgroup label="カラー">
-                    <option value="カラー">カラー</option>
-                    <option value="リタッチカラー">リタッチカラー</option>
-                    <option value="ダブルカラー">ダブルカラー</option>
-                    <option value="アクセントカラー">アクセントカラー</option>
-                    <option value="ヘナ">ヘナ</option>
-                </optgroup>
-                <optgroup label="パーマ">
-                    <option value="モイストパーマ">モイストパーマ</option>
-                    <option value="ポイントパーマ">ポイントパーマ</option>
-                </optgroup>
-                <optgroup label="ストレート">
-                    <option value="ストレートパーマ">ストレートパーマ</option>
-                    <option value="ポイントストレートパーマ">ポイントストレートパーマ</option>
-                </optgroup>
-                <optgroup label="トリートメント">
-                    <option value="トリートメント">トリートメント</option>
-                </optgroup>
-                <optgroup label="メニュー未定">
-                    <option value="来店時に相談（２時間枠）">来店時に相談（２時間枠）</option>
-                    <option value="来店時に相談（３時間枠）">来店時に相談（３時間枠）</option>
-                </optgroup>
-            </select>
-        </div>
+<h1>Candoll 予約フォーム</h1>
 
-        <label for="date">日付</label>
-        <select id="date" required></select>
+<form id="reserveForm">
+  <label>メニューを選択：</label>
+  <select id="menuSelect"></select>
 
-        <label for="time">時間</label>
-        <div id="timeContainer"></div>
+  <label>日付を選択：</label>
+  <input type="date" id="dateInput" />
 
-        <button class="submit-btn" type="submit">予約する</button>
-    </form>
-</div>
+  <label>時間を選択：</label>
+  <select id="timeSelect"></select>
 
-<script src="https://static.line-scdn.net/liff/edge/2.1/sdk.js"></script>
+  <button type="submit">予約する</button>
+</form>
+
+<h2>時間の空き状況（⭕/❌）</h2>
+<table id="timeTable"></table>
+
 <script>
-window.onload = async function() {
-    liff.init({ liffId: "2008442624-YB13z2B1" }).then(async () => {
-        if (!liff.isLoggedIn()) liff.login();
-    });
+const menuData = [
+  { name: "通常コース", times: ["10:00","10:30","11:00","11:30","12:00","12:30","13:00","13:30","14:00","14:30","15:00","15:30","16:00","16:30","17:00","17:30","18:00"] },
+  { name: "ロングコース", times: ["10:00","11:00","12:00","13:00","14:00","15:00","16:00","17:00"] }
+];
 
-    // 日付プルダウン作成
-    const dateSelect = document.getElementById("date");
-    const daysOfWeek = ['日','月','火','水','木','金','土'];
-    for (let i=0; i<30; i++){
-        const d = new Date();
-        d.setDate(d.getDate()+i);
-        const y=d.getFullYear();
-        const m=(d.getMonth()+1).toString().padStart(2,'0');
-        const day=d.getDate().toString().padStart(2,'0');
-        const dow=daysOfWeek[d.getDay()];
-        const option = document.createElement('option');
-        option.value = `${y}-${m}-${day}`;
-        option.textContent = `${y}/${m}/${day} (${dow})`;
-        dateSelect.appendChild(option);
-    }
+const menuSelect = document.getElementById("menuSelect");
+const dateInput = document.getElementById("dateInput");
+const timeSelect = document.getElementById("timeSelect");
+const timeTable = document.getElementById("timeTable");
 
-    // 日付変更で空き時間取得
-    dateSelect.addEventListener('change', async function() {
-        if(!this.value) return;
-        const res = await fetch(`/api/freeTimes?date=${this.value}`);
-        const data = await res.json();
-        renderTimeButtons(data.freeTimes);
-    });
-};
-
-// メニュー複数選択
-const menuContainer = document.getElementById('menuContainer');
-menuContainer.addEventListener('change', function(e){
-    if(e.target.classList.contains('menu-select') && e.target.value!==''){
-        const selects = menuContainer.querySelectorAll('.menu-select');
-        if(selects.length<4){
-            const newSelect = e.target.cloneNode(true);
-            newSelect.value='';
-            newSelect.required=false;
-            menuContainer.appendChild(newSelect);
-        }
-    }
+menuData.forEach(m => {
+  const op = document.createElement("option");
+  op.value = m.name;
+  op.textContent = m.name;
+  menuSelect.appendChild(op);
 });
 
-let selectedTime = null;
-function renderTimeButtons(freeTimes){
-    const container = document.getElementById("timeContainer");
-    container.innerHTML='';
-    freeTimes.forEach(t=>{
-        const btn = document.createElement("button");
-        btn.type="button";
-        btn.textContent = t;
-        btn.className="time-btn";
-        btn.onclick = () => {
-            selectedTime = t;
-            document.querySelectorAll(".time-btn").forEach(b => {
-                b.style.background="#fff";
-                b.style.color="#000";
-            });
-            btn.style.background="#000";
-            btn.style.color="#fff";
-        };
-        container.appendChild(btn);
-    });
+function updateTimes() {
+  const menu = menuData.find(x => x.name === menuSelect.value);
+  timeSelect.innerHTML = "";
+  menu.times.forEach(t => {
+    const op = document.createElement("option");
+    op.value = t;
+    op.textContent = t;
+    timeSelect.appendChild(op);
+  });
 }
+updateTimes();
+menuSelect.addEventListener("change", () => { updateTimes(); updateTimeTable(); });
+dateInput.addEventListener("change", updateTimeTable);
 
-// 予約送信
-document.getElementById('reserveForm').addEventListener('submit', async function(e){
-    e.preventDefault();
-    const menus = Array.from(menuContainer.querySelectorAll('.menu-select'))
-                       .map(s=>s.value).filter(v=>v!=='');
-    if(menus.length===0) return alert('メニューを選択してください');
-    if(!selectedTime) return alert('空き時間を選択してください');
-    const date = document.getElementById("date").value;
+async function updateTimeTable() {
+  if (!dateInput.value) return;
+  const menu = menuSelect.value;
+  const res = await fetch(`/api/freeTimes?date=${dateInput.value}&menu=${menu}`);
+  const data = await res.json();
 
-    const profile = await liff.getProfile();
+  timeTable.innerHTML = "";
+  let header = "<tr><th>時間</th><th>状態</th></tr>";
+  timeTable.insertAdjacentHTML("beforeend", header);
 
-    const res = await fetch('/api/reserve',{
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({
-            name: profile.displayName,
-            menus,
-            date,
-            time: selectedTime
-        })
-    });
-    const result = await res.json();
-    alert(result.message);
-});
+  data.freeTimes.forEach(t => {
+    const isFree = data.freeList.includes(t);
+    const row = `<tr class="${isFree ? 'ok':'ng'}"><td>${t}</td><td>${isFree ? '⭕':'❌'}</td></tr>`;
+    timeTable.insertAdjacentHTML("beforeend", row);
+  });
+}
 </script>
 </body>
 </html>
