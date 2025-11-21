@@ -1,6 +1,7 @@
 {
   "name": "candoll-reserve",
   "version": "1.0.0",
+  "type": "module",
   "dependencies": {
     "googleapis": "^121.0.0"
   }
