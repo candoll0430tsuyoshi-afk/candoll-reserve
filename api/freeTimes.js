@@ -1,54 +1,57 @@
-// /api/freeTimes.js
 import { google } from "googleapis";
-import fs from "fs";
-import path from "path";
 
 export default async function handler(req, res) {
-  const { date } = req.query;
-  if (!date) return res.status(400).json({ error: "date is required" });
-
-  // サービスアカウント JSON
-  const keyPath = path.join(process.cwd(), "service-account.json");
-  const auth = new google.auth.GoogleAuth({
-    keyFile: keyPath,
-    scopes: ["https://www.googleapis.com/auth/calendar"],
-  });
-
-  const calendar = google.calendar({ version: "v3", auth });
-  const calendarId = "candoll202601@gmail.com";
-
-  // 日付の開始と終了（UTCに注意）
-  const start = new Date(`${date}T10:00:00`);
-  const end = new Date(`${date}T18:00:00`);
-
   try {
-    const response = await calendar.events.list({
-      calendarId,
+    const { date } = req.query;
+
+    if (!date) {
+      return res.status(400).json({ error: "date が必要です" });
+    }
+
+    const credentials = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT_KEY);
+
+    const client = new google.auth.JWT(
+      credentials.client_email,
+      null,
+      credentials.private_key,
+      ["https://www.googleapis.com/auth/calendar.readonly"]
+    );
+
+    const calendar = google.calendar({ version: "v3", auth: client });
+
+    const start = new Date(`${date}T00:00:00+09:00`);
+    const end = new Date(`${date}T23:59:59+09:00`);
+
+    const result = await calendar.events.list({
+      calendarId: "candoll202601@gmail.com",
       timeMin: start.toISOString(),
       timeMax: end.toISOString(),
       singleEvents: true,
-      orderBy: "startTime",
+      orderBy: "startTime"
     });
 
-    // 予約済み時間を抽出
-    const bookedTimes = response.data.items.map(event => {
-      const startTime = new Date(event.start.dateTime || event.start.date);
-      return `${startTime.getHours().toString().padStart(2,"0")}:${startTime.getMinutes().toString().padStart(2,"0")}`;
-    });
+    const events = result.data.items;
+    const free = [];
 
-    // 10:00〜18:00 30分刻みで空き時間を計算
-    const allSlots = [];
-    for(let h=10; h<18; h++){
-      allSlots.push(`${h.toString().padStart(2,'0')}:00`);
-      allSlots.push(`${h.toString().padStart(2,'0')}:30`);
+    const times = [];
+    for (let h = 10; h <= 18; h++) {
+      times.push(`${h.toString().padStart(2, "0")}:00`);
+      if (h < 18) times.push(`${h.toString().padStart(2, "0")}:30`);
     }
-    allSlots.push('18:00'); // 最後の18:00も追加
 
-    const freeTimes = allSlots.filter(t => !bookedTimes.includes(t));
+    times.forEach((t) => {
+      const s = new Date(`${date}T${t}:00+09:00`);
+      const overlap = events.some((ev) => {
+        const evStart = new Date(ev.start.dateTime);
+        const evEnd = new Date(ev.end.dateTime);
+        return s >= evStart && s < evEnd;
+      });
+      free.push({ time: t, available: !overlap });
+    });
 
-    res.status(200).json({ freeTimes });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Google Calendar API error" });
+    res.status(200).json(free);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Server error", details: error.message });
   }
 }
