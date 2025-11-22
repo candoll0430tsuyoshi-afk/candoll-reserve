@@ -57,11 +57,20 @@
         cursor: pointer;
         margin-top: 10px;
     }
-
     #menuContainer {
         display: flex;
         flex-direction: column;
         gap: 10px;
+    }
+    #addMenu {
+        margin-top: 6px;
+        font-size: 13px;
+        color: #007bff;
+        background: none;
+        border: none;
+        padding: 0;
+        cursor: pointer;
+        text-decoration: underline;
     }
 </style>
 </head>
@@ -80,9 +89,11 @@
 </div>
 
 <form id="reserveForm">
+
     <label for="menu">メニュー</label>
 
     <div id="menuContainer">
+        <!-- 1つ目のメニュー -->
         <select class="menu-select">
             <option value="">選択してください</option>
             <optgroup label="組み合わせ">
@@ -122,6 +133,9 @@
         </select>
     </div>
 
+    <!-- メニュー追加ボタン -->
+    <button type="button" id="addMenu">メニューを追加する</button>
+
     <label for="date">日付</label>
     <select id="date" required></select>
 
@@ -152,10 +166,9 @@
 </div>
 
 <script>
-/* 日付生成 */
+/* ▼ 日付の生成（30日分） ▼ */
 const dateSelect = document.getElementById("date");
 const daysOfWeek = ['日','月','火','水','木','金','土'];
-
 for (let i = 0; i < 30; i++) {
     const d = new Date();
     d.setDate(d.getDate() + i);
@@ -169,28 +182,22 @@ for (let i = 0; i < 30; i++) {
     dateSelect.appendChild(option);
 }
 
-/* ▼ メニュー追加（修正版：cloneNode を使わず option をコピー） */
+/* ▼ メニュー追加処理（安全版） ▼ */
 const menuContainer = document.getElementById('menuContainer');
+const addMenuBtn = document.getElementById('addMenu');
 
-menuContainer.addEventListener('change', function(e){
-    if(e.target.classList.contains('menu-select') && e.target.value !== ''){
-        const selects = menuContainer.querySelectorAll('.menu-select');
+addMenuBtn.addEventListener("click", () => {
+    const selects = menuContainer.querySelectorAll(".menu-select");
+    if (selects.length >= 4) return;
 
-        if(selects.length < 4){
-            const original = selects[0];  // １つ目を基準にする
-            const newSelect = document.createElement('select');
-            newSelect.className = "menu-select";
+    const firstSelect = selects[0];
+    const newSelect = firstSelect.cloneNode(true);
 
-            // option / optgroup をコピー
-            newSelect.innerHTML = original.innerHTML;
-            newSelect.value = "";
-
-            menuContainer.appendChild(newSelect);
-        }
-    }
+    newSelect.value = "";
+    menuContainer.appendChild(newSelect);
 });
 
-/* 送信 */
+/* ▼ 予約確認 ▼ */
 document.getElementById('reserveForm').addEventListener('submit', function(e){
     e.preventDefault();
     const menus = Array.from(menuContainer.querySelectorAll('.menu-select'))
@@ -201,5 +208,6 @@ document.getElementById('reserveForm').addEventListener('submit', function(e){
     alert(`予約内容:\nメニュー: ${menus.join(', ')}\n日付: ${date}\n時間: ${time}`);
 });
 </script>
+
 </body>
 </html>
