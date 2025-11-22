@@ -18,13 +18,14 @@
         max-width: 420px;
         margin: 0 auto;
         padding: 20px 0 40px;
+        text-align: center;
     }
     label {
         font-size: 18px;
+        display: block;
         margin-bottom: 8px;
         font-weight: 600;
         text-align: center;
-        display: block;
     }
     select {
         width: 100%;
@@ -33,6 +34,11 @@
         border: 1px solid #000;
         border-radius: 6px;
         margin-bottom: 20px;
+    }
+    #menuContainer {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
     }
     .submit-btn {
         width: 100%;
@@ -44,27 +50,6 @@
         border-radius: 10px;
         cursor: pointer;
         margin-top: 10px;
-    }
-
-    /* メニュー複数追加用 */
-    #menuContainer {
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-    }
-
-    /* 「メニューを追加する」リンク風ボタン */
-    #addMenu {
-        margin-top: -10px;
-        font-size: 13px;
-        color: #007bff;
-        background: none;
-        border: none;
-        padding: 0;
-        cursor: pointer;
-        text-decoration: underline;
-        width: 100px;
-        margin: 0 auto 20px;
     }
 </style>
 </head>
@@ -83,11 +68,9 @@
 </div>
 
 <form id="reserveForm">
-
-    <label>メニュー</label>
+    <label for="menu">メニュー</label>
 
     <div id="menuContainer">
-        <!-- 初期メニュー枠 -->
         <select class="menu-select">
             <option value="">選択してください</option>
             <optgroup label="組み合わせ">
@@ -127,24 +110,38 @@
         </select>
     </div>
 
-    <!-- メニュー追加ボタン -->
-    <button type="button" id="addMenu">メニューを追加する</button>
-
     <label for="date">日付</label>
     <select id="date" required></select>
 
     <label for="time">時間</label>
-    <select id="time" required></select>
+    <select id="time" required>
+        <option value="">時間を選択</option>
+        <option value="10:00">10:00</option>
+        <option value="10:30">10:30</option>
+        <option value="11:00">11:00</option>
+        <option value="11:30">11:30</option>
+        <option value="12:00">12:00</option>
+        <option value="12:30">12:30</option>
+        <option value="13:00">13:00</option>
+        <option value="13:30">13:30</option>
+        <option value="14:00">14:00</option>
+        <option value="14:30">14:30</option>
+        <option value="15:00">15:00</option>
+        <option value="15:30">15:30</option>
+        <option value="16:00">16:00</option>
+        <option value="16:30">16:30</option>
+        <option value="17:00">17:00</option>
+        <option value="17:30">17:30</option>
+        <option value="18:00">18:00</option>
+    </select>
 
     <button class="submit-btn" type="submit">予約する</button>
-
 </form>
+
 </div>
 
 <script>
-/* -------------------
-   ■ 日付の自動生成
-------------------- */
+// 日付リスト生成
 const dateSelect = document.getElementById("date");
 const daysOfWeek = ['日','月','火','水','木','金','土'];
 
@@ -155,62 +152,28 @@ for (let i = 0; i < 30; i++) {
     const m = (d.getMonth() + 1).toString().padStart(2, '0');
     const day = d.getDate().toString().padStart(2, '0');
     const dow = daysOfWeek[d.getDay()];
+
     const option = document.createElement('option');
     option.value = `${y}-${m}-${day}`;
     option.textContent = `${y}/${m}/${day} (${dow})`;
     dateSelect.appendChild(option);
 }
 
-/* -------------------
-   ■ 時間の自動生成
-------------------- */
-const timeSelect = document.getElementById("time");
-
-function generateTimes() {
-    timeSelect.innerHTML = ""; // いったんクリア
-
-    const start = 10 * 60; // 10:00 → 分に変換
-    const end = 18 * 60;   // 18:00
-    const interval = 30;   // 30分ごとの区切り
-
-    for (let t = start; t <= end; t += interval) {
-        const h = String(Math.floor(t / 60)).padStart(2, "0");
-        const m = String(t % 60).padStart(2, "0");
-        const option = document.createElement("option");
-        option.value = `${h}:${m}`;
-        option.textContent = `${h}:${m}`;
-        timeSelect.appendChild(option);
-    }
-}
-
-dateSelect.addEventListener("change", generateTimes);
-// 初回は空欄表示のため呼ばない（昨日の仕様に合わせる）
-
-
-/* -------------------
-   ■ メニュー複数追加
-------------------- */
+// メニュー複数追加
 const menuContainer = document.getElementById('menuContainer');
-const addMenuButton = document.getElementById('addMenu');
-
-addMenuButton.addEventListener("click", function () {
-    const selects = menuContainer.querySelectorAll('.menu-select');
-
-    if (selects.length >= 4) return;
-
-    const newSelect = selects[0].cloneNode(true);
-    newSelect.value = "";
-    menuContainer.appendChild(newSelect);
-
-    if (menuContainer.querySelectorAll('.menu-select').length >= 4) {
-        addMenuButton.style.display = "none";
+menuContainer.addEventListener('change', function(e){
+    if(e.target.classList.contains('menu-select') && e.target.value !== ''){
+        const selects = menuContainer.querySelectorAll('.menu-select');
+        if(selects.length < 4){
+            const newSelect = e.target.cloneNode(true);
+            newSelect.value = '';
+            newSelect.required = false;
+            menuContainer.appendChild(newSelect);
+        }
     }
 });
 
-
-/* -------------------
-   ■ 送信
-------------------- */
+// 送信
 document.getElementById('reserveForm').addEventListener('submit', function(e){
     e.preventDefault();
 
@@ -219,7 +182,7 @@ document.getElementById('reserveForm').addEventListener('submit', function(e){
                        .filter(v => v !== '');
 
     const date = dateSelect.value;
-    const time = timeSelect.value;
+    const time = document.getElementById('time').value;
 
     alert(`予約内容:\nメニュー: ${menus.join(', ')}\n日付: ${date}\n時間: ${time}`);
 });
