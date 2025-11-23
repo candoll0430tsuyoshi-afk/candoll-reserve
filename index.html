@@ -20,6 +20,17 @@
         padding: 20px 0 40px;
         text-align: center;
     }
+    .logo {
+        width: 120px;
+        margin: 0 auto 20px;
+        display: block;
+    }
+    .greeting {
+        font-size: 16px;
+        line-height: 1.6;
+        margin-bottom: 20px;
+        text-align: center;
+    }
     label {
         font-size: 18px;
         display: block;
@@ -35,11 +46,6 @@
         border-radius: 6px;
         margin-bottom: 20px;
     }
-    #menuContainer {
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-    }
     .submit-btn {
         width: 100%;
         padding: 18px;
@@ -50,6 +56,12 @@
         border-radius: 10px;
         cursor: pointer;
         margin-top: 10px;
+    }
+
+    #menuContainer {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
     }
 </style>
 </head>
@@ -69,7 +81,6 @@
 
 <form id="reserveForm">
     <label for="menu">メニュー</label>
-
     <div id="menuContainer">
         <select class="menu-select">
             <option value="">選択してください</option>
@@ -137,29 +148,27 @@
 
     <button class="submit-btn" type="submit">予約する</button>
 </form>
-
 </div>
 
 <script>
-// 日付リスト生成
 const dateSelect = document.getElementById("date");
 const daysOfWeek = ['日','月','火','水','木','金','土'];
 
 for (let i = 0; i < 30; i++) {
     const d = new Date();
     d.setDate(d.getDate() + i);
+
     const y = d.getFullYear();
     const m = (d.getMonth() + 1).toString().padStart(2, '0');
     const day = d.getDate().toString().padStart(2, '0');
     const dow = daysOfWeek[d.getDay()];
 
     const option = document.createElement('option');
-    option.value = `${y}-${m}-${day}`;
-    option.textContent = `${y}/${m}/${day} (${dow})`;
+    option.value = `${y}-${m}-${day}`;   // ←修正済み（絶対必要）
+    option.textContent = `${y}/${m}/${day} (${dow})`; // ←修正済み
     dateSelect.appendChild(option);
 }
 
-// メニュー複数追加
 const menuContainer = document.getElementById('menuContainer');
 menuContainer.addEventListener('change', function(e){
     if(e.target.classList.contains('menu-select') && e.target.value !== ''){
@@ -168,18 +177,18 @@ menuContainer.addEventListener('change', function(e){
             const newSelect = e.target.cloneNode(true);
             newSelect.value = '';
             newSelect.required = false;
+            newSelect.classList.add('menu-select');
             menuContainer.appendChild(newSelect);
         }
     }
 });
 
-// 送信
 document.getElementById('reserveForm').addEventListener('submit', function(e){
     e.preventDefault();
 
     const menus = Array.from(menuContainer.querySelectorAll('.menu-select'))
-                       .map(s => s.value)
-                       .filter(v => v !== '');
+        .map(s => s.value)
+        .filter(v => v !== '');
 
     const date = dateSelect.value;
     const time = document.getElementById('time').value;
