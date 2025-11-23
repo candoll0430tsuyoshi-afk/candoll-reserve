@@ -20,6 +20,24 @@
         padding: 20px 0 40px;
         text-align: center;
     }
+    .logo {
+        width: 120px;
+        margin: 0 auto 20px;
+        display: block;
+    }
+    .greeting {
+        font-size: 16px;
+        line-height: 1.6;
+        margin-bottom: 20px;
+        text-align: center;
+    }
+    label {
+        font-size: 18px;
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 600;
+        text-align: center;
+    }
     select {
         width: 100%;
         padding: 12px;
@@ -27,11 +45,6 @@
         border: 1px solid #000;
         border-radius: 6px;
         margin-bottom: 20px;
-    }
-    #menuContainer {
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
     }
     .submit-btn {
         width: 100%;
@@ -44,16 +57,24 @@
         cursor: pointer;
         margin-top: 10px;
     }
+
+    #menuContainer {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
 </style>
 </head>
+
 <body>
 <div class="container">
 
+<!-- ロゴは触らない -->
 <img src="https://candoll0430tsuyoshi-afk.github.io/candoll-reserve/logo.png"
      alt="Candoll ロゴ"
      style="width: 250px; display: block; margin: 0 auto 20px;">
 
-<h1>Candoll 予約フォーム</h1>
+<!-- ★ あなたの要望通り、ここの「Candoll 予約フォーム」という文字は削除 ★ -->
 
 <div class="greeting">
     いつもお世話になっております。<br>
@@ -62,22 +83,25 @@
 
 <form id="reserveForm">
 
-    <label>メニュー</label>
+    <label for="menu">メニュー</label>
     <div id="menuContainer">
         <select class="menu-select">
             <option value="">選択してください</option>
+
             <optgroup label="組み合わせ">
                 <option value="カット＋カラー">カット＋カラー</option>
                 <option value="カット＋リタッチカラー">カット＋リタッチカラー</option>
                 <option value="カット＋パーマ">カット＋パーマ</option>
                 <option value="カット＋ストレート">カット＋ストレート</option>
             </optgroup>
+
             <optgroup label="カット">
                 <option value="カット">カット</option>
                 <option value="カット（大学生・専門学生）">カット（大学生・専門学生）</option>
                 <option value="カット（中学生以下）">カット（中学生以下）</option>
                 <option value="前髪カット">前髪カット</option>
             </optgroup>
+
             <optgroup label="カラー">
                 <option value="カラー">カラー</option>
                 <option value="リタッチカラー">リタッチカラー</option>
@@ -85,17 +109,21 @@
                 <option value="アクセントカラー">アクセントカラー</option>
                 <option value="ヘナ">ヘナ</option>
             </optgroup>
+
             <optgroup label="パーマ">
                 <option value="モイストパーマ">モイストパーマ</option>
                 <option value="ポイントパーマ">ポイントパーマ</option>
             </optgroup>
+
             <optgroup label="ストレート">
                 <option value="ストレートパーマ">ストレートパーマ</option>
                 <option value="ポイントストレートパーマ">ポイントストレートパーマ</option>
             </optgroup>
+
             <optgroup label="トリートメント">
                 <option value="トリートメント">トリートメント</option>
             </optgroup>
+
             <optgroup label="メニュー未定">
                 <option value="来店時に相談（２時間枠）">来店時に相談（２時間枠）</option>
                 <option value="来店時に相談（３時間枠）">来店時に相談（３時間枠）</option>
@@ -109,23 +137,6 @@
     <label for="time">時間</label>
     <select id="time" required>
         <option value="">時間を選択</option>
-        <option value="10:00">10:00</option>
-        <option value="10:30">10:30</option>
-        <option value="11:00">11:00</option>
-        <option value="11:30">11:30</option>
-        <option value="12:00">12:00</option>
-        <option value="12:30">12:30</option>
-        <option value="13:00">13:00</option>
-        <option value="13:30">13:30</option>
-        <option value="14:00">14:00</option>
-        <option value="14:30">14:30</option>
-        <option value="15:00">15:00</option>
-        <option value="15:30">15:30</option>
-        <option value="16:00">16:00</option>
-        <option value="16:30">16:30</option>
-        <option value="17:00">17:00</option>
-        <option value="17:30">17:30</option>
-        <option value="18:00">18:00</option>
     </select>
 
     <button class="submit-btn" type="submit">予約する</button>
@@ -133,51 +144,96 @@
 </div>
 
 <script>
-/* 日付追加（修正済み） */
+// ===== 日付生成 =====
 const dateSelect = document.getElementById("date");
 const daysOfWeek = ['日','月','火','水','木','金','土'];
 
 for (let i = 0; i < 30; i++) {
     const d = new Date();
     d.setDate(d.getDate() + i);
+
     const y = d.getFullYear();
-    const m = (d.getMonth() + 1).toString().padStart(2, '0');
-    const day = d.getDate().toString().padStart(2, '0');
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
     const dow = daysOfWeek[d.getDay()];
 
-    const option = document.createElement('option');
+    const option = document.createElement("option");
     option.value = `${y}-${m}-${day}`;
     option.textContent = `${y}/${m}/${day} (${dow})`;
+
     dateSelect.appendChild(option);
 }
 
-/* メニュー追加ロジック（前のまま） */
-const menuContainer = document.getElementById('menuContainer');
-menuContainer.addEventListener('change', function(e){
-    if(e.target.classList.contains('menu-select') && e.target.value !== ''){
-        const selects = menuContainer.querySelectorAll('.menu-select');
+// ===== メニュー追加複製 =====
+const menuContainer = document.getElementById("menuContainer");
+menuContainer.addEventListener("change", function(e){
+    if(e.target.classList.contains("menu-select") && e.target.value !== ""){
+        const selects = menuContainer.querySelectorAll(".menu-select");
         if(selects.length < 4){
-            const newSelect = e.target.cloneNode(true);
-            newSelect.value = '';
-            newSelect.required = false;
-            newSelect.classList.add('menu-select');
-            menuContainer.appendChild(newSelect);
+            const copy = e.target.cloneNode(true);
+            copy.value = "";
+            menuContainer.appendChild(copy);
         }
     }
 });
 
-/* 送信 */
-document.getElementById('reserveForm').addEventListener('submit', function(e){
-    e.preventDefault();
-    const menus = Array.from(menuContainer.querySelectorAll('.menu-select'))
-                       .map(s => s.value)
-                       .filter(v => v !== '');
-    const date = dateSelect.value;
-    const time = document.getElementById('time').value;
+// ===== 時間のリスト =====
+const timeSelect = document.getElementById("time");
 
-    alert(`予約内容:\nメニュー: ${menus.join(', ')}\n日付: ${date}\n時間: ${time}`);
+function generateTimeOptions() {
+    timeSelect.innerHTML = '<option value="">時間を選択</option>';
+    const times = [];
+
+    for (let h = 10; h <= 18; h++) {
+        times.push(`${String(h).padStart(2,"0")}:00`);
+        if (h !== 18) times.push(`${String(h).padStart(2,"0")}:30`);
+    }
+
+    times.forEach(t => {
+        const op = document.createElement("option");
+        op.value = t;
+        op.textContent = t;
+        timeSelect.appendChild(op);
+    });
+}
+
+generateTimeOptions();
+
+// ===== Google Calendar API と連携（バックエンド必要）=====
+// 予約の入っている時間を取得し、該当時間をグレーアウト
+dateSelect.addEventListener("change", async () => {
+    generateTimeOptions();
+
+    const date = dateSelect.value;
+    if (!date) return;
+
+    const res = await fetch(`/api/calendarBusy?date=${date}`);
+    const data = await res.json();  // 例：{ busyTimes:["10:30","13:00"] }
+
+    if (data.busyTimes) {
+        data.busyTimes.forEach(t => {
+            const op = timeSelect.querySelector(`option[value="${t}"]`);
+            if (op) {
+                op.disabled = true;
+                op.style.background = "#ddd";
+            }
+        });
+    }
+});
+
+// ===== 予約送信 =====
+document.getElementById("reserveForm").addEventListener("submit", function(e){
+    e.preventDefault();
+
+    const menus = Array.from(menuContainer.querySelectorAll(".menu-select"))
+        .map(s => s.value)
+        .filter(v => v !== "");
+
+    const date = dateSelect.value;
+    const time = timeSelect.value;
+
+    alert(`予約内容:\nメニュー: ${menus.join(", ")}\n日付: ${date}\n時間: ${time}`);
 });
 </script>
-
 </body>
 </html>
