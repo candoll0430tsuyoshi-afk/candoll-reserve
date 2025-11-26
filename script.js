@@ -1,6 +1,4 @@
-// === script.js 完全修正版 ===
-// ※ index.html 側で日付生成しているため、ここでは日付を触らない！
-//   （上書きすると選択がリセットされるため）
+// === script.js 完全版（alert を使わない版） ===
 
 // ===== メニュー追加（追加ボタンでのみ増える） =====
 const menuContainer = document.getElementById('menuContainer');
@@ -39,7 +37,7 @@ form.addEventListener('submit', function (e) {
         return;
     }
 
-    // 確認画面テキスト生成
+    // 確認画面テキスト
     confirmText.innerHTML = `
         お名前：${name}<br>
         メニュー：${menus.join(', ')}<br>
@@ -47,16 +45,26 @@ form.addEventListener('submit', function (e) {
         時間：${time}
     `;
 
-    // 確認画面を表示
     form.style.display = "none";
     confirmScreen.style.display = "block";
 });
 
+// キャンセル → 元の入力画面に戻る
 cancelBtn.addEventListener('click', function () {
     confirmScreen.style.display = "none";
     form.style.display = "block";
 });
 
+// OK → 予約完了メッセージをその場に表示（alert は使わない）
 okBtn.addEventListener('click', function () {
-    alert("予約を受付ました。\nありがとうございます。");
+    const heading = document.querySelector('#confirm-screen h2');
+    heading.textContent = '予約を受付ました';
+
+    confirmText.innerHTML = 'ご予約を受付ました。<br>ありがとうございます。';
+
+    // OK ボタンは隠す
+    okBtn.style.display = 'none';
+
+    // キャンセルボタンを「閉じる」に変えて、そのまま閉じるボタンとして使う
+    cancelBtn.textContent = '閉じる';
 });
