@@ -2,7 +2,7 @@
 // ※ 空欄 option が最初に1つだけ必ず入るようにする
 const dateSelect = document.getElementById("date");
 
-dateSelect.innerHTML = '<option value="">日付を選択</option>'; // ★ これがないと選べなくなる
+dateSelect.innerHTML = '<option value="">日付を選択</option>';
 
 const daysOfWeek = ['日','月','火','水','木','金','土'];
 for (let i = 0; i < 30; i++) {
@@ -68,6 +68,6 @@ cancelBtn.addEventListener('click', function(){
 });
 
 okBtn.addEventListener('click', function(){
-    alert("予約を送信しました！");
+    alert("予約を受付ました。\nありがとうございます。");
     // 本番は LINE または Google Sheets に送信処理を書く
 });
