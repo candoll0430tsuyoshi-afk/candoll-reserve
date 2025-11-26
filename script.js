@@ -1,8 +1,10 @@
-// === script.js 完全版（alert を使わない版） ===
+// === script.js 完全修正版 ===
+// ※ 日付は index.html 側で生成しているので、ここでは触らない
 
-// ===== メニュー追加（追加ボタンでのみ増える） =====
+// ===== メニュー追加（追加ボタンでのみ増える）=====
 const menuContainer = document.getElementById('menuContainer');
 const addMenuButton = document.getElementById('addMenu');
+const greeting = document.querySelector('.greeting');
 
 addMenuButton.addEventListener('click', function () {
     const selects = menuContainer.querySelectorAll('.menu-select');
@@ -37,7 +39,7 @@ form.addEventListener('submit', function (e) {
         return;
     }
 
-    // 確認画面テキスト
+    // 確認画面テキスト生成
     confirmText.innerHTML = `
         お名前：${name}<br>
         メニュー：${menus.join(', ')}<br>
@@ -45,26 +47,32 @@ form.addEventListener('submit', function (e) {
         時間：${time}
     `;
 
+    // 確認画面を表示（挨拶は消す）
     form.style.display = "none";
+    if (greeting) greeting.style.display = "none";
     confirmScreen.style.display = "block";
 });
 
-// キャンセル → 元の入力画面に戻る
 cancelBtn.addEventListener('click', function () {
+    // 確認画面を閉じてフォームに戻す（挨拶も戻す）
     confirmScreen.style.display = "none";
     form.style.display = "block";
+    if (greeting) greeting.style.display = "block";
 });
 
-// OK → 予約完了メッセージをその場に表示（alert は使わない）
+// 「閉じる」ボタン → 予約完了メッセージを表示してからウィンドウを閉じる
 okBtn.addEventListener('click', function () {
-    const heading = document.querySelector('#confirm-screen h2');
-    heading.textContent = '予約を受付ました.';
+    // 確認テキストを「受付完了」メッセージに変更
+    confirmText.innerHTML = `予約を受付ました。<br>ありがとうございます。`;
 
-    confirmText.innerHTML = '<br>ありがとうございます。';
-
-    // OK ボタンは隠す
-    okBtn.style.display = 'none';
-
-    // キャンセルボタンを「閉じる」に変えて、そのまま閉じるボタンとして使う
-    cancelBtn.textContent = '閉じる';
+    // ちょっとだけ見せてから閉じる（0.8秒くらい）
+    setTimeout(() => {
+        // LIFF 内なら LIFF を閉じる
+        if (window.liff && typeof liff.closeWindow === 'function' && liff.isInClient()) {
+            liff.closeWindow();
+        } else {
+            // 通常ブラウザの場合は window.close（効かない場合もある）
+            window.close();
+        }
+    }, 800);
 });
