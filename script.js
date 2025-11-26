@@ -1,10 +1,10 @@
 // === script.js 完全修正版 ===
-// ※ 日付は index.html 側で生成しているので、ここでは触らない
+// ※ index.html 側で日付生成しているため、ここでは日付を触らない！
+//   （上書きすると選択がリセットされるため）
 
-// ===== メニュー追加（追加ボタンでのみ増える）=====
+// ===== メニュー追加（追加ボタンでのみ増える） =====
 const menuContainer = document.getElementById('menuContainer');
 const addMenuButton = document.getElementById('addMenu');
-const greeting = document.querySelector('.greeting');
 
 addMenuButton.addEventListener('click', function () {
     const selects = menuContainer.querySelectorAll('.menu-select');
@@ -35,7 +35,9 @@ form.addEventListener('submit', function (e) {
 
     // 入力チェック
     if (!name || menus.length === 0 || !date || !time) {
-        alert("入力されていない項目があります。");
+        // ▼ OK（→ 完了画面に進む）
+confirmScreen.style.display = "none";
+showCompleteScreen();
         return;
     }
 
@@ -47,32 +49,48 @@ form.addEventListener('submit', function (e) {
         時間：${time}
     `;
 
-    // 確認画面を表示（挨拶は消す）
+    // 確認画面を表示
     form.style.display = "none";
-    if (greeting) greeting.style.display = "none";
     confirmScreen.style.display = "block";
 });
 
 cancelBtn.addEventListener('click', function () {
-    // 確認画面を閉じてフォームに戻す（挨拶も戻す）
     confirmScreen.style.display = "none";
     form.style.display = "block";
-    if (greeting) greeting.style.display = "block";
 });
 
-// 「閉じる」ボタン → 予約完了メッセージを表示してからウィンドウを閉じる
 okBtn.addEventListener('click', function () {
-    // 確認テキストを「受付完了」メッセージに変更
-    confirmText.innerHTML = `予約を受付ました。<br>ありがとうございます。`;
-
-    // ちょっとだけ見せてから閉じる（0.8秒くらい）
-    setTimeout(() => {
-        // LIFF 内なら LIFF を閉じる
-        if (window.liff && typeof liff.closeWindow === 'function' && liff.isInClient()) {
-            liff.closeWindow();
-        } else {
-            // 通常ブラウザの場合は window.close（効かない場合もある）
-            window.close();
-        }
-    }, 800);
+    alert("予約を受付ました。
+ありがとうございます。");
 });
+
+// === 完了画面生成（PC/iPhone 両対応） ===
+function showCompleteScreen() {
+    // 既存 complete-screen があれば削除
+    const old = document.getElementById("complete-screen");
+    if (old) old.remove();
+
+    const div = document.createElement("div");
+    div.id = "complete-screen";
+    div.style.padding = "20px";
+
+    // 完了メッセージ（ご予約内容は消す）
+    div.innerHTML = `
+        <h2>予約を受付ました。</h2>
+        <p>ありがとうございます。</p>
+        <button id="closeBtn" style="padding:15px 25px; font-size:18px; border-radius:8px; background:#000; color:#fff; border:none;">閉じる</button>
+    `;
+
+    document.querySelector('.container').appendChild(div);
+
+    // ▼ 閉じる＝画面を閉じる（PC/iPhone 対応）
+    document.getElementById("closeBtn").addEventListener('click', function(){
+        if (window.liff) {
+            // LIFF ならアプリ内ブラウザを閉じる
+            try { liff.closeWindow(); return; } catch(e){}
+        }
+        // 通常ブラウザなら前の画面へ
+        window.history.back();
+    });
+}
+
