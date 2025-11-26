@@ -3,6 +3,7 @@
 const dateSelect = document.getElementById("date");
 
 // ★ index.html 側で日付生成しているので script.js では重複生成しない
+const dateSelect = document.getElementById("date");
 // （日付が二重に書き換わり選択不可になるため）(option);
 }
 
