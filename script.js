@@ -1,7 +1,8 @@
-// === script.js 最終版 ===
-// ※ index.html 側で「日付の一覧」は作っているので、ここでは日付は触らない
+// === script.js 完全修正版 ===
+// ※ index.html 側で日付生成しているため、ここでは日付を触らない！
+//   （上書きすると選択がリセットされるため）
 
-// ===== メニュー追加（「＋ メニューを追加する」を押したときだけ増える） =====
+// ===== メニュー追加（追加ボタンでのみ増える） =====
 const menuContainer = document.getElementById('menuContainer');
 const addMenuButton = document.getElementById('addMenu');
 
@@ -14,17 +15,13 @@ addMenuButton.addEventListener('click', function () {
     }
 });
 
-// ===== 確認画面＆完了画面切り替え用 =====
+// ===== 確認画面（OK / キャンセル） =====
 const form = document.getElementById('reserveForm');
 const confirmScreen = document.getElementById('confirm-screen');
 const confirmText = document.getElementById('confirm-text');
 const okBtn = document.getElementById('okBtn');
 const cancelBtn = document.getElementById('cancelBtn');
-const greeting = document.querySelector('.greeting');
 
-let isConfirmMode = true; // true: 確認画面 / false: 完了画面
-
-// フォーム送信 → ご予約内容の確認画面へ
 form.addEventListener('submit', function (e) {
     e.preventDefault();
 
@@ -38,11 +35,13 @@ form.addEventListener('submit', function (e) {
 
     // 入力チェック
     if (!name || menus.length === 0 || !date || !time) {
-        alert("入力されていない項目があります。");
+        // ▼ OK（→ 完了画面に進む）
+confirmScreen.style.display = "none";
+showCompleteScreen();
         return;
     }
 
-    // ご予約内容を表示
+    // 確認画面テキスト生成
     confirmText.innerHTML = `
         お名前：${name}<br>
         メニュー：${menus.join(', ')}<br>
@@ -50,68 +49,55 @@ form.addEventListener('submit', function (e) {
         時間：${time}
     `;
 
-    // 見た目の調整
-    const heading = confirmScreen.querySelector('h2');
-    if (heading) heading.textContent = 'ご予約内容';
-    okBtn.textContent = 'OK';
-    cancelBtn.style.display = 'inline-block';
-
-    // あいさつ文を隠す
-    if (greeting) greeting.style.display = 'none';
-
-    isConfirmMode = true;
+    // 確認画面を表示
     form.style.display = "none";
     confirmScreen.style.display = "block";
 });
 
-// キャンセル → フォームに戻る
 cancelBtn.addEventListener('click', function () {
     confirmScreen.style.display = "none";
     form.style.display = "block";
-    // あいさつ文を戻す
-    if (greeting) greeting.style.display = 'block';
 });
 
-// OK ボタン
 okBtn.addEventListener('click', function () {
-    const heading = confirmScreen.querySelector('h2');
-
-    if (isConfirmMode) {
-        // ① ご予約内容 → ② 予約完了画面に切り替え
-
-        // 見出しの「ご予約内容」を消す
-        if (heading) heading.textContent = '';
-
-        // メッセージを「予約完了」に変更
-        confirmText.innerHTML = `
-            予約を受付ました。<br>
-            ありがとうございます。
-        `;
-
-        // ボタンは「閉じる」1つにする
-        okBtn.textContent = '閉じる';
-        cancelBtn.style.display = 'none';
-
-        isConfirmMode = false;
-    } else {
-        // 完了画面で「閉じる」を押したとき → 画面を閉じる
-
-        // LIFF 内ならウィンドウを閉じる
-        try {
-            if (window.liff) {
-                liff.closeWindow();
-                return;
-            }
-        } catch (e) {
-            // liff が無い場合は無視
-        }
-
-        // 通常ブラウザ：前の画面に戻る（history が無ければタブを閉じる動きに近い）
-        if (window.history.length > 1) {
-            window.history.back();
-        } else {
-            // history がない場合はトップに飛ばすなどお好みで
-            window.location.href = 'about:blank';
-        }
-    }
+    alert("予約を受付ました。
+ありがとうございます。");
 });
+
+// === 完了画面生成（PC/iPhone 両対応） ===
+function showCompleteScreen() {
+    // 既存 complete-screen があれば削除
+    const old = document.getElementById("complete-screen");
+    if (old) old.remove();
+
+    const div = document.createElement("div");
+    div.id = "complete-screen";
+    div.style.padding = "20px";
+
+    // 完了メッセージ（ご予約内容は消す）
+    div.innerHTML = `
+        <h2>予約を受付ました。</h2>
+        <p>ありがとうございます。</p>
+        <button id="closeBtn" style="padding:15px 25px; font-size:18px; border-radius:8px; background:#000; color:#fff; border:none;">閉じる</button>
+    `;
+
+    document.querySelector('.container').appendChild(div);
+
+    // ▼ 閉じる＝画面を閉じる（PC/iPhone 対応）
+    document.getElementById("closeBtn").addEventListener('click', function(){
+        if (window.liff) {
+            // LIFF ならアプリ内ブラウザを閉じる
+            try { liff.closeWindow(); return; } catch(e){}
+        }
+        // 通常ブラウザなら前の画面へ
+        // iPhone LINE 専用の強制クローズ対策
+if (/iphone|ipad|ipod/i.test(navigator.userAgent)) {
+    window.location.href = "about:blank";
+    return;
+}
+
+// 通常ブラウザ
+window.history.back();
+    });
+}
+
