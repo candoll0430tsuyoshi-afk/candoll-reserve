@@ -58,9 +58,9 @@ cancelBtn.addEventListener('click', function () {
 // OK → 予約完了メッセージをその場に表示（alert は使わない）
 okBtn.addEventListener('click', function () {
     const heading = document.querySelector('#confirm-screen h2');
-    heading.textContent = '予約を受付ました';
+    heading.textContent = '予約を受付ました.';
 
-    confirmText.innerHTML = 'ご予約を受付ました。<br>ありがとうございます。';
+    confirmText.innerHTML = '<br>ありがとうございます。';
 
     // OK ボタンは隠す
     okBtn.style.display = 'none';
