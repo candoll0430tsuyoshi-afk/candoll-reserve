@@ -2,22 +2,8 @@
 // ※ 空欄 option が最初に1つだけ必ず入るようにする
 const dateSelect = document.getElementById("date");
 
-dateSelect.innerHTML = '<option value="">日付を選択</option>';
-
-const daysOfWeek = ['日','月','火','水','木','金','土'];
-for (let i = 0; i < 30; i++) {
-    const d = new Date();
-    d.setDate(d.getDate() + i);
-
-    const y = d.getFullYear();
-    const m = (d.getMonth() + 1).toString().padStart(2, '0');
-    const day = d.getDate().toString().padStart(2, '0');
-    const dow = daysOfWeek[d.getDay()];
-
-    const option = document.createElement('option');
-    option.value = `${y}-${m}-${day}`;
-    option.textContent = `${y}/${m}/${day} (${dow})`;
-    dateSelect.appendChild(option);
+// ★ index.html 側で日付生成しているので script.js では重複生成しない
+// （日付が二重に書き換わり選択不可になるため）(option);
 }
 
 // ===== メニュー複製（追加ボタン対応） =====
