@@ -1,19 +1,14 @@
-// ===== 日付自動生成（曜日付き 修正版） =====
-// ※ 空欄 option が最初に1つだけ必ず入るようにする
-const dateSelect = document.getElementById("date");
+// === script.js 完全修正版 ===
+// ※ index.html 側で日付生成しているため、ここでは日付を触らない！
+//   （上書きすると選択がリセットされるため）
 
-// ★ index.html 側で日付生成しているので script.js では重複生成しない
-const dateSelect = document.getElementById("date");
-// （日付が二重に書き換わり選択不可になるため）(option);
-}
-
-// ===== メニュー複製（追加ボタン対応） =====
+// ===== メニュー追加（追加ボタンでのみ増える） =====
 const menuContainer = document.getElementById('menuContainer');
 const addMenuButton = document.getElementById('addMenu');
 
-addMenuButton.addEventListener('click', function(){
+addMenuButton.addEventListener('click', function () {
     const selects = menuContainer.querySelectorAll('.menu-select');
-    if(selects.length < 4){
+    if (selects.length < 4) {
         const newSelect = selects[0].cloneNode(true);
         newSelect.value = "";
         menuContainer.appendChild(newSelect);
@@ -27,17 +22,24 @@ const confirmText = document.getElementById('confirm-text');
 const okBtn = document.getElementById('okBtn');
 const cancelBtn = document.getElementById('cancelBtn');
 
-form.addEventListener('submit', function(e){
+form.addEventListener('submit', function (e) {
     e.preventDefault();
 
     const name = document.getElementById('name').value;
     const menus = Array.from(menuContainer.querySelectorAll('.menu-select'))
-                        .map(s => s.value)
-                        .filter(v => v !== '');
+        .map(s => s.value)
+        .filter(v => v !== "");
 
-    const date = dateSelect.value;
+    const date = document.getElementById('date').value;
     const time = document.getElementById('time').value;
 
+    // 入力チェック
+    if (!name || menus.length === 0 || !date || !time) {
+        alert("入力されていない項目があります。");
+        return;
+    }
+
+    // 確認画面テキスト生成
     confirmText.innerHTML = `
         お名前：${name}<br>
         メニュー：${menus.join(', ')}<br>
@@ -45,16 +47,16 @@ form.addEventListener('submit', function(e){
         時間：${time}
     `;
 
+    // 確認画面を表示
     form.style.display = "none";
     confirmScreen.style.display = "block";
 });
 
-cancelBtn.addEventListener('click', function(){
+cancelBtn.addEventListener('click', function () {
     confirmScreen.style.display = "none";
     form.style.display = "block";
 });
 
-okBtn.addEventListener('click', function(){
+okBtn.addEventListener('click', function () {
     alert("予約を受付ました。\nありがとうございます。");
-    // 本番は LINE または Google Sheets に送信処理を書く
 });
