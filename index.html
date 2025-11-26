@@ -182,6 +182,38 @@
 </div>
 
 </div>
+<script>
+// ★ 定休日（毎週月曜 & 第1・第3火曜）を除いた日付生成
+const dateSelect = document.getElementById("date");
+dateSelect.innerHTML = '<option value="">日付を選択</option>';
+
+const daysOfWeek = ['日','月','火','水','木','金','土'];
+
+for (let i = 0; i < 30; i++) {
+    const d = new Date();
+    d.setDate(d.getDate() + i);
+
+    const y = d.getFullYear();
+    const m = (d.getMonth() + 1).toString().padStart(2, '0');
+    const day = d.getDate().toString().padStart(2, '0');
+
+    const dow = d.getDay(); // 0:日,1:月,2:火...
+
+    // ★ 毎週月曜日は除外
+    if (dow === 1) continue;
+
+    // ★ 第1・第3火曜日を除外
+    if (dow === 2) {
+        const weekNumber = Math.ceil(d.getDate() / 7); // 1〜5週目
+        if (weekNumber === 1 || weekNumber === 3) continue;
+    }
+
+    const option = document.createElement('option');
+    option.value = `${y}-${m}-${day}`;
+    option.textContent = `${y}/${m}/${day} (${daysOfWeek[dow]})`;
+    dateSelect.appendChild(option);
+}
+</script>
 <script src="script.js"></script>
 </body>
 </html>
