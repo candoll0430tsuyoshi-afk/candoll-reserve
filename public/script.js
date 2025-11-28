@@ -66,22 +66,24 @@ const confirmText = document.getElementById('confirm-text');
 const cancelBtn = document.getElementById('cancelBtn');
 const okBtn = document.getElementById('okBtn');
 
-form.addEventListener('submit', async function(e){
+form.addEventListener('submit', async function (e) {
     e.preventDefault();
 
     const name = document.getElementById('name').value;
     const menus = Array.from(menuContainer.querySelectorAll('.menu-select'))
-        .map(s => s.value).filter(v=>v!=="");
+        .map(s => s.value)
+        .filter(v => v !== "");
+
     const date = document.getElementById('date').value;
     const time = document.getElementById('time').value;
 
-    if(!name || menus.length===0 || !date || !time){
+    if (!name || menus.length === 0 || !date || !time) {
         alert("未入力があります");
         return;
     }
 
-    const dup = await checkDuplicate(date,time);
-    if(dup){
+    const dup = await checkDuplicate(date, time);
+    if (dup) {
         alert("この時間は予約があります");
         return;
     }
@@ -99,8 +101,8 @@ form.addEventListener('submit', async function(e){
     confirmScreen.style.display = "block";
 });
 
-// 戻るボタン
-cancelBtn.addEventListener('click',function(){
+// ===== 戻る =====
+cancelBtn.addEventListener('click', function () {
     confirmScreen.style.display = "none";
     form.style.display = "block";
 
@@ -109,40 +111,42 @@ cancelBtn.addEventListener('click',function(){
 });
 
 // ===== OKボタン（予約確定） =====
-okBtn.addEventListener('click', async function(){
+okBtn.addEventListener('click', async function () {
     const name = document.getElementById('name').value;
     const menus = Array.from(menuContainer.querySelectorAll('.menu-select'))
-        .map(s => s.value).filter(v=>v!=="");
+        .map(s => s.value)
+        .filter(v => v !== "");
     const date = document.getElementById('date').value;
     const time = document.getElementById('time').value;
 
     const { error } = await supabaseClient
         .from('reservations')
-        .insert([{ name, menus:menus.join(', '), date, time }]);
+        .insert([{ name, menus: menus.join(', '), date, time }]);
 
-    if(error){
+    if (error) {
         alert("予約保存エラー");
         return;
     }
 
-    try{
-        await fetch("https://bcahztzetpfuklipjmxx.supabase.co/functions/v1/send_line_notify",{
-            method:"POST",
-            headers:{ "Content-Type":"application/json" },
-            body:JSON.stringify({name,menus:menus.join(', '),date,time})
+    // LINE通知
+    try {
+        await fetch("https://bcahztzetpfuklipjmxx.supabase.co/functions/v1/send_line_notify", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name, menus: menus.join(', '), date, time })
         });
-    }catch(e){}
+    } catch (e) {}
 
     confirmScreen.style.display = "none";
     showCompleteScreen();
 });
 
 // ===== 完了画面 =====
-function showCompleteScreen(){
+function showCompleteScreen() {
     const old = document.getElementById("complete-screen");
-    if(old) old.remove();
+    if (old) old.remove();
 
-    // ★ 完了画面でも greeting を確実に消す
+    // ★ 完了画面でも greeting を完全に消す
     if (greeting) greeting.style.display = "none";
 
     const div = document.createElement("div");
@@ -152,33 +156,31 @@ function showCompleteScreen(){
         <h2>予約を受付ました。</h2>
         <p>ありがとうございます。</p>
         <button id="closeBtn"
-            style="padding:15px 25px;font-size:18px;border-radius:8px;background:#000;color:#fff;border:none;">
+            style="padding:15px 25px; font-size:18px; border-radius:8px; background:#000; color:#fff; border:none;">
             閉じる
         </button>
     `;
 
     document.querySelector(".container").appendChild(div);
 
-    // ===== ★ iPhone・Android・PC 完全対応「閉じる」処理 =====
-    document.getElementById("closeBtn").addEventListener("click",function(){
+    // ===== ★ iPhone・Android・PC 完全対応版「閉じる」 =====
+    document.getElementById("closeBtn").addEventListener("click", function () {
 
-        // LIFF の場合は LIFF を閉じる
-        if(window.liff){
-            try { 
-                liff.closeWindow(); 
-                return; 
-            } catch(e){}
+        // LIFF なら LIFF を閉じる
+        if (window.liff) {
+            try {
+                liff.closeWindow();
+                return;
+            } catch (e) {}
         }
 
-        // iPhone Safari 対応（最強パターン）
+        // iPhone Safari 対応
         const ua = window.navigator.userAgent.toLowerCase();
         const isIOS = /iphone|ipad|ipod/.test(ua);
 
         if (isIOS) {
             window.location.href = "about:blank";
-            setTimeout(() => {
-                window.close();
-            }, 50);
+            setTimeout(() => window.close(), 50);
             return;
         }
 
@@ -186,5 +188,4 @@ function showCompleteScreen(){
         window.open("about:blank", "_self");
         window.close();
     });
-}
 }
