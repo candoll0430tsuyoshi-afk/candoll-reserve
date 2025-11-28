@@ -1,7 +1,7 @@
 // ===== Supabase 初期化 =====
 const supabaseUrl = "https://bcahztezptfuklipjmxx.supabase.co";
-const supabaseKey = "sb_publishable_rPyAIzNttEK3P8nsnBllYA_FTF-kxJQ"; // supabase → Project settings → API → anon public
-const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+const supabaseKey = "sb_publishable_rPyAIzNttEK3P8nsnBllYA_FTF-kxJQ";
+const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 
 // ===== メニュー追加（追加ボタンでのみ増える） =====
 const menuContainer = document.getElementById('menuContainer');
@@ -18,17 +18,13 @@ addMenuButton.addEventListener('click', function () {
 
 // ===== 予約重複チェック =====
 async function checkDuplicate(date, time) {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseClient
         .from('reservations')
         .select('*')
         .eq('date', date)
         .eq('time', time);
 
-    if (error) {
-        console.error('Supabase エラー:', error);
-        return true; // エラー時は予約不可扱い
-    }
-
+    if (error) return true;
     return data.length > 0;
 }
 
@@ -50,20 +46,17 @@ form.addEventListener('submit', async function (e) {
     const date = document.getElementById('date').value;
     const time = document.getElementById('time').value;
 
-    // --- 入力チェック ---
     if (!name || menus.length === 0 || !date || !time) {
-        alert("未入力の項目があります。");
+        alert("未入力があります");
         return;
     }
 
-    // --- 予約重複チェック ---
     const duplicated = await checkDuplicate(date, time);
     if (duplicated) {
-        alert("⚠ この時間はすでに予約があります。\n別の時間を選んでください。");
+        alert("この時間は予約があります");
         return;
     }
 
-    // --- 確認画面に表示 ---
     confirmText.innerHTML = `
         お名前：${name}<br>
         メニュー：${menus.join(', ')}<br>
@@ -75,13 +68,13 @@ form.addEventListener('submit', async function (e) {
     confirmScreen.style.display = "block";
 });
 
-// キャンセルボタン → フォームに戻る
+// キャンセル
 cancelBtn.addEventListener('click', function () {
     confirmScreen.style.display = "none";
     form.style.display = "block";
 });
 
-// ===== OKボタン（予約確定） =====
+// ===== OKボタン =====
 okBtn.addEventListener('click', async function () {
     const name = document.getElementById('name').value;
     const menus = Array.from(menuContainer.querySelectorAll('.menu-select'))
@@ -90,18 +83,17 @@ okBtn.addEventListener('click', async function () {
     const date = document.getElementById('date').value;
     const time = document.getElementById('time').value;
 
-    // --- ① Supabase に予約保存 ---
-    const { data, error } = await supabase
+    // --- 予約保存 ---
+    const { data, error } = await supabaseClient
         .from('reservations')
         .insert([{ name, menus: menus.join(', '), date, time }]);
 
     if (error) {
-        console.error("Supabase 保存エラー:", error);
-        alert("予約の保存に失敗しました。\n時間をおいて再度お試しください。");
+        alert("予約保存エラー");
         return;
     }
 
-    // --- ② LINE通知（Edge Function 呼び出し） ---
+    // --- LINE通知 ---
     try {
         await fetch("https://bcahztezptfuklipjmxx.supabase.co/functions/v1/send_line_notify", {
             method: "POST",
@@ -113,12 +105,8 @@ okBtn.addEventListener('click', async function () {
                 time
             })
         });
-    } catch (e) {
-        console.error("LINE通知エラー:", e);
-        // 通知失敗しても予約自体は成功しているので続行
-    }
+    } catch (e) {}
 
-    // --- ③ 完了画面へ ---
     confirmScreen.style.display = "none";
     showCompleteScreen();
 });
@@ -142,17 +130,12 @@ function showCompleteScreen() {
 
     document.getElementById("closeBtn").addEventListener('click', function(){
         if (window.liff) {
-            try {
-                liff.closeWindow();
-                return;
-            } catch(e){}
+            try { liff.closeWindow(); return; } catch(e){}
         }
-
         if (/iphone|ipad|ipod/i.test(navigator.userAgent)) {
             window.location.href = "about:blank";
             return;
         }
-
         window.history.back();
     });
 }
