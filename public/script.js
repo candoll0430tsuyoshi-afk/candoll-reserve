@@ -159,8 +159,7 @@ function showCompleteScreen(){
 
     document.querySelector(".container").appendChild(div);
 
-    // ★ 全デバイスでページを確実に閉じる
-    document.getElementById("closeBtn").addEventListener("click", function(){
+   document.getElementById("closeBtn").addEventListener("click", function(){
 
     // LIFF の場合は LIFF を閉じる（最優先）
     if (window.liff) {
