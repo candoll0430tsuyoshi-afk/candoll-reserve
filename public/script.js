@@ -86,7 +86,7 @@ form.addEventListener('submit', async function(e){
         return;
     }
 
-    // ★ greeting を消す（確認画面）
+    // ★ greeting を確実に消す（確認画面）
     if (greeting) greeting.style.display = "none";
 
     confirmText.innerHTML =
@@ -104,7 +104,7 @@ cancelBtn.addEventListener('click',function(){
     confirmScreen.style.display = "none";
     form.style.display = "block";
 
-    // greeting を戻す
+    // greeting を復活
     if (greeting) greeting.style.display = "block";
 });
 
@@ -125,11 +125,12 @@ okBtn.addEventListener('click', async function(){
         return;
     }
 
+    // ===== LINE 通知（関数名だけ修正）=====
     try{
-        await fetch("https://bcahztzetpfuklipjmxx.supabase.co/functions/v1/send_line_notify",{
+        await fetch("https://bcahztzetpfuklipjmxx.supabase.co/functions/v1/line-notify", {
             method:"POST",
             headers:{ "Content-Type":"application/json" },
-            body:JSON.stringify({name,menus:menus.join(', '),date,time})
+            body:JSON.stringify({ name, menus: menus.join(', '), date, time })
         });
     }catch(e){}
 
@@ -139,7 +140,6 @@ okBtn.addEventListener('click', async function(){
 
 // ===== 完了画面 =====
 function showCompleteScreen(){
-
     const old = document.getElementById("complete-screen");
     if(old) old.remove();
 
@@ -160,14 +160,11 @@ function showCompleteScreen(){
 
     document.querySelector(".container").appendChild(div);
 
-    // ===== iPhone / Android / PC 対応 =====
+    // ===== iPhone・Android・PC 完全対応 =====
     document.getElementById("closeBtn").addEventListener("click",function(){
 
         if(window.liff){
-            try{
-                liff.closeWindow();
-                return;
-            }catch(e){}
+            try{ liff.closeWindow(); return; }catch(e){}
         }
 
         const ua = window.navigator.userAgent.toLowerCase();
