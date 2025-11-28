@@ -15,7 +15,7 @@ addMenuButton.addEventListener('click', function () {
     }
 });
 
-// ===== 予約重複チェック =====
+// ===== 重複チェック =====
 async function checkDuplicate(date, time) {
     const { data, error } = await supabaseClient
         .from('reservations')
@@ -26,7 +26,7 @@ async function checkDuplicate(date, time) {
     return data.length > 0;
 }
 
-// =====＝ 時間グレーアウト ======
+// ===== 時間グレーアウト =====
 document.getElementById("date").addEventListener("change", updateTimeOptions);
 
 async function updateTimeOptions() {
@@ -40,17 +40,15 @@ async function updateTimeOptions() {
 
     if (!date) return;
 
-    const { data, error } = await supabaseClient
+    const { data } = await supabaseClient
         .from('reservations')
         .select('time')
         .eq('date', date);
 
-    if (error) return;
-
-    const reservedTimes = data.map(r => r.time);
+    const reserved = data.map(r => r.time);
 
     Array.from(timeSelect.options).forEach(o => {
-        if (reservedTimes.includes(o.value)) {
+        if (reserved.includes(o.value)) {
             o.disabled = true;
             o.style.color = "#aaa";
         }
@@ -61,102 +59,112 @@ async function updateTimeOptions() {
 const form = document.getElementById('reserveForm');
 const confirmScreen = document.getElementById('confirm-screen');
 const confirmText = document.getElementById('confirm-text');
-const okBtn = document.getElementById('okBtn');
 const cancelBtn = document.getElementById('cancelBtn');
+const okBtn = document.getElementById('okBtn');
 
-form.addEventListener('submit', async function (e) {
+form.addEventListener('submit', async function(e){
     e.preventDefault();
 
     const name = document.getElementById('name').value;
     const menus = Array.from(menuContainer.querySelectorAll('.menu-select'))
-        .map(s => s.value)
-        .filter(v => v !== "");
-
+        .map(s => s.value).filter(v=>v!=="");
     const date = document.getElementById('date').value;
     const time = document.getElementById('time').value;
 
-    if (!name || menus.length === 0 || !date || !time) {
+    if(!name || menus.length===0 || !date || !time){
         alert("未入力があります");
         return;
     }
 
-    const duplicated = await checkDuplicate(date, time);
-    if (duplicated) {
+    const dup = await checkDuplicate(date,time);
+    if(dup){
         alert("この時間は予約があります");
         return;
     }
 
-    confirmText.innerHTML = `
-        お名前：${name}<br>
-        メニュー：${menus.join(', ')}<br>
-        日付：${date}<br>
-        時間：${time}
-    `;
+    // ★ greeting を消す
+    document.getElementById("greeting").style.display = "none";
+
+    confirmText.innerHTML =
+        `お名前：${name}<br>
+         メニュー：${menus.join(', ')}<br>
+         日付：${date}<br>
+         時間：${time}`;
 
     form.style.display = "none";
     confirmScreen.style.display = "block";
 });
 
-cancelBtn.addEventListener('click', function () {
+// 戻るボタン
+cancelBtn.addEventListener('click',function(){
     confirmScreen.style.display = "none";
     form.style.display = "block";
+
+    // ★ greeting を戻す
+    document.getElementById("greeting").style.display = "block";
 });
 
-// ===== OKボタン =====
-okBtn.addEventListener('click', async function () {
+// ===== OKボタン（予約確定） =====
+okBtn.addEventListener('click', async function(){
     const name = document.getElementById('name').value;
     const menus = Array.from(menuContainer.querySelectorAll('.menu-select'))
-        .map(s => s.value)
-        .filter(v => v !== "");
+        .map(s => s.value).filter(v=>v!=="");
     const date = document.getElementById('date').value;
     const time = document.getElementById('time').value;
 
-    const { data, error } = await supabaseClient
+    const { error } = await supabaseClient
         .from('reservations')
-        .insert([{ name, menus: menus.join(', '), date, time }]);
+        .insert([{ name, menus:menus.join(', '), date, time }]);
 
-    if (error) {
+    if(error){
         alert("予約保存エラー");
         return;
     }
 
-    try {
-        await fetch("https://bcahztzetpfuklipjmxx.supabase.co/functions/v1/send_line_notify", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ name, menus: menus.join(', '), date, time })
+    // LINE通知
+    try{
+        await fetch("https://bcahztzetpfuklipjmxx.supabase.co/functions/v1/send_line_notify",{
+            method:"POST",
+            headers:{ "Content-Type":"application/json" },
+            body:JSON.stringify({name,menus:menus.join(', '),date,time})
         });
-    } catch (e) {}
+    }catch(e){}
 
     confirmScreen.style.display = "none";
     showCompleteScreen();
 });
 
 // ===== 完了画面 =====
-function showCompleteScreen() {
+function showCompleteScreen(){
     const old = document.getElementById("complete-screen");
-    if (old) old.remove();
+    if(old) old.remove();
+
+    // ★ greeting を消す
+    document.getElementById("greeting").style.display = "none";
 
     const div = document.createElement("div");
     div.id = "complete-screen";
     div.style.padding = "20px";
-
     div.innerHTML = `
         <h2>予約を受付ました。</h2>
         <p>ありがとうございます。</p>
-        <button id="closeBtn" style="padding:15px 25px; font-size:18px; border-radius:8px; background:#000; color:#fff; border:none;">閉じる</button>
+        <button id="closeBtn"
+            style="padding:15px 25px;font-size:18px;border-radius:8px;background:#000;color:#fff;border:none;">
+            閉じる
+        </button>
     `;
 
-    document.querySelector('.container').appendChild(div);
+    document.querySelector(".container").appendChild(div);
 
-    document.getElementById("closeBtn").addEventListener('click', function(){
-        if (window.liff) {
-            try { liff.closeWindow(); return; } catch(e){}
+    document.getElementById("closeBtn").addEventListener("click",function(){
+
+        // LIFF なら閉じる
+        if(window.liff){
+            try{ liff.closeWindow(); return; }catch(e){}
         }
-        if (/iphone|ipad|ipod/i.test(navigator.userAgent)) {
-            window.location.href = "about:blank";
-            return;
-        }
-        window.history.back();
+
+        // PC / iPhone / Android 全対応
+        window.open("about:blank","_self");
+        window.close();
     });
 }
