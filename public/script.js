@@ -3,6 +3,9 @@ const supabaseUrl = "https://bcahztzetpfuklipjmxx.supabase.co";
 const supabaseKey = "sb_publishable_rPyAIzNttEK3P8nsnBllYA_FTF-kxJQ";
 const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 
+// greeting（挨拶文）
+const greeting = document.getElementById("greeting");
+
 // ===== メニュー追加 =====
 const menuContainer = document.getElementById('menuContainer');
 const addMenuButton = document.getElementById('addMenu');
@@ -22,6 +25,7 @@ async function checkDuplicate(date, time) {
         .select('*')
         .eq('date', date)
         .eq('time', time);
+
     if (error) return true;
     return data.length > 0;
 }
@@ -82,8 +86,8 @@ form.addEventListener('submit', async function(e){
         return;
     }
 
-    // ★ greeting を消す
-    document.getElementById("greeting").style.display = "none";
+    // ★ greeting を確実に消す（確認画面）
+    if (greeting) greeting.style.display = "none";
 
     confirmText.innerHTML =
         `お名前：${name}<br>
@@ -100,8 +104,8 @@ cancelBtn.addEventListener('click',function(){
     confirmScreen.style.display = "none";
     form.style.display = "block";
 
-    // ★ greeting を戻す
-    document.getElementById("greeting").style.display = "block";
+    // ★ greeting を復活
+    if (greeting) greeting.style.display = "block";
 });
 
 // ===== OKボタン（予約確定） =====
@@ -121,7 +125,6 @@ okBtn.addEventListener('click', async function(){
         return;
     }
 
-    // LINE通知
     try{
         await fetch("https://bcahztzetpfuklipjmxx.supabase.co/functions/v1/send_line_notify",{
             method:"POST",
@@ -139,8 +142,8 @@ function showCompleteScreen(){
     const old = document.getElementById("complete-screen");
     if(old) old.remove();
 
-    // ★ greeting を消す
-    document.getElementById("greeting").style.display = "none";
+    // ★ 完了画面でも greeting を確実に消す
+    if (greeting) greeting.style.display = "none";
 
     const div = document.createElement("div");
     div.id = "complete-screen";
@@ -156,15 +159,15 @@ function showCompleteScreen(){
 
     document.querySelector(".container").appendChild(div);
 
+    // ★ 全デバイスでページを確実に閉じる
     document.getElementById("closeBtn").addEventListener("click",function(){
 
-        // LIFF なら閉じる
         if(window.liff){
             try{ liff.closeWindow(); return; }catch(e){}
         }
 
-        // PC / iPhone / Android 全対応
-        window.open("about:blank","_self");
+        // どの環境でも確実に閉じる
+        window.open("about:blank", "_self");
         window.close();
     });
 }
