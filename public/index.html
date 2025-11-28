@@ -91,7 +91,8 @@
      alt="Candoll ロゴ"
      style="width: 250px; display: block; margin: 0 auto 20px;">
 
-<div class="greeting">
+<!-- ★ greeting に id を付与（消すため） -->
+<div class="greeting" id="greeting">
     いつもお世話になっております。<br>
     ご予約内容をお選び下さい。
 </div>
@@ -179,49 +180,43 @@
 <div id="confirm-screen">
     <h2>ご予約内容</h2>
     <p id="confirm-text"></p>
-    <button class="confirm-btn ok" id="okBtn">閉じる</button>
-    <button class="confirm-btn cancel" id="cancelBtn">キャンセル</button>
+
+    <!-- ★ 文言変更 -->
+    <button class="confirm-btn ok" id="okBtn">OK</button>
+    <button class="confirm-btn cancel" id="cancelBtn">戻る</button>
 </div>
 
 </div>
 
-<!-- ★ 定休日（毎週月曜 & 第1・第3火曜）を除いた日付生成 -->
+<!-- ★ 定休日処理（そのまま） -->
 <script>
 const dateSelect = document.getElementById("date");
 dateSelect.innerHTML = '<option value="">日付を選択</option>';
-
-const daysOfWeek = ['日','月','火','水','木','金','土'];
+const days = ['日','月','火','水','木','金','土'];
 
 for (let i = 0; i < 30; i++) {
     const d = new Date();
     d.setDate(d.getDate() + i);
-
     const y = d.getFullYear();
-    const m = (d.getMonth() + 1).toString().padStart(2, '0');
-    const day = d.getDate().toString().padStart(2, '0');
+    const m = (d.getMonth()+1).toString().padStart(2,"0");
+    const day = d.getDate().toString().padStart(2,"0");
+    const dow = d.getDay();
 
-    const dow = d.getDay(); // 0:日,1:月,2:火...
-
-    // ★ 毎週月曜日は除外
-    if (dow === 1) continue;
-
-    // ★ 第1・第3火曜日を除外
-    if (dow === 2) {
-        const weekNumber = Math.ceil(d.getDate() / 7); // 1〜5週目
-        if (weekNumber === 1 || weekNumber === 3) continue;
+    if (dow===1) continue;
+    if (dow===2){
+        const week = Math.ceil(d.getDate()/7);
+        if (week===1 || week===3) continue;
     }
 
-    const option = document.createElement('option');
-    option.value = `${y}-${m}-${day}`;
-    option.textContent = `${y}/${m}/${day} (${daysOfWeek[dow]})`;
-    dateSelect.appendChild(option);
+    const op = document.createElement("option");
+    op.value = `${y}-${m}-${day}`;
+    op.textContent = `${y}/${m}/${day} (${days[dow]})`;
+    dateSelect.appendChild(op);
 }
 </script>
 
-<!-- Supabase SDK（必ず先） -->
+<!-- Supabase & script -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-<!-- script.js（必ず後） -->
 <script src="script.js"></script>
 
 </body>
