@@ -73,7 +73,6 @@ form.addEventListener('submit', async function (e) {
     const menus = Array.from(menuContainer.querySelectorAll('.menu-select'))
         .map(s => s.value)
         .filter(v => v !== "");
-
     const date = document.getElementById('date').value;
     const time = document.getElementById('time').value;
 
@@ -88,7 +87,7 @@ form.addEventListener('submit', async function (e) {
         return;
     }
 
-    // ★ greeting を確実に消す（確認画面）
+    // greeting を消す（確認画面）
     if (greeting) greeting.style.display = "none";
 
     confirmText.innerHTML =
@@ -99,19 +98,21 @@ form.addEventListener('submit', async function (e) {
 
     form.style.display = "none";
     confirmScreen.style.display = "block";
-});
+
+});  // ★ submit の閉じ（正しい位置）
 
 // ===== 戻る =====
 cancelBtn.addEventListener('click', function () {
     confirmScreen.style.display = "none";
     form.style.display = "block";
 
-    // ★ greeting を復活
+    // greeting を戻す
     if (greeting) greeting.style.display = "block";
 });
 
 // ===== OKボタン（予約確定） =====
 okBtn.addEventListener('click', async function () {
+
     const name = document.getElementById('name').value;
     const menus = Array.from(menuContainer.querySelectorAll('.menu-select'))
         .map(s => s.value)
@@ -143,10 +144,11 @@ okBtn.addEventListener('click', async function () {
 
 // ===== 完了画面 =====
 function showCompleteScreen() {
+
     const old = document.getElementById("complete-screen");
     if (old) old.remove();
 
-    // ★ 完了画面でも greeting を完全に消す
+    // greeting を消す
     if (greeting) greeting.style.display = "none";
 
     const div = document.createElement("div");
@@ -163,10 +165,10 @@ function showCompleteScreen() {
 
     document.querySelector(".container").appendChild(div);
 
-    // ===== ★ iPhone・Android・PC 完全対応版「閉じる」 =====
+    // ===== iPhone/Android/PC 完全対応版「閉じる」 =====
     document.getElementById("closeBtn").addEventListener("click", function () {
 
-        // LIFF なら LIFF を閉じる
+        // LIFF なら閉じる
         if (window.liff) {
             try {
                 liff.closeWindow();
