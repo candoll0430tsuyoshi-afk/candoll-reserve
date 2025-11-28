@@ -160,14 +160,30 @@ function showCompleteScreen(){
     document.querySelector(".container").appendChild(div);
 
     // ★ 全デバイスでページを確実に閉じる
-    document.getElementById("closeBtn").addEventListener("click",function(){
+    document.getElementById("closeBtn").addEventListener("click", function(){
 
-        if(window.liff){
-            try{ liff.closeWindow(); return; }catch(e){}
-        }
+    // LIFF の場合は LIFF を閉じる（最優先）
+    if (window.liff) {
+        try { 
+            liff.closeWindow(); 
+            return; 
+        } catch(e){}
+    }
 
-        // どの環境でも確実に閉じる
-        window.open("about:blank", "_self");
-        window.close();
-    });
-}
+    // ★ iPhone Safari 対策（これが最も強力）
+    const ua = window.navigator.userAgent.toLowerCase();
+    const isIOS = /iphone|ipad|ipod/.test(ua);
+
+    if (isIOS) {
+        // iOSで確実に閉じるための強制パターン
+        window.location.href = "about:blank";
+        setTimeout(() => {
+            window.close();
+        }, 50);
+        return;
+    }
+
+    // ★ Android & PC
+    window.open("about:blank", "_self");
+    window.close();
+});
