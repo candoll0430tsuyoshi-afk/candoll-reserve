@@ -159,30 +159,31 @@ function showCompleteScreen(){
 
     document.querySelector(".container").appendChild(div);
 
-   document.getElementById("closeBtn").addEventListener("click", function(){
+    // ===== ★ iPhone・Android・PC 完全対応「閉じる」処理 =====
+    document.getElementById("closeBtn").addEventListener("click",function(){
 
-    // LIFF の場合は LIFF を閉じる（最優先）
-    if (window.liff) {
-        try { 
-            liff.closeWindow(); 
-            return; 
-        } catch(e){}
-    }
+        // LIFF の場合は LIFF を閉じる
+        if(window.liff){
+            try { 
+                liff.closeWindow(); 
+                return; 
+            } catch(e){}
+        }
 
-    // ★ iPhone Safari 対策（これが最も強力）
-    const ua = window.navigator.userAgent.toLowerCase();
-    const isIOS = /iphone|ipad|ipod/.test(ua);
+        // iPhone Safari 対応（最強パターン）
+        const ua = window.navigator.userAgent.toLowerCase();
+        const isIOS = /iphone|ipad|ipod/.test(ua);
 
-    if (isIOS) {
-        // iOSで確実に閉じるための強制パターン
-        window.location.href = "about:blank";
-        setTimeout(() => {
-            window.close();
-        }, 50);
-        return;
-    }
+        if (isIOS) {
+            window.location.href = "about:blank";
+            setTimeout(() => {
+                window.close();
+            }, 50);
+            return;
+        }
 
-    // ★ Android & PC
-    window.open("about:blank", "_self");
-    window.close();
-});
+        // Android & PC
+        window.open("about:blank", "_self");
+        window.close();
+    });
+}
