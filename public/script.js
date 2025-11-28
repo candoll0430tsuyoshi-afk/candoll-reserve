@@ -1,6 +1,6 @@
 // ===== Supabase 初期化 =====
 const supabaseUrl = "https://bcahztzetpfuklipjmxx.supabase.co";
-const supabaseKey = "⭐あなたの anon key ⭐";
+const supabaseKey = "sb_publishable_rPyAIzNttEK3P8nsnBllYA_FTF-kxJQ";
 const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 
 // ===== メニュー追加 =====
