@@ -127,7 +127,8 @@ okBtn.addEventListener('click', async function(){
 
     // ===== LINE 通知（ここを修正済み）=====
     try {
-        await fetch("https://bcahztzetpfuklipjmxx.functions.supabase.co/dynamic-service", {
+        await fetch("https://bcahztzetpfuklipjmxx.functions.supabase.co/functions/v1/dynamic-service
+", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ name, menus: menus.join(', '), date, time })
