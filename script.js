@@ -28,7 +28,7 @@ const MENU_DATA = {
   "来店時に相談（３時間枠）": 179,
   "来店時に相談（4時間枠）": 239,
 
-  // ===== セットメニュー =====
+  // セットメニュー
   "カット＋カラー": 119,
   "カット＋リタッチカラー": 119,
   "カット＋パーマ": 134,
@@ -39,11 +39,11 @@ const MENU_DATA = {
 const greeting = document.getElementById("greeting");
 
 // ===== メニュー追加 =====
-const menuContainer = document.getElementById('menuContainer');
-const addMenuButton = document.getElementById('addMenu');
+const menuContainer = document.getElementById("menuContainer");
+const addMenuButton = document.getElementById("addMenu");
 
-addMenuButton.addEventListener('click', function () {
-  const selects = menuContainer.querySelectorAll('.menu-select');
+addMenuButton.addEventListener("click", function () {
+  const selects = menuContainer.querySelectorAll(".menu-select");
   if (selects.length < 4) {
     const newSelect = selects[0].cloneNode(true);
     newSelect.value = "";
@@ -54,16 +54,18 @@ addMenuButton.addEventListener('click', function () {
 // ===== 所要時間計算 =====
 function calcTotalMinutes(selectedMenus) {
   return selectedMenus
-    .map(name => MENU_DATA[name] || 0)
+    .map((name) => MENU_DATA[name] || 0)
     .reduce((a, b) => a + b, 0);
 }
 
-// ===== 終了時刻を計算（1分単位で正確） =====
+// ===== 終了時刻を計算 =====
 function addMinutesToTime(time, minutes) {
   const [h, m] = time.split(":").map(Number);
   const start = new Date(2000, 0, 1, h, m);
   const end = new Date(start.getTime() + minutes * 60000);
-  return `${String(end.getHours()).padStart(2, '0')}:${String(end.getMinutes()).padStart(2, '0')}`;
+  return `${String(end.getHours()).padStart(2, "0")}:${String(
+    end.getMinutes()
+  ).padStart(2, "0")}`;
 }
 
 // ===== 時間帯がかぶるか =====
@@ -95,7 +97,7 @@ async function updateTimeOptions() {
   const date = document.getElementById("date").value;
   const timeSelect = document.getElementById("time");
 
-  Array.from(timeSelect.options).forEach(o => {
+  Array.from(timeSelect.options).forEach((o) => {
     o.disabled = false;
     o.style.color = "#000";
   });
@@ -107,17 +109,17 @@ async function updateTimeOptions() {
     .select("time, end_time")
     .eq("date", date);
 
-  const reservedRanges = data.map(r => ({
+  const reservedRanges = data.map((r) => ({
     start: r.time,
-    end: r.end_time
+    end: r.end_time,
   }));
 
-  // ★ 30分枠で重なり判定
-  Array.from(timeSelect.options).forEach(o => {
+  // 30分枠で重なり判定
+  Array.from(timeSelect.options).forEach((o) => {
     const optionStart = o.value;
     const optionEnd = addMinutesToTime(o.value, 30);
 
-    reservedRanges.forEach(r => {
+    reservedRanges.forEach((r) => {
       if (isOverlap(optionStart, optionEnd, r.start, r.end)) {
         o.disabled = true;
         o.style.color = "#aaa";
@@ -127,21 +129,21 @@ async function updateTimeOptions() {
 }
 
 // ===== 確認画面 =====
-const form = document.getElementById('reserveForm');
-const confirmScreen = document.getElementById('confirm-screen');
-const confirmText = document.getElementById('confirm-text');
-const cancelBtn = document.getElementById('cancelBtn');
-const okBtn = document.getElementById('okBtn');
+const form = document.getElementById("reserveForm");
+const confirmScreen = document.getElementById("confirm-screen");
+const confirmText = document.getElementById("confirm-text");
+const cancelBtn = document.getElementById("cancelBtn");
+const okBtn = document.getElementById("okBtn");
 
-form.addEventListener('submit', async function (e) {
+form.addEventListener("submit", async function (e) {
   e.preventDefault();
 
-  const name = document.getElementById('name').value;
-  const menus = Array.from(menuContainer.querySelectorAll('.menu-select'))
-    .map(s => s.value)
-    .filter(v => v !== "");
-  const date = document.getElementById('date').value;
-  const time = document.getElementById('time').value;
+  const name = document.getElementById("name").value;
+  const menus = Array.from(menuContainer.querySelectorAll(".menu-select"))
+    .map((s) => s.value)
+    .filter((v) => v !== "");
+  const date = document.getElementById("date").value;
+  const time = document.getElementById("time").value;
 
   if (!name || menus.length === 0 || !date || !time) {
     alert("未入力があります");
@@ -159,51 +161,59 @@ form.addEventListener('submit', async function (e) {
 
   if (greeting) greeting.style.display = "none";
 
-  confirmText.innerHTML =
-    `お名前：${name}<br>
-     メニュー：${menus.join(', ')}<br>
-     日付：${date}<br>
-     時間：${time} 〜 ${end_time}`;
+  confirmText.innerHTML = `お名前：${name}<br>
+メニュー：${menus.join(", ")}<br>
+日付：${date}<br>
+時間：${time} 〜 ${end_time}`;
 
   form.style.display = "none";
   confirmScreen.style.display = "block";
 });
 
 // ===== 戻る =====
-cancelBtn.addEventListener('click', function () {
+cancelBtn.addEventListener("click", function () {
   confirmScreen.style.display = "none";
   form.style.display = "block";
   if (greeting) greeting.style.display = "block";
 });
 
 // ===== 確定（登録＋通知） =====
-okBtn.addEventListener('click', async function () {
-  const name = document.getElementById('name').value;
-  const menus = Array.from(menuContainer.querySelectorAll('.menu-select'))
-    .map(s => s.value)
-    .filter(v => v !== "");
-  const date = document.getElementById('date').value;
-  const time = document.getElementById('time').value;
+okBtn.addEventListener("click", async function () {
+  const name = document.getElementById("name").value;
+  const menus = Array.from(menuContainer.querySelectorAll(".menu-select"))
+    .map((s) => s.value)
+    .filter((v) => v !== "");
+  const date = document.getElementById("date").value;
+  const time = document.getElementById("time").value;
 
   const duration = calcTotalMinutes(menus);
   const end_time = addMinutesToTime(time, duration);
 
-  const { error } = await supabaseClient
-    .from("reservations")
-    .insert([{ name, menus: menus.join(', '), date, time, end_time }]);
+  const { error } = await supabaseClient.from("reservations").insert([
+    {
+      name,
+      menus: menus.join(", "),
+      date,
+      time,
+      end_time,
+    },
+  ]);
 
   if (error) {
     alert("予約保存エラー");
     return;
   }
 
-  // ===== LINE通知 =====
+  // LINE通知
   try {
-    await fetch("https://bcahztzetpfuklipjmxx.functions.supabase.co/dynamic-service", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, menus: menus.join(', '), date, time })
-    });
+    await fetch(
+      "https://bcahztzetpfuklipjmxx.functions.supabase.co/dynamic-service",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, menus: menus.join(", "), date, time }),
+      }
+    );
   } catch (e) {
     console.error("LINE通知エラー:", e);
   }
@@ -233,21 +243,22 @@ function showCompleteScreen() {
 
   document.querySelector(".container").appendChild(div);
 
+  // ★ 閉じるボタン（LINEは閉じる／その他は一つ前のページに戻る）
   document.getElementById("closeBtn").addEventListener("click", function () {
-    if (window.liff) {
-      try { liff.closeWindow(); return; } catch (e) { }
+    // LINE（LIFF）内ブラウザ
+    if (window.liff && typeof liff.closeWindow === "function") {
+      try {
+        liff.closeWindow();
+        return;
+      } catch (e) {}
     }
 
-    const ua = window.navigator.userAgent.toLowerCase();
-    const isIOS = /iphone|ipad|ipod/.test(ua);
-
-    if (isIOS) {
-      window.location.href = "about:blank";
-      setTimeout(() => window.close(), 50);
-      return;
+    // それ以外：前のページに戻す
+    if (window.history.length > 1) {
+      window.history.back();
+    } else {
+      // 戻る履歴がない場合は何もせず（必要ならここに遷移先を指定）
+      window.close();
     }
-
-    window.open("about:blank", "_self");
-    window.close();
   });
 }
