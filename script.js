@@ -1,103 +1,184 @@
-// Supabase initialize
-const supabaseUrl = 'https://bcahztzetpfuklipjmxx.supabase.co';
-const supabaseKey = 'your-anon-key';
-const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+// ===== Supabase 初期化 =====
+const supabaseUrl = "https://bcahztzetpfuklipjmxx.supabase.co";
+const supabaseKey = "sb_publishable_rPyAIzNttEK3P8nsnBllYA_FTF-kxJQ";
+const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 
-let selectedMenus = [];
+// greeting（挨拶文）
+const greeting = document.getElementById("greeting");
 
-// メニュー追加
-document.getElementById("addMenuBtn").addEventListener("click", function () {
-  const newMenu = document.createElement("select");
-  newMenu.classList.add("menu");
-  newMenu.innerHTML = document.getElementById("menu").innerHTML;
-  document.getElementById("menuArea").appendChild(newMenu);
-});
-
-// 日付選択時、予約済み時間をグレーアウト
-document.getElementById("date").addEventListener("change", async function () {
-  const date = this.value;
-  const timeSelect = document.getElementById("time");
-  timeSelect.disabled = false;
-  const { data: reservations } = await supabase
-    .from("reservations")
-    .select("time")
-    .eq("date", date);
-
-  const reservedTimes = reservations.map(r => r.time);
-  for (let option of timeSelect.options) {
-    if (reservedTimes.includes(option.value)) {
-      option.disabled = true;
-      option.style.color = "#ccc";
-    } else {
-      option.disabled = false;
-      option.style.color = "#000";
+// ===== メニュー追加 =====
+const menuContainer = document.getElementById('menuContainer');
+const addMenuButton = document.getElementById('addMenu');
+addMenuButton.addEventListener('click', function () {
+    const selects = menuContainer.querySelectorAll('.menu-select');
+    if (selects.length < 4) {
+        const newSelect = selects[0].cloneNode(true);
+        newSelect.value = "";
+        menuContainer.appendChild(newSelect);
     }
-  }
 });
 
-// 予約内容確認
-document.getElementById("checkBtn").addEventListener("click", function () {
-  const name = document.getElementById("name").value.trim();
-  const menuEls = document.querySelectorAll(".menu");
-  const menus = [...menuEls].map(menu => menu.value);
-  const date = document.getElementById("date").value;
-  const time = document.getElementById("time").value;
+// ===== 重複チェック =====
+async function checkDuplicate(date, time) {
+    const { data, error } = await supabaseClient
+        .from('reservations')
+        .select('*')
+        .eq('date', date)
+        .eq('time', time);
 
-  if (!name || menus.length === 0 || !date || !time) {
-    alert("未入力の項目があります。");
-    return;
-  }
+    if (error) return true;
+    return data.length > 0;
+}
 
-  selectedMenus = menus;
+// ===== 時間グレーアウト =====
+document.getElementById("date").addEventListener("change", updateTimeOptions);
 
-  document.getElementById("confirmName").textContent = name;
-  document.getElementById("confirmMenus").textContent = menus.join(", ");
-  document.getElementById("confirmDate").textContent = date;
-  document.getElementById("confirmTime").textContent = time;
+async function updateTimeOptions() {
+    const date = document.getElementById("date").value;
+    const timeSelect = document.getElementById("time");
 
-  document.getElementById("formArea").style.display = "none";
-  document.getElementById("confirmArea").style.display = "block";
+    Array.from(timeSelect.options).forEach(o => {
+        o.disabled = false;
+        o.style.color = "#000";
+    });
+
+    if (!date) return;
+
+    const { data } = await supabaseClient
+        .from('reservations')
+        .select('time')
+        .eq('date', date);
+
+    const reserved = data.map(r => r.time);
+
+    Array.from(timeSelect.options).forEach(o => {
+        if (reserved.includes(o.value)) {
+            o.disabled = true;
+            o.style.color = "#aaa";
+        }
+    });
+}
+
+// ===== 確認画面 =====
+const form = document.getElementById('reserveForm');
+const confirmScreen = document.getElementById('confirm-screen');
+const confirmText = document.getElementById('confirm-text');
+const cancelBtn = document.getElementById('cancelBtn');
+const okBtn = document.getElementById('okBtn');
+
+form.addEventListener('submit', async function(e){
+    e.preventDefault();
+
+    const name = document.getElementById('name').value;
+    const menus = Array.from(menuContainer.querySelectorAll('.menu-select'))
+        .map(s => s.value).filter(v=>v!=="");
+    const date = document.getElementById('date').value;
+    const time = document.getElementById('time').value;
+
+    if(!name || menus.length===0 || !date || !time){
+        alert("未入力があります");
+        return;
+    }
+
+    const dup = await checkDuplicate(date,time);
+    if(dup){
+        alert("この時間は予約があります");
+        return;
+    }
+
+    // greeting を非表示
+    if (greeting) greeting.style.display = "none";
+
+    confirmText.innerHTML =
+        `お名前：${name}<br>
+         メニュー：${menus.join(', ')}<br>
+         日付：${date}<br>
+         時間：${time}`;
+
+    form.style.display = "none";
+    confirmScreen.style.display = "block";
 });
 
-// 戻るボタン
-document.getElementById("backBtn").addEventListener("click", function () {
-  document.getElementById("formArea").style.display = "block";
-  document.getElementById("confirmArea").style.display = "none";
+// ===== 戻る =====
+cancelBtn.addEventListener('click',function(){
+    confirmScreen.style.display = "none";
+    form.style.display = "block";
+
+    // greeting を復活
+    if (greeting) greeting.style.display = "block";
 });
 
-// 予約する
-document.getElementById("okBtn").addEventListener("click", async function () {
-  const name = document.getElementById("name").value.trim();
-  const menus = selectedMenus;
-  const date = document.getElementById("date").value;
-  const time = document.getElementById("time").value;
+// ===== OKボタン（予約確定） =====
+okBtn.addEventListener('click', async function(){
+    const name = document.getElementById('name').value;
+    const menus = Array.from(menuContainer.querySelectorAll('.menu-select'))
+        .map(s => s.value).filter(v=>v!=="");
+    const date = document.getElementById('date').value;
+    const time = document.getElementById('time').value;
 
-  const { error } = await supabase.from("reservations").insert([
-    {
-      name,
-      menus: menus.join(", "),
-      date,
-      time,
-    },
-  ]);
+    const { error } = await supabaseClient
+        .from('reservations')
+        .insert([{ name, menus:menus.join(', '), date, time }]);
 
-  if (error) {
-    console.error(error);
-    alert("予約登録に失敗しました。");
-    return;
-  }
+    if(error){
+        alert("予約保存エラー");
+        return;
+    }
 
-  // 完了画面
-  document.getElementById("confirmArea").style.display = "none";
-  document.getElementById("doneArea").style.display = "block";
+    // ===== LINE 通知（失敗してもフォームは壊さない）=====
+    try {
+        await fetch("https://bcahztzetpfuklipjmxx.functions.supabase.co/dynamic-service", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name, menus: menus.join(', '), date, time })
+        });
+    } catch(e) {
+        console.error("LINE通知エラー:", e);
+    }
+
+    confirmScreen.style.display = "none";
+    showCompleteScreen();
 });
 
-// 閉じるボタン
-document.getElementById("closeBtn").addEventListener("click", function () {
-  if (window.liff) {
-    liff.closeWindow();
-  } else {
-    window.close();
-  }
-});
+// ===== 完了画面 =====
+function showCompleteScreen(){
+    const old = document.getElementById("complete-screen");
+    if(old) old.remove();
 
+    // greeting を消す
+    if (greeting) greeting.style.display = "none";
+
+    const div = document.createElement("div");
+    div.id = "complete-screen";
+    div.style.padding = "20px";
+    div.innerHTML = `
+        <h2>予約を受付ました。</h2>
+        <p>ありがとうございます。</p>
+        <button id="closeBtn"
+            style="padding:15px 25px;font-size:18px;border-radius:8px;background:#000;color:#fff;border:none;">
+            閉じる
+        </button>
+    `;
+
+    document.querySelector(".container").appendChild(div);
+
+    // ===== iPhone・Android・PC 完全対応 =====
+    document.getElementById("closeBtn").addEventListener("click",function(){
+
+        if(window.liff){
+            try{ liff.closeWindow(); return; }catch(e){}
+        }
+
+        const ua = window.navigator.userAgent.toLowerCase();
+        const isIOS = /iphone|ipad|ipod/.test(ua);
+
+        if (isIOS) {
+            window.location.href = "about:blank";
+            setTimeout(() => window.close(), 50);
+            return;
+        }
+
+        window.open("about:blank", "_self");
+        window.close();
+    });
+}
