@@ -125,14 +125,16 @@ okBtn.addEventListener('click', async function(){
         return;
     }
 
-    // ===== LINE 通知（関数名だけ修正）=====
-    try{
-        await fetch("https://bcahztzetpfuklipjmxx.supabase.co/functions/v1/line-notify", {
-            method:"POST",
-            headers:{ "Content-Type":"application/json" },
-            body:JSON.stringify({ name, menus: menus.join(', '), date, time })
+    // ===== LINE 通知（ここを修正済み）=====
+    try {
+        await fetch("https://bcahztzetpfuklipjmxx.functions.supabase.co/dynamic-service", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name, menus: menus.join(', '), date, time })
         });
-    }catch(e){}
+    } catch(e) {
+        console.error("LINE通知エラー:", e);
+    }
 
     confirmScreen.style.display = "none";
     showCompleteScreen();
