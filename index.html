@@ -4,6 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Candoll 予約フォーム</title>
+
 <style>
  body {
      font-family: "Hiragino Sans", "Hiragino Kaku Gothic ProN", sans-serif;
@@ -36,7 +37,6 @@
      display: block;
      margin-bottom: 8px;
      font-weight: 600;
-     text-align: center;
  }
  select, input {
      width: 100%;
@@ -84,6 +84,7 @@
  #name { width: 100%; box-sizing: border-box; display: block; }
 </style>
 </head>
+
 <body>
 <div class="container">
 
@@ -91,7 +92,6 @@
      alt="Candoll ロゴ"
      style="width: 250px; display: block; margin: 0 auto 20px;">
 
-<!-- ★ greeting に id を付与（消すため） -->
 <div class="greeting" id="greeting">
     いつもお世話になっております。<br>
     ご予約内容をお選び下さい。
@@ -106,18 +106,21 @@
     <div id="menuContainer">
         <select class="menu-select">
             <option value="">選択してください</option>
+
             <optgroup label="組み合わせ">
                 <option value="カット＋カラー">カット＋カラー</option>
                 <option value="カット＋リタッチカラー">カット＋リタッチカラー</option>
                 <option value="カット＋パーマ">カット＋パーマ</option>
                 <option value="カット＋ストレート">カット＋ストレート</option>
             </optgroup>
+
             <optgroup label="カット">
                 <option value="カット">カット</option>
                 <option value="カット（大学生・専門学生）">カット（大学生・専門学生）</option>
                 <option value="カット（中学生以下）">カット（中学生以下）</option>
                 <option value="前髪カット">前髪カット</option>
             </optgroup>
+
             <optgroup label="カラー">
                 <option value="カラー">カラー</option>
                 <option value="リタッチカラー">リタッチカラー</option>
@@ -125,21 +128,27 @@
                 <option value="アクセントカラー">アクセントカラー</option>
                 <option value="ヘナ">ヘナ</option>
             </optgroup>
+
             <optgroup label="パーマ">
                 <option value="モイストパーマ">モイストパーマ</option>
                 <option value="ポイントパーマ">ポイントパーマ</option>
             </optgroup>
+
             <optgroup label="ストレート">
                 <option value="ストレートパーマ">ストレートパーマ</option>
                 <option value="ポイントストレートパーマ">ポイントストレートパーマ</option>
             </optgroup>
+
             <optgroup label="トリートメント">
                 <option value="トリートメント">トリートメント</option>
             </optgroup>
+
             <optgroup label="メニュー未定">
                 <option value="来店時に相談（２時間枠）">来店時に相談（２時間枠）</option>
                 <option value="来店時に相談（３時間枠）">来店時に相談（３時間枠）</option>
+                <option value="来店時に相談（4時間枠）">来店時に相談（4時間枠）</option>
             </optgroup>
+
         </select>
     </div>
 
@@ -181,31 +190,33 @@
     <h2>ご予約内容</h2>
     <p id="confirm-text"></p>
 
-    <!-- ★ 文言変更 -->
     <button class="confirm-btn ok" id="okBtn">OK</button>
     <button class="confirm-btn cancel" id="cancelBtn">戻る</button>
 </div>
 
 </div>
 
-<!-- ★ 定休日処理（そのまま） -->
+<!-- ★ 日付生成：当日を除外し、翌日〜30日先まで表示 -->
 <script>
 const dateSelect = document.getElementById("date");
-dateSelect.innerHTML = '<option value="">日付を選択</option>';
 const days = ['日','月','火','水','木','金','土'];
 
-for (let i = 0; i < 30; i++) {
+dateSelect.innerHTML = '<option value="">日付を選択</option>';
+
+for (let i = 1; i <= 30; i++) {
     const d = new Date();
     d.setDate(d.getDate() + i);
+
     const y = d.getFullYear();
-    const m = (d.getMonth()+1).toString().padStart(2,"0");
-    const day = d.getDate().toString().padStart(2,"0");
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
     const dow = d.getDay();
 
-    if (dow===1) continue;
-    if (dow===2){
-        const week = Math.ceil(d.getDate()/7);
-        if (week===1 || week===3) continue;
+    if (dow === 1) continue;
+
+    if (dow === 2) {
+        const week = Math.ceil(d.getDate() / 7);
+        if (week === 1 || week === 3) continue;
     }
 
     const op = document.createElement("option");
@@ -215,7 +226,6 @@ for (let i = 0; i < 30; i++) {
 }
 </script>
 
-<!-- Supabase & script -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="script.js"></script>
 
