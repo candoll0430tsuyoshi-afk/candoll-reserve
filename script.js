@@ -3,7 +3,7 @@ const supabaseUrl = "https://bcahztzetpfuklipjmxx.supabase.co";
 const supabaseKey = "sb_publishable_rPyAIzNttEK3P8nsnBllYA_FTF-kxJQ";
 const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 
-// ===== メニュー所要時間 =====
+// ===== メニュー所要時間（単品＋セット） =====
 const MENU_DATA = {
   "カット": 49,
   "カット（大学生・専門学生）": 49,
@@ -26,7 +26,13 @@ const MENU_DATA = {
 
   "来店時に相談（２時間枠）": 119,
   "来店時に相談（３時間枠）": 179,
-  "来店時に相談（4時間枠）": 239
+  "来店時に相談（4時間枠）": 239,
+
+  // ===== セットメニュー =====
+  "カット＋カラー": 119,
+  "カット＋リタッチカラー": 119,
+  "カット＋パーマ": 134,
+  "カット＋ストレート": 209
 };
 
 // greeting
@@ -52,35 +58,33 @@ function calcTotalMinutes(selectedMenus) {
     .reduce((a, b) => a + b, 0);
 }
 
-// ===== 終了時刻計算 =====
+// ===== 終了時刻を計算（1分単位で正確） =====
 function addMinutesToTime(time, minutes) {
   const [h, m] = time.split(":").map(Number);
   const start = new Date(2000, 0, 1, h, m);
   const end = new Date(start.getTime() + minutes * 60000);
-
   return `${String(end.getHours()).padStart(2, '0')}:${String(end.getMinutes()).padStart(2, '0')}`;
 }
 
-// ===== 時間帯がかぶるかチェック =====
+// ===== 時間帯がかぶるか =====
 function isOverlap(startA, endA, startB, endB) {
   return startA < endB && startB < endA;
 }
 
-// ===== 重複チェック（開始-終了で判定） =====
+// ===== 重複チェック（開始〜終了で判定） =====
 async function checkDuplicateFull(date, start, end) {
-  const { data: reservations, error } = await supabaseClient
+  const { data, error } = await supabaseClient
     .from("reservations")
     .select("time, end_time")
     .eq("date", date);
 
   if (error) return true;
 
-  for (const r of reservations) {
+  for (const r of data) {
     if (isOverlap(start, end, r.time, r.end_time)) {
       return true;
     }
   }
-
   return false;
 }
 
@@ -108,9 +112,13 @@ async function updateTimeOptions() {
     end: r.end_time
   }));
 
+  // ★ 30分枠で重なり判定
   Array.from(timeSelect.options).forEach(o => {
+    const optionStart = o.value;
+    const optionEnd = addMinutesToTime(o.value, 30);
+
     reservedRanges.forEach(r => {
-      if (isOverlap(o.value, addMinutesToTime(o.value, 1), r.start, r.end)) {
+      if (isOverlap(optionStart, optionEnd, r.start, r.end)) {
         o.disabled = true;
         o.style.color = "#aaa";
       }
@@ -130,7 +138,8 @@ form.addEventListener('submit', async function (e) {
 
   const name = document.getElementById('name').value;
   const menus = Array.from(menuContainer.querySelectorAll('.menu-select'))
-    .map(s => s.value).filter(v => v !== "");
+    .map(s => s.value)
+    .filter(v => v !== "");
   const date = document.getElementById('date').value;
   const time = document.getElementById('time').value;
 
@@ -143,7 +152,6 @@ form.addEventListener('submit', async function (e) {
   const end_time = addMinutesToTime(time, duration);
 
   const dup = await checkDuplicateFull(date, time, end_time);
-
   if (dup) {
     alert("この時間帯は予約があります");
     return;
@@ -165,15 +173,15 @@ form.addEventListener('submit', async function (e) {
 cancelBtn.addEventListener('click', function () {
   confirmScreen.style.display = "none";
   form.style.display = "block";
-
   if (greeting) greeting.style.display = "block";
 });
 
-// ===== OKボタン =====
+// ===== 確定（登録＋通知） =====
 okBtn.addEventListener('click', async function () {
   const name = document.getElementById('name').value;
   const menus = Array.from(menuContainer.querySelectorAll('.menu-select'))
-    .map(s => s.value).filter(v => v !== "");
+    .map(s => s.value)
+    .filter(v => v !== "");
   const date = document.getElementById('date').value;
   const time = document.getElementById('time').value;
 
@@ -189,7 +197,7 @@ okBtn.addEventListener('click', async function () {
     return;
   }
 
-  // LINE通知
+  // ===== LINE通知 =====
   try {
     await fetch("https://bcahztzetpfuklipjmxx.functions.supabase.co/dynamic-service", {
       method: "POST",
