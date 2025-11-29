@@ -34,7 +34,6 @@ const MENU_DATA = {
   "カット＋ストレート": 209
 };
 
-// greeting
 const greeting = document.getElementById("greeting");
 
 // ===== メニュー追加 =====
@@ -52,89 +51,81 @@ addMenuButton.addEventListener("click", function () {
 
 // ===== 所要時間計算 =====
 function calcTotalMinutes(selectedMenus) {
-  return selectedMenus
-    .map((name) => MENU_DATA[name] || 0)
-    .reduce((a, b) => a + b, 0);
+  return selectedMenus.map(m => MENU_DATA[m] || 0).reduce((a,b)=>a+b,0);
 }
 
-// ===== 終了時刻を計算 =====
+// ===== 時間処理 =====
 function addMinutesToTime(time, minutes) {
   const [h, m] = time.split(":").map(Number);
-  const start = new Date(2000, 0, 1, h, m);
-  const end = new Date(start.getTime() + minutes * 60000);
-  return `${String(end.getHours()).padStart(2, "0")}:${String(
-    end.getMinutes()
-  ).padStart(2, "0")}`;
+  const start = new Date(2000,0,1,h,m);
+  const end = new Date(start.getTime() + minutes*60000);
+  return `${String(end.getHours()).padStart(2,'0')}:${String(end.getMinutes()).padStart(2,'0')}`;
 }
 
-// ===== 時間帯がかぶるか =====
-function isOverlap(startA, endA, startB, endB) {
+function isOverlap(startA,endA,startB,endB){
   return startA < endB && startB < endA;
 }
 
 // ===== 重複チェック =====
-async function checkDuplicateFull(date, start, end) {
-  const { data, error } = await supabaseClient
+async function checkDuplicateFull(date, start, end){
+  const {data, error} = await supabaseClient
     .from("reservations")
-    .select("time, end_time")
-    .eq("date", date);
+    .select("time,end_time")
+    .eq("date",date);
 
-  if (error) return true;
+  if(error) return true;
 
-  for (const r of data) {
-    if (isOverlap(start, end, r.time, r.end_time)) return true;
+  for(const r of data){
+    if(isOverlap(start,end,r.time,r.end_time)) return true;
   }
   return false;
 }
 
-// ===== 時間グレーアウト（営業終了19:00チェック追加版） =====
+// ===== 時間グレーアウト =====
 document.getElementById("date").addEventListener("change", updateTimeOptions);
 
-async function updateTimeOptions() {
+async function updateTimeOptions(){
   const date = document.getElementById("date").value;
   const timeSelect = document.getElementById("time");
 
-  Array.from(timeSelect.options).forEach((o) => {
+  Array.from(timeSelect.options).forEach(o=>{
     o.disabled = false;
     o.style.color = "#000";
   });
 
-  if (!date) return;
+  if(!date) return;
 
-  // 今日のメニュー選択から所要時間取得
-  const selectedMenus = Array.from(menuContainer.querySelectorAll(".menu-select"))
-    .map(s => s.value)
-    .filter(v => v !== "");
-  const requiredMinutes = calcTotalMinutes(selectedMenus);
+  const menus = Array.from(menuContainer.querySelectorAll(".menu-select"))
+    .map(s=>s.value)
+    .filter(v=>v!=="");
+  const required = calcTotalMinutes(menus);
 
-  const { data } = await supabaseClient
+  const {data} = await supabaseClient
     .from("reservations")
-    .select("time, end_time")
-    .eq("date", date);
+    .select("time,end_time")
+    .eq("date",date);
 
-  const reservedRanges = data.map((r) => ({ start: r.time, end: r.end_time }));
+  const reserved = data.map(r=>({start:r.time,end:r.end_time}));
 
-  // 19:00の時刻
   const closeTime = "19:00";
 
-  Array.from(timeSelect.options).forEach((o) => {
-    if (!o.value) return;
+  Array.from(timeSelect.options).forEach(o=>{
+    if(!o.value) return;
 
     const optionStart = o.value;
-    const optionEnd = addMinutesToTime(o.value, requiredMinutes);
+    const optionEnd = addMinutesToTime(o.value, required);
 
-    // ★ 営業終了チェック：終了時刻が19:00を超えたらNG
-    if (optionEnd > closeTime) {
+    // ★ 営業終了チェック
+    if(optionEnd > closeTime){
       o.disabled = true;
       o.style.color = "#aaa";
       return;
     }
 
-    // ★ 30分枠での通常重複チェック
-    const halfEnd = addMinutesToTime(o.value, 30);
-
-    reservedRanges.forEach((r) => {
-      if (isOverlap(optionStart, halfEnd, r.start, r.end)) {
+    // ★ 30分重複チェック
+    const halfEnd = addMinutesToTime(o.value,30);
+    reserved.forEach(r=>{
+      if(isOverlap(optionStart,halfEnd,r.start,r.end)){
         o.disabled = true;
         o.style.color = "#aaa";
       }
@@ -142,46 +133,128 @@ async function updateTimeOptions() {
   });
 }
 
-// ===== 確認・保存・通知はそのまま =====
-// （中略：あなたの動作は問題なし）
+// ===== フォーム送信（確認画面へ） =====
+const form = document.getElementById("reserveForm");
+const confirmScreen = document.getElementById("confirm-screen");
+const confirmText = document.getElementById("confirm-text");
+const cancelBtn = document.getElementById("cancelBtn");
+const okBtn = document.getElementById("okBtn");
+
+form.addEventListener("submit", async function(e){
+  e.preventDefault();
+
+  const name = document.getElementById("name").value;
+  const menus = Array.from(menuContainer.querySelectorAll(".menu-select"))
+    .map(s=>s.value)
+    .filter(v=>v!=="");
+  const date = document.getElementById("date").value;
+  const time = document.getElementById("time").value;
+
+  if(!name || menus.length===0 || !date || !time){
+    alert("未入力があります");
+    return;
+  }
+
+  const required = calcTotalMinutes(menus);
+  const end_time = addMinutesToTime(time, required);
+
+  const dup = await checkDuplicateFull(date,time,end_time);
+  if(dup){
+    alert("この時間帯は予約があります");
+    return;
+  }
+
+  if(greeting) greeting.style.display = "none";
+
+  confirmText.innerHTML =
+    `お名前：${name}<br>メニュー：${menus.join(", ")}<br>日付：${date}<br>時間：${time} 〜 ${end_time}`;
+
+  form.style.display = "none";
+  confirmScreen.style.display = "block";
+});
+
+// ===== 戻る =====
+cancelBtn.addEventListener("click",function(){
+  confirmScreen.style.display = "none";
+  form.style.display = "block";
+  if(greeting) greeting.style.display = "block";
+});
+
+// ===== 確定（DB保存＋LINE通知） =====
+okBtn.addEventListener("click", async function(){
+
+  const name = document.getElementById("name").value;
+  const menus = Array.from(menuContainer.querySelectorAll(".menu-select"))
+    .map(s=>s.value)
+    .filter(v=>v!=="");
+  const date = document.getElementById("date").value;
+  const time = document.getElementById("time").value;
+
+  const required = calcTotalMinutes(menus);
+  const end_time = addMinutesToTime(time, required);
+
+  const {error} = await supabaseClient.from("reservations")
+    .insert([{name,menus:menus.join(", "),date,time,end_time}]);
+
+  if(error){
+    alert("予約保存エラー");
+    return;
+  }
+
+  // ========= LINE 通知 =========
+  try{
+    await fetch("https://bcahztzetpfuklipjmxx.functions.supabase.co/dynamic-service",{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({name,menus:menus.join(", "),date,time})
+    });
+  }catch(e){
+    console.error("LINE通知エラー:", e);
+  }
+
+  confirmScreen.style.display = "none";
+  showCompleteScreen();
+});
+
 // ===== 完了画面 =====
-
-function showCompleteScreen() {
+function showCompleteScreen(){
   const old = document.getElementById("complete-screen");
-  if (old) old.remove();
+  if(old) old.remove();
 
-  if (greeting) greeting.style.display = "none";
+  if(greeting) greeting.style.display = "none";
 
   const div = document.createElement("div");
   div.id = "complete-screen";
   div.style.padding = "20px";
-  div.innerHTML = `
-      <h2>予約を受付ました。</h2>
-      <p>ありがとうございます。</p>
-      <button id="closeBtn"
-          style="padding:15px 25px;font-size:18px;border-radius:8px;background:#000;color:#fff;border:none;">
-          閉じる
-      </button>
+  div.innerHTML=`
+    <h2>予約を受付ました。</h2>
+    <p>ありがとうございます。</p>
+    <button id="closeBtn"
+      style="padding:15px 25px;font-size:18px;border-radius:8px;background:#000;color:#fff;border:none;">
+      閉じる
+    </button>
   `;
   document.querySelector(".container").appendChild(div);
 
-  // ===== ★ 完全安定版「閉じる」処理 =====
-  document.getElementById("closeBtn").addEventListener("click", function () {
+  // ★ 完全安定版「閉じる」
+  document.getElementById("closeBtn").addEventListener("click", function(){
+
     // LINE(LIFF)
-    if (window.liff && typeof liff.closeWindow === "function") {
-      try {
+    if(window.liff && typeof liff.closeWindow === "function"){
+      try{
         liff.closeWindow();
         return;
-      } catch (_) {}
+      }catch(_){}
     }
 
-    // 戻れる履歴があれば戻る
-    if (window.history.length > 1) {
+    // 戻れる履歴がある
+    if(window.history.length > 1){
       window.history.back();
       return;
     }
 
-    // 履歴がない場合 → トップページに戻す（最も確実）
-    window.location.href = "https://candoll0430tsuyoshi-afk.github.io/candoll-reserve/";
+    // 戻れない → トップへ
+    window.location.href =
+      "https://candoll0430tsuyoshi-afk.github.io/candoll-reserve/";
   });
 }
