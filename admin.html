@@ -8,7 +8,7 @@
 <style>
     body {
         font-family: "Hiragino Sans", "Hiragino Kaku Gothic ProN", sans-serif;
-        background: #f5f5f5;
+        background: #ffffff; /* ← ロゴの白に変更 */
         margin: 0;
         padding: 0;
     }
@@ -27,9 +27,9 @@
         display: block;
     }
 
-    /* パスワード画面 */
+    /* パスワード画面（背景をグレーに変更） */
     #login-box {
-        background: #fff;
+        background: #f5f5f5;  /* ← もともとの背景色をここへ */
         padding: 25px;
         border-radius: 10px;
         box-shadow: 0 2px 8px rgba(0,0,0,0.1);
@@ -99,12 +99,12 @@
 
 <div class="container">
 
-    <!-- ★ ロゴだけを配置 -->
+    <!-- ★ ロゴ -->
     <img src="https://candoll0430tsuyoshi-afk.github.io/candoll-reserve/logo.png"
          alt="Candoll ロゴ"
          class="logo">
 
-    <!-- パスワード入力 -->
+    <!-- パスワード入力ボックス（枠がグレー） -->
     <div id="login-box">
         <p>Pass</p>
         <input type="password" id="admin-pass" placeholder="パスワード">
