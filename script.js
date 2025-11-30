@@ -3,7 +3,7 @@ const supabaseUrl = "https://bcahztzetpfuklipjmxx.supabase.co";
 const supabaseKey = "sb_publishable_rPyAIzNttEK3P8nsnBllYA_FTF-kxJQ";
 const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 
-// ===== メニュー所要時間（単品＋セット） =====
+// ===== メニュー所要時間 =====
 const MENU_DATA = {
   "カット": 49,
   "カット（大学生・専門学生）": 49,
@@ -40,12 +40,26 @@ const greeting = document.getElementById("greeting");
 const menuContainer = document.getElementById("menuContainer");
 const addMenuButton = document.getElementById("addMenu");
 
+// ★ A：メニュー変更のたびに updateTimeOptions() を動かす
+function attachMenuUpdate() {
+  const selects = menuContainer.querySelectorAll(".menu-select");
+  selects.forEach(sel => {
+    sel.addEventListener("change", () => {
+      updateTimeOptions();
+    });
+  });
+}
+
+// 初期化
+attachMenuUpdate();
+
 addMenuButton.addEventListener("click", function () {
   const selects = menuContainer.querySelectorAll(".menu-select");
   if (selects.length < 4) {
     const newSelect = selects[0].cloneNode(true);
     newSelect.value = "";
     menuContainer.appendChild(newSelect);
+    attachMenuUpdate(); // ★追加selectにも反映
   }
 });
 
@@ -54,7 +68,7 @@ function calcTotalMinutes(selectedMenus) {
   return selectedMenus.map(m => MENU_DATA[m] || 0).reduce((a,b)=>a+b,0);
 }
 
-// ===== 時間処理 =====
+// ===== 時刻変換 =====
 function addMinutesToTime(time, minutes) {
   const [h, m] = time.split(":").map(Number);
   const start = new Date(2000,0,1,h,m);
@@ -62,8 +76,18 @@ function addMinutesToTime(time, minutes) {
   return `${String(end.getHours()).padStart(2,'0')}:${String(end.getMinutes()).padStart(2,'0')}`;
 }
 
-function isOverlap(startA,endA,startB,endB){
-  return startA < endB && startB < endA;
+// ===== ★ B：絶対にズレない時刻比較 =====
+function toMinutes(t){
+  const [h,m] = t.split(":").map(Number);
+  return h*60 + m;
+}
+
+function isOverlap(startA, endA, startB, endB) {
+  const Astart = toMinutes(startA);
+  const Aend   = toMinutes(endA);
+  const Bstart = toMinutes(startB);
+  const Bend   = toMinutes(endB);
+  return Astart < Bend && Bstart < Aend;
 }
 
 // ===== 重複チェック =====
@@ -76,12 +100,14 @@ async function checkDuplicateFull(date, start, end){
   if(error) return true;
 
   for(const r of data){
-    if(isOverlap(start,end,r.time,r.end_time)) return true;
+    if(isOverlap(start,end,r.time,r.end_time)){
+      return true;
+    }
   }
   return false;
 }
 
-// ===== 時間グレーアウト =====
+// ===== 時間グレーアウト（完全同期版） =====
 document.getElementById("date").addEventListener("change", updateTimeOptions);
 
 async function updateTimeOptions(){
@@ -95,41 +121,45 @@ async function updateTimeOptions(){
 
   if(!date) return;
 
+  // 現在のメニュー時間で再計算
   const menus = Array.from(menuContainer.querySelectorAll(".menu-select"))
     .map(s=>s.value)
     .filter(v=>v!=="");
+
   const required = calcTotalMinutes(menus);
+  const closeTime = "19:00";
 
   const {data} = await supabaseClient
     .from("reservations")
     .select("time,end_time")
     .eq("date",date);
 
-  const reserved = data.map(r=>({start:r.time,end:r.end_time}));
-
-  const closeTime = "19:00";
+  const reserved = data.map(r=>({
+    start: r.time.trim(),
+    end:   r.end_time.trim()
+  }));
 
   Array.from(timeSelect.options).forEach(o=>{
     if(!o.value) return;
 
-    const optionStart = o.value;
-    const optionEnd = addMinutesToTime(o.value, required);
+    const start = o.value.trim();
+    const end   = addMinutesToTime(start, required);
 
-    // ★ 営業終了チェック
-    if(optionEnd > closeTime){
+    // 営業終了チェック
+    if(end > closeTime){
       o.disabled = true;
       o.style.color = "#aaa";
       return;
     }
 
-    // ★ 30分重複チェック
-    const halfEnd = addMinutesToTime(o.value,30);
-    reserved.forEach(r=>{
-      if(isOverlap(optionStart,halfEnd,r.start,r.end)){
+    // 完全一致の重複判定
+    for(const r of reserved){
+      if(isOverlap(start,end,r.start,r.end)){
         o.disabled = true;
         o.style.color = "#aaa";
+        return;
       }
-    });
+    }
   });
 }
 
@@ -180,7 +210,7 @@ cancelBtn.addEventListener("click",function(){
   if(greeting) greeting.style.display = "block";
 });
 
-// ===== 確定（DB保存＋LINE通知） =====
+// ===== 確定（保存＋通知） =====
 okBtn.addEventListener("click", async function(){
 
   const name = document.getElementById("name").value;
@@ -201,7 +231,7 @@ okBtn.addEventListener("click", async function(){
     return;
   }
 
-  // ========= LINE 通知 =========
+  // LINE通知
   try{
     await fetch("https://bcahztzetpfuklipjmxx.functions.supabase.co/dynamic-service",{
       method:"POST",
@@ -230,16 +260,15 @@ function showCompleteScreen(){
     <h2>予約を受付ました。</h2>
     <p>ありがとうございます。</p>
     <button id="closeBtn"
-      style="padding:15px 25px;font-size:18px;border-radius:8px;background:#000;color:#fff;border:none;">
+      style="padding:15px 25px;font-size:18px;border-radius:8px;background:#000;
+             color:#fff;border:none;">
       閉じる
     </button>
   `;
   document.querySelector(".container").appendChild(div);
 
-  // ★ 完全安定版「閉じる」
   document.getElementById("closeBtn").addEventListener("click", function(){
 
-    // LINE(LIFF)
     if(window.liff && typeof liff.closeWindow === "function"){
       try{
         liff.closeWindow();
@@ -247,13 +276,11 @@ function showCompleteScreen(){
       }catch(_){}
     }
 
-    // 戻れる履歴がある
     if(window.history.length > 1){
       window.history.back();
       return;
     }
 
-    // 戻れない → トップへ
     window.location.href =
       "https://candoll0430tsuyoshi-afk.github.io/candoll-reserve/";
   });
