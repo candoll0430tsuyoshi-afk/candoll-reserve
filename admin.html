@@ -17,11 +17,14 @@
         max-width: 600px;
         margin: 30px auto;
         padding: 20px;
+        text-align: center;
     }
 
-    h1 {
-        text-align: center;
-        margin-bottom: 20px;
+    /* ロゴ画像 */
+    .logo {
+        width: 260px;
+        margin: 0 auto 25px;
+        display: block;
     }
 
     /* パスワード画面 */
@@ -30,10 +33,11 @@
         padding: 25px;
         border-radius: 10px;
         box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        text-align: left;
     }
 
     input, button {
-        width: 100%;                /* ← パスワード欄とボタンの幅を完全に統一 */
+        width: 100%;
         padding: 15px;
         font-size: 18px;
         border-radius: 6px;
@@ -95,7 +99,10 @@
 
 <div class="container">
 
-    <h1>Candoll管理画面</h1>
+    <!-- ★ ロゴだけを配置 -->
+    <img src="https://candoll0430tsuyoshi-afk.github.io/candoll-reserve/logo.png"
+         alt="Candoll ロゴ"
+         class="logo">
 
     <!-- パスワード入力 -->
     <div id="login-box">
