@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Candoll 管理画面</title>
+
+<style>
+    body {
+        font-family: "Hiragino Sans", "Hiragino Kaku Gothic ProN", sans-serif;
+        background: #f5f5f5;
+        margin: 0;
+        padding: 0;
+    }
+
+    .container {
+        max-width: 600px;
+        margin: 30px auto;
+        padding: 20px;
+    }
+
+    h1 {
+        text-align: center;
+        margin-bottom: 20px;
+    }
+
+    /* パスワード画面 */
+    #login-box {
+        background: #fff;
+        padding: 25px;
+        border-radius: 10px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    input {
+        width: 100%;
+        padding: 12px;
+        margin-top: 10px;
+        font-size: 18px;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+    }
+
+    button {
+        width: 100%;
+        padding: 15px;
+        margin-top: 20px;
+        background: #000;
+        color: #fff;
+        font-size: 20px;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+    }
+
+    /* 予約一覧 */
+    #reserve-list {
+        display: none;
+        margin-top: 30px;
+    }
+
+    .date-title {
+        background: #000;
+        color: #fff;
+        padding: 10px;
+        margin-top: 25px;
+        border-radius: 5px;
+        font-size: 20px;
+    }
+
+    .reserve-item {
+        background: #fff;
+        padding: 12px 15px;
+        margin-top: 10px;
+        border-radius: 6px;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+    }
+
+    .time {
+        font-weight: bold;
+        margin-bottom: 5px;
+    }
+
+    .menu {
+        color: #333;
+        margin-bottom: 3px;
+    }
+
+    .name {
+        color: #666;
+    }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+    <h1>📅 Candoll 予約一覧</h1>
+
+    <!-- パスワード入力 -->
+    <div id="login-box">
+        <p>管理者パスワードを入力してください。</p>
+        <input type="password" id="admin-pass" placeholder="パスワード">
+        <button id="login-btn">ログイン</button>
+        <p id="login-error" style="color:red; display:none; margin-top:10px;">
+            パスワードが違います
+        </p>
+    </div>
+
+    <!-- 予約一覧 -->
+    <div id="reserve-list"></div>
+
+</div>
+
+<script src="admin.js"></script>
+
+</body>
+</html>
