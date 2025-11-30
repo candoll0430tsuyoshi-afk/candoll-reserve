@@ -32,24 +32,24 @@
         box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     }
 
-    input {
-        width: 100%;
-        padding: 12px;
-        margin-top: 10px;
+    input, button {
+        width: 100%;                /* ← パスワード欄とボタンの幅を完全に統一 */
+        padding: 15px;
         font-size: 18px;
-        border: 1px solid #ccc;
         border-radius: 6px;
+        box-sizing: border-box;
+    }
+
+    input {
+        margin-top: 10px;
+        border: 1px solid #ccc;
     }
 
     button {
-        width: 100%;
-        padding: 15px;
         margin-top: 20px;
         background: #000;
         color: #fff;
-        font-size: 20px;
         border: none;
-        border-radius: 8px;
         cursor: pointer;
     }
 
@@ -95,11 +95,11 @@
 
 <div class="container">
 
-    <h1>📅 Candoll 予約一覧</h1>
+    <h1>Candoll管理画面</h1>
 
     <!-- パスワード入力 -->
     <div id="login-box">
-        <p>管理者パスワードを入力してください。</p>
+        <p>Pass</p>
         <input type="password" id="admin-pass" placeholder="パスワード">
         <button id="login-btn">ログイン</button>
         <p id="login-error" style="color:red; display:none; margin-top:10px;">
