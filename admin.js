@@ -1,205 +1,183 @@
-// ===============================
-// admin.js（現行コードベース + 追加機能版）
-// ===============================
+// ==============================
+// Candoll 管理画面 admin.js 完全版
+// （現行コードベースに追加処理を統合）
+// ==============================
 
-// 管理API
-const API_URL =
-  "https://bcahztzetpfuklipjmxx.functions.supabase.co/admin-service";
+// ====== API URL ======
+const API_URL = "https://bcahztzetpfuklipjmxx.functions.supabase.co/admin-service";
 
-// DOM
+// ====== DOM 取得 ======
 const loginBox = document.getElementById("login-box");
-const loginBtn = document.getElementById("login-btn");
+const reserveList = document.getElementById("reserve-list");
 const loginError = document.getElementById("login-error");
-const passInput = document.getElementById("admin-pass");
 
-const dateNav = document.getElementById("date-nav");
-const currentDayLabel = document.getElementById("currentDay");
-const prevBtn = document.getElementById("prevDay");
-const nextBtn = document.getElementById("nextDay");
-const daysContainer = document.getElementById("days-container");
+// ====== ログイン処理 ======
+document.getElementById("login-btn").addEventListener("click", async () => {
+    const pass = document.getElementById("admin-pass").value;
 
-// 日付基準
-let baseDate = new Date();
+    const res = await fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            mode: "list",
+            password: pass
+        })
+    });
 
-// 所要時間データ（現行コードそのまま）
-const MENU_DATA = {
-    "カット": 49,
-    "カット（大学生・専門学生）": 49,
-    "カット（中学生以下）": 49,
-    "前髪カット": 19,
-    "カラー": 70,
-    "リタッチカラー": 70,
-    "ダブルカラー": 119,
-    "アクセントカラー": 119,
-    "ヘナ": 70,
-    "モイストパーマ": 70,
-    "ポイントパーマ": 70,
-    "ストレートパーマ": 150,
-    "ポイントストレートパーマ": 120,
-    "トリートメント": 29,
-    "来店時に相談（２時間枠）": 119,
-    "来店時に相談（３時間枠）": 179,
-    "来店時に相談（4時間枠）": 239,
-    "カット＋カラー": 119,
-    "カット＋リタッチカラー": 119,
-    "カット＋パーマ": 134,
-    "カット＋ストレート": 209
-};
-
-// 時間帯（表示固定）
-const TIME_LIST = [
-  "10:00","10:30","11:00","11:30",
-  "12:00","12:30","13:00","13:30",
-  "14:00","14:30","15:00","15:30",
-  "16:00","16:30","17:00","17:30",
-  "18:00"
-];
-
-//-------------------------------------
-// 日付 → YYYY-MM-DD
-//-------------------------------------
-function toYMD(date) {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, "0");
-  const d = String(date.getDate()).padStart(2, "0");
-  return `${y}-${m}-${d}`;
-}
-
-//-------------------------------------
-// 日付 → 2025/01/30（木）
-//-------------------------------------
-function formatJp(date) {
-  const w = ["日","月","火","水","木","金","土"];
-  return `${date.getFullYear()}/${date.getMonth()+1}/${date.getDate()}（${w[date.getDay()]}）`;
-}
-
-//-------------------------------------
-// Supabaseから予約取得
-//-------------------------------------
-async function fetchReservations(pass) {
-  const res = await fetch(API_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ mode: "list", password: pass })
-  });
-
-  if (!res.ok) return null;
-  const json = await res.json();
-  return json.ok ? json.data : null;
-}
-
-//-------------------------------------
-// ログイン処理（現行コードのまま）
-//-------------------------------------
-loginBtn.addEventListener("click", async () => {
-  const pass = passInput.value.trim();
-  if (!pass) return;
-
-  const ok = await fetchReservations(pass);
-  if (!ok) {
-    loginError.style.display = "block";
-    return;
-  }
-
-  loginError.style.display = "none";
-  localStorage.setItem("candoll_admin_pass", pass);
-
-  loginBox.style.display = "none";
-  dateNav.style.display = "block";
-
-  renderAllDays();
-});
-
-//-------------------------------------
-// 自動ログイン（現行コードのまま）
-//-------------------------------------
-const savedPass = localStorage.getItem("candoll_admin_pass");
-if (savedPass) {
-  loginBox.style.display = "none";
-  dateNav.style.display = "block";
-  renderAllDays();
-}
-
-//-------------------------------------
-// 3日分の表示
-//-------------------------------------
-async function renderAllDays() {
-  const pass = localStorage.getItem("candoll_admin_pass");
-  const all = await fetchReservations(pass);
-  if (!all) return;
-
-  daysContainer.innerHTML = "";
-
-  const before = new Date(baseDate);
-  before.setDate(baseDate.getDate() - 1);
-
-  const after = new Date(baseDate);
-  after.setDate(baseDate.getDate() + 1);
-
-  const three = [
-    { date: before },
-    { date: baseDate },
-    { date: after }
-  ];
-
-  currentDayLabel.textContent = formatJp(baseDate);
-
-  three.forEach(info => {
-    const ymd = toYMD(info.date);
-    const dayData = all.filter(r => r.date === ymd);
-
-    const box = document.createElement("div");
-    box.style.marginBottom = "30px";
-
-    box.innerHTML = `
-      <div class="date-title">${formatJp(info.date)}</div>
-      <div id="list-${ymd}"></div>
-    `;
-
-    daysContainer.appendChild(box);
-    renderOneDay(ymd, dayData, document.getElementById(`list-${ymd}`));
-  });
-}
-
-//-------------------------------------
-// 1日の時間割表示（予約あり/空き）
-//-------------------------------------
-function renderOneDay(dateYmd, reservations, container) {
-  container.innerHTML = "";
-
-  TIME_LIST.forEach(time => {
-    const found = reservations.find(r => r.time === time);
-
-    const div = document.createElement("div");
-    div.className = "reserve-item";
-
-    if (found) {
-      div.style.background = "#ffeaea";
-      div.innerHTML = `
-        <div class="time">${time}〜${found.end_time}</div>
-        <div class="menu">${found.menus}</div>
-        <div class="name">👤 ${found.name}</div>
-      `;
-    } else {
-      div.style.background = "#e8ffe8";
-      div.innerHTML = `
-        <div class="time">${time}（空き）</div>
-      `;
+    if (!res.ok) {
+        loginError.style.display = "block";
+        return;
     }
 
-    container.appendChild(div);
-  });
+    const json = await res.json();
+    if (!json.ok) {
+        loginError.style.display = "block";
+        return;
+    }
+
+    // ログイン成功
+    loginBox.style.display = "none";
+    reserveList.style.display = "block";
+
+    renderReservationTable(json.data);
+});
+
+
+// ==============================
+// 1日＋前後1日の予約一覧を表示する
+// ==============================
+
+// 今日を基準にする
+let centerDate = new Date();
+
+// 描画
+function renderReservationTable(allData) {
+
+    reserveList.innerHTML = "";
+
+    // centerDate の前後 1日を作成
+    const dates = [
+        shiftDate(centerDate, -1),
+        centerDate,
+        shiftDate(centerDate, +1)
+    ];
+
+    dates.forEach(date => {
+        const dateStr = formatYMD(date);
+
+        // タイトル
+        const dow = ["日","月","火","水","木","金","土"][date.getDay()];
+        const title = document.createElement("div");
+        title.className = "date-title";
+        title.textContent = `${dateStr}（${dow}）`;
+        reserveList.appendChild(title);
+
+        // その日の予約だけ取り出す
+        const dayData = allData.filter(r => r.date === dateStr);
+
+        // ▶ ホットペッパー風 30分区切り枠を生成
+        renderOneDayBlocks(dateStr, dayData);
+    });
+
+    // 全体を少し下げる
+    reserveList.style.marginBottom = "80px";
 }
 
-//-------------------------------------
-// 日付移動
-//-------------------------------------
-prevBtn.addEventListener("click", () => {
-  baseDate.setDate(baseDate.getDate() - 1);
-  renderAllDays();
-});
 
-nextBtn.addEventListener("click", () => {
-  baseDate.setDate(baseDate.getDate() + 1);
-  renderAllDays();
-});
+// ==============================
+// 30分刻み枠生成（10:00〜19:00）
+// ==============================
+function renderOneDayBlocks(dateStr, reservations) {
+
+    const container = document.createElement("div");
+
+    // 30分刻み生成
+    const times = [];
+    for (let h = 10; h <= 18; h++) {
+        times.push(`${h.toString().padStart(2, "0")}:00`);
+        times.push(`${h.toString().padStart(2, "0")}:30`);
+    }
+
+    // 終了時刻が19:00 を超えない枠だけ
+    times.push("19:00");
+
+    times.forEach(time => {
+
+        const block = document.createElement("div");
+        block.style.margin = "8px 0";
+        block.style.padding = "12px";
+        block.style.borderRadius = "6px";
+        block.style.textAlign = "center";
+        block.style.fontSize = "18px";
+
+        // この枠が予約とかぶってるか判定
+        const rsv = findOverlapped(reservations, time);
+
+        if (rsv) {
+            // ================================
+            //      予約がある → 赤背景
+            // ================================
+            block.style.background = "#ffd6d6";
+
+            const end = rsv.end_time || rsv.time;
+
+            block.innerHTML = `
+                <div style="font-weight:bold;">${rsv.time}〜${end}</div>
+                <div>${rsv.menus}</div>
+                <div style="margin-top:3px; font-size:15px;">👤 ${rsv.name}</div>
+            `;
+
+        } else {
+            // ================================
+            //      空き枠 → 緑背景
+            // ================================
+            block.style.background = "#d8ffe0";
+            block.textContent = `${time}（空き）`;
+        }
+
+        container.appendChild(block);
+    });
+
+    reserveList.appendChild(container);
+}
+
+
+// ==============================
+// 予約とかぶっている時間帯を判定
+// ==============================
+function findOverlapped(list, startTime) {
+
+    function toMinutes(t) {
+        const [h, m] = t.split(":").map(Number);
+        return h * 60 + m;
+    }
+
+    const startMin = toMinutes(startTime);
+
+    for (const r of list) {
+        const rStart = toMinutes(r.time);
+        const rEnd = toMinutes(r.end_time || r.time);
+
+        if (startMin >= rStart && startMin < rEnd) {
+            return r;
+        }
+    }
+    return null;
+}
+
+
+// ==============================
+// 日付ユーティリティ
+// ==============================
+function shiftDate(base, offset) {
+    const d = new Date(base);
+    d.setDate(d.getDate() + offset);
+    return d;
+}
+
+function formatYMD(d) {
+    const y = d.getFullYear();
+    const m = (d.getMonth()+1).toString().padStart(2,"0");
+    const day = d.getDate().toString().padStart(2,"0");
+    return `${y}-${m}-${day}`;
+}
