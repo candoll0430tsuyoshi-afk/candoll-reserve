@@ -1,6 +1,6 @@
 // ==============================
 // Candoll 管理画面 admin.js 完全版
-// （現行コードベースに追加処理を統合）
+// （現行コードベース / 今日・明日・明後日の表示版）
 // ==============================
 
 // ====== API URL ======
@@ -44,22 +44,18 @@ document.getElementById("login-btn").addEventListener("click", async () => {
 
 
 // ==============================
-// 1日＋前後1日の予約一覧を表示する
+// ★ 今日 / 明日 / 明後日 の 3日分を表示する
 // ==============================
+let baseDate = new Date();  // 今日
 
-// 今日を基準にする
-let centerDate = new Date();
-
-// 描画
 function renderReservationTable(allData) {
 
     reserveList.innerHTML = "";
 
-    // centerDate の前後 1日を作成
     const dates = [
-        shiftDate(centerDate, -1),
-        centerDate,
-        shiftDate(centerDate, +1)
+        shiftDate(baseDate, 0),   // 今日
+        shiftDate(baseDate, 1),   // 明日
+        shiftDate(baseDate, 2)    // 明後日
     ];
 
     dates.forEach(date => {
@@ -79,7 +75,6 @@ function renderReservationTable(allData) {
         renderOneDayBlocks(dateStr, dayData);
     });
 
-    // 全体を少し下げる
     reserveList.style.marginBottom = "80px";
 }
 
@@ -91,14 +86,11 @@ function renderOneDayBlocks(dateStr, reservations) {
 
     const container = document.createElement("div");
 
-    // 30分刻み生成
     const times = [];
     for (let h = 10; h <= 18; h++) {
         times.push(`${h.toString().padStart(2, "0")}:00`);
         times.push(`${h.toString().padStart(2, "0")}:30`);
     }
-
-    // 終了時刻が19:00 を超えない枠だけ
     times.push("19:00");
 
     times.forEach(time => {
@@ -110,13 +102,11 @@ function renderOneDayBlocks(dateStr, reservations) {
         block.style.textAlign = "center";
         block.style.fontSize = "18px";
 
-        // この枠が予約とかぶってるか判定
+        // 予約かぶり判定
         const rsv = findOverlapped(reservations, time);
 
         if (rsv) {
-            // ================================
-            //      予約がある → 赤背景
-            // ================================
+            // ■ 予約あり（赤背景）
             block.style.background = "#ffd6d6";
 
             const end = rsv.end_time || rsv.time;
@@ -126,11 +116,8 @@ function renderOneDayBlocks(dateStr, reservations) {
                 <div>${rsv.menus}</div>
                 <div style="margin-top:3px; font-size:15px;">👤 ${rsv.name}</div>
             `;
-
         } else {
-            // ================================
-            //      空き枠 → 緑背景
-            // ================================
+            // ■ 空き（緑）
             block.style.background = "#d8ffe0";
             block.textContent = `${time}（空き）`;
         }
