@@ -8,7 +8,7 @@
 <style>
     body {
         font-family: "Hiragino Sans", "Hiragino Kaku Gothic ProN", sans-serif;
-        background: #ffffff; /* ← ロゴの白に変更 */
+        background: #ffffff;
         margin: 0;
         padding: 0;
     }
@@ -29,7 +29,7 @@
 
     /* パスワード画面（背景をグレーに変更） */
     #login-box {
-        background: #f5f5f5;  /* ← もともとの背景色をここへ */
+        background: #f5f5f5;
         padding: 25px;
         border-radius: 10px;
         box-shadow: 0 2px 8px rgba(0,0,0,0.1);
@@ -104,7 +104,7 @@
          alt="Candoll ロゴ"
          class="logo">
 
-    <!-- パスワード入力ボックス（枠がグレー） -->
+    <!-- ★ パスワード入力ボックス -->
     <div id="login-box">
         <p>Pass</p>
         <input type="password" id="admin-pass" placeholder="パスワード">
@@ -114,7 +114,18 @@
         </p>
     </div>
 
-    <!-- 予約一覧 -->
+    <!-- ▼▼▼ ここから追加：日付ナビゲーション ▼▼▼ -->
+    <div id="date-nav" style="display:none; text-align:center; margin:20px 0;">
+        <button id="prevDay" style="padding:10px 16px;">◀ 前日</button>
+        <span id="currentDay" style="font-size:18px; font-weight:bold; margin:0 12px;">-</span>
+        <button id="nextDay" style="padding:10px 16px;">翌日 ▶</button>
+    </div>
+
+    <!-- 3日分を表示するエリア -->
+    <div id="days-container"></div>
+    <!-- ▲▲▲ 追加ここまで ▲▲▲ -->
+
+    <!-- 予約一覧（旧エリアは残すが内容は days-container に移行） -->
     <div id="reserve-list"></div>
 
 </div>
