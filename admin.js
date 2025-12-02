@@ -1,6 +1,5 @@
 // ==============================
-// Candoll 管理画面 admin.js 最終完全版
-// reservations + holidays 連動
+// Candoll 管理画面 admin.js 修正版（listAll → list に統一）
 // ==============================
 
 const API_URL = "https://bcahztzetpfuklipjmxx.functions.supabase.co/admin-service";
@@ -26,7 +25,7 @@ document.getElementById("login-btn").onclick = async () => {
   const res = await fetch(API_URL, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ mode: "listAll", password: pass }),
+    body: JSON.stringify({ mode: "list", password: pass }), // 修正
   });
 
   if (!res.ok) return (loginError.style.display = "block");
@@ -58,15 +57,17 @@ async function fetchAll() {
   const res = await fetch(API_URL, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ mode: "listAll", password: pass }),
+    body: JSON.stringify({ mode: "list", password: pass }), // 修正
   });
 
   if (!res.ok) return null;
-  return await res.json();
+  const json = await res.json();
+
+  return json;
 }
 
 // ------------------------------
-// 表示（今日 / 明日 / 明後日）
+// 日付関係
 // ------------------------------
 let baseDate = new Date();
 
@@ -85,11 +86,14 @@ function shiftDate(d, n) {
   return t;
 }
 
+// ------------------------------
+// メイン表示
+// ------------------------------
 async function loadAll() {
   const all = await fetchAll();
   if (!all) return (reserveList.innerHTML = "読み込みエラー");
 
-  const reservations = all.reservations;
+  const reservations = all.data;
   const holidays = all.holidays.map((h) => h.date);
 
   reserveList.innerHTML = "";
@@ -116,7 +120,7 @@ async function loadAll() {
 }
 
 // ------------------------------
-// 1日分の表示
+// 1日の表示
 // ------------------------------
 function renderDayBlocks(date, list, isHoliday) {
   const wrap = document.createElement("div");
