@@ -27,7 +27,7 @@ document.getElementById("login-btn").onclick = async () => {
     const res = await fetch(API_URL, {
         method: "POST",
         headers: {"Content-Type":"application/json"},
-        body: JSON.stringify({ mode:"list", password: pass })
+        body: JSON.stringify({ mode:"listAll", password: pass })
     });
 
     if (!res.ok) {
