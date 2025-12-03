@@ -128,7 +128,7 @@ async function loadAll() {
 
   renderHolidayControl();
 
-  // ▼ 新しい日付ナビ更新
+  // ▼ 黒ボタン日付ナビ更新
   dayNavi.style.display = "block";
   navCurrent.textContent = jp(baseDate);
 }
@@ -190,14 +190,13 @@ function overlap(list, start) {
 }
 
 // ------------------------------
-// 休業日 UI（トリガーだけ変更）
+// 休業日（prompt だけ新UIにした）
 // ------------------------------
 function renderHolidayControl() {
   const pass = localStorage.getItem("candoll_admin_pass");
 
-  // ▼ 休日追加（プルダウンから開く）
   menuAdd.onclick = () => {
-    const d = prompt("追加する休日を選んでください（YYYY-MM-DD）");
+    const d = prompt("追加する休日（YYYY-MM-DD）");
     if (!d) return;
     fetch(API_URL, {
       method: "POST",
@@ -206,9 +205,8 @@ function renderHolidayControl() {
     }).then(() => loadAll());
   };
 
-  // ▼ 休日解除
   menuDel.onclick = () => {
-    const d = prompt("解除する休日を選んでください（YYYY-MM-DD）");
+    const d = prompt("解除する休日（YYYY-MM-DD）");
     if (!d) return;
     fetch(API_URL, {
       method: "POST",
@@ -219,7 +217,7 @@ function renderHolidayControl() {
 }
 
 // ------------------------------
-// ▼ 日付ナビゲーション
+// ▼ 日付ナビ
 // ------------------------------
 navPrev.onclick = () => {
   baseDate = shiftDate(baseDate, -1);
@@ -232,7 +230,7 @@ navNext.onclick = () => {
 };
 
 // ------------------------------
-// ▼ ログアウト（新UI）
+// ▼ ログアウト（プルダウン）
 // ------------------------------
 menuLogout.onclick = () => {
   localStorage.removeItem("candoll_admin_pass");
