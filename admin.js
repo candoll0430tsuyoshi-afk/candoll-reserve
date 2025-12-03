@@ -1,5 +1,5 @@
 // ==============================
-// Candoll 管理画面 admin.js（新UI対応 最小変更版）
+// Candoll 管理画面 admin.js（新UI同期・最小変更版）
 // ==============================
 
 const API_URL = "https://bcahztzetpfuklipjmxx.functions.supabase.co/admin-service";
@@ -8,12 +8,12 @@ const loginBox = document.getElementById("login-box");
 const reserveList = document.getElementById("reserve-list");
 const loginError = document.getElementById("login-error");
 
-// ▼ 新UI（プルダウンメニュー）
+// ▼ プルダウン
 const menuLogout = document.getElementById("m-logout");
 const menuAdd = document.getElementById("m-add");
 const menuDel = document.getElementById("m-del");
 
-// ▼ 日付ナビ
+// ▼ 日付ナビ（黒ボタン左右）
 const dayNavi = document.getElementById("day-navi");
 const navPrev = document.getElementById("nav-prev");
 const navNext = document.getElementById("nav-next");
@@ -72,13 +72,11 @@ async function fetchAll() {
   });
 
   if (!res.ok) return null;
-  const json = await res.json();
-
-  return json;
+  return await res.json();
 }
 
 // ------------------------------
-// 日付関係
+// 日付
 // ------------------------------
 let baseDate = new Date();
 
@@ -98,7 +96,7 @@ function shiftDate(d, n) {
 }
 
 // ------------------------------
-// メイン表示
+// メイン表示（reserve-list のみ使用）
 // ------------------------------
 async function loadAll() {
   const all = await fetchAll();
@@ -107,34 +105,40 @@ async function loadAll() {
   const reservations = all.data;
   const holidays = all.holidays.map((h) => h.date);
 
+  // ▼ 表示クリア（2重描画防止）
   reserveList.innerHTML = "";
 
+  // ▼ 日付ナビ更新（UI通りに中央）
+  dayNavi.style.display = "block";
+  navCurrent.textContent = jp(baseDate);
+
+  // ▼ 3日分を描画
   [0, 1, 2].forEach((n) => {
     const d = shiftDate(baseDate, n);
     const dStr = ymd(d);
 
+    // タイトル
     const title = document.createElement("div");
     title.className = "date-title";
     title.style.cursor = "pointer";
     title.textContent = jp(d);
+
     title.onclick = () => {
       baseDate = d;
       loadAll();
     };
+
     reserveList.appendChild(title);
 
+    // 1日分の枠を描画
     renderDayBlocks(dStr, reservations.filter((r) => r.date === dStr), holidays.includes(dStr));
   });
 
   renderHolidayControl();
-
-  // ▼ 黒ボタン日付ナビ更新
-  dayNavi.style.display = "block";
-  navCurrent.textContent = jp(baseDate);
 }
 
 // ------------------------------
-// 1日の表示
+// 1日の詳細描画
 // ------------------------------
 function renderDayBlocks(date, list, isHoliday) {
   const wrap = document.createElement("div");
@@ -190,7 +194,7 @@ function overlap(list, start) {
 }
 
 // ------------------------------
-// 休業日（prompt だけ新UIにした）
+// 休日（プルダウン対応）
 // ------------------------------
 function renderHolidayControl() {
   const pass = localStorage.getItem("candoll_admin_pass");
@@ -217,7 +221,7 @@ function renderHolidayControl() {
 }
 
 // ------------------------------
-// ▼ 日付ナビ
+// 日付ナビ
 // ------------------------------
 navPrev.onclick = () => {
   baseDate = shiftDate(baseDate, -1);
@@ -230,7 +234,7 @@ navNext.onclick = () => {
 };
 
 // ------------------------------
-// ▼ ログアウト（プルダウン）
+// ログアウト
 // ------------------------------
 menuLogout.onclick = () => {
   localStorage.removeItem("candoll_admin_pass");
