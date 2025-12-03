@@ -27,6 +27,22 @@
         display: block;
     }
 
+    /* ▼ ログアウトボタン（追加） ▼ */
+    #logout-btn {
+        display: none;
+        position: fixed;
+        top: 10px;
+        right: 10px;
+        padding: 8px 14px;
+        background: #d9534f;
+        color: #fff;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 14px;
+        z-index: 999;
+    }
+
     /* パスワード画面（背景をグレーに変更） */
     #login-box {
         background: #f5f5f5;
@@ -143,6 +159,9 @@
 </head>
 <body>
 
+<!-- ★ ログアウトボタン（追加） -->
+<button id="logout-btn">ログアウト</button>
+
 <div class="container">
 
     <!-- ★ ロゴ -->
@@ -194,17 +213,31 @@ toggleBtn.addEventListener("click", () => {
     passInput.type = isHidden ? "text" : "password";
 
     if (isHidden) {
-        // 表示中 → アンロック状態
         toggleBtn.classList.remove("locked");
         toggleBtn.classList.add("unlocked");
     } else {
-        // 非表示 → ロック状態
         toggleBtn.classList.remove("unlocked");
         toggleBtn.classList.add("locked");
     }
 });
 </script>
 
+<!-- ▼ ログアウト処理（追加） ▼ -->
+<script>
+document.getElementById("logout-btn").addEventListener("click", () => {
+    localStorage.removeItem("candoll-admin-password");
+
+    document.getElementById("login-box").style.display = "block";
+    document.getElementById("reserve-list").style.display = "none";
+    document.getElementById("date-nav").style.display = "none";
+    document.getElementById("days-container").innerHTML = "";
+    document.getElementById("admin-pass").value = "";
+
+    document.getElementById("logout-btn").style.display = "none";
+});
+</script>
+
 </body>
 </html>
+
 
