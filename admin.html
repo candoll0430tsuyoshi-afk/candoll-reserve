@@ -20,33 +20,78 @@
         text-align: center;
     }
 
-    /* ロゴ画像 */
     .logo {
         width: 260px;
         margin: 0 auto 25px;
         display: block;
     }
 
-    /* ▼ ログアウトボタン（控えめグレーデザイン） ▼ */
-    #logout-btn {
-        display: none;
+    /* ▼ 右上メニュー（▼ボタン） ▼ */
+    #menu-btn {
         position: fixed;
-        top: 12px;
+        top: 10px;
         right: 12px;
-        padding: 6px 14px;
+        padding: 6px 12px;
         background: #f6f6f6;
-        color: #555;
         border: 1px solid #ddd;
-        border-radius: 12px;
+        border-radius: 8px;
         cursor: pointer;
-        font-size: 13px;
+        font-size: 14px;
         z-index: 999;
     }
-    #logout-btn:hover {
-        background: #ededed;
+
+    #menu-box {
+        display: none;
+        position: fixed;
+        top: 46px;
+        right: 12px;
+        background: #fff;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        width: 140px;
+        text-align: left;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        z-index: 1000;
     }
 
-    /* パスワード画面（背景をグレーに変更） */
+    #menu-box div {
+        padding: 12px;
+        cursor: pointer;
+        border-bottom: 1px solid #eee;
+        font-size: 15px;
+    }
+    #menu-box div:hover {
+        background: #f0f0f0;
+    }
+    #menu-box div:last-child {
+        border-bottom: none;
+    }
+
+    /* ▼ 日付ナビ（中央に日付・左右にボタン） ▼ */
+    #day-navi {
+        display:none;
+        margin: 20px 0;
+        text-align: center;
+        font-size: 18px;
+        font-weight: bold;
+    }
+    #day-navi button {
+        padding: 6px 14px;
+        margin: 0 14px;
+        font-size: 15px;
+        border: 1px solid #ccc;
+        background: #fafafa;
+        border-radius: 8px;
+        cursor: pointer;
+    }
+    #day-navi button:hover {
+        background: #f0f0f0;
+    }
+    #nav-current {
+        font-size: 20px;
+        font-weight: bold;
+    }
+
     #login-box {
         background: #f5f5f5;
         padding: 25px;
@@ -76,7 +121,6 @@
         cursor: pointer;
     }
 
-    /* 予約一覧 */
     #reserve-list {
         display: none;
         margin-top: 30px;
@@ -99,21 +143,10 @@
         box-shadow: 0 1px 4px rgba(0,0,0,0.1);
     }
 
-    .time {
-        font-weight: bold;
-        margin-bottom: 5px;
-    }
+    .time { font-weight: bold; margin-bottom: 5px; }
+    .menu { color: #333; margin-bottom: 3px; }
+    .name { color: #666; }
 
-    .menu {
-        color: #333;
-        margin-bottom: 3px;
-    }
-
-    .name {
-        color: #666;
-    }
-
-    /* ▼ パスワード鍵アイコン ▼ */
     .lock-icon {
         position: absolute;
         right: 12px;
@@ -123,7 +156,6 @@
         height: 24px;
         cursor: pointer;
     }
-
     .lock-icon::before,
     .lock-icon::after {
         content: "";
@@ -132,8 +164,6 @@
         transform: translateX(-50%);
         box-sizing: border-box;
     }
-
-    /* 鍵のわっか部分（ロック状態） */
     .lock-icon::before {
         top: 1px;
         width: 14px;
@@ -143,8 +173,6 @@
         border-radius: 10px 10px 0 0;
         transition: transform 0.2s ease, left 0.2s ease;
     }
-
-    /* 鍵の本体部分 */
     .lock-icon::after {
         top: 9px;
         width: 16px;
@@ -152,8 +180,6 @@
         border-radius: 3px;
         background: #555;
     }
-
-    /* アンロック状態（わっかを少し傾ける） */
     .lock-icon.unlocked::before {
         transform: translateX(-50%) rotate(-25deg);
         left: 55%;
@@ -162,21 +188,23 @@
 </head>
 <body>
 
-<!-- ★ ログアウトボタン -->
-<button id="logout-btn">ログアウト</button>
+<!-- ▼ プルダウンメニュー ▼ -->
+<button id="menu-btn">▼</button>
+<div id="menu-box">
+    <div id="m-logout">ログアウト</div>
+    <div id="m-add">休日追加</div>
+    <div id="m-del">休日解除</div>
+</div>
 
 <div class="container">
 
-    <!-- ★ ロゴ -->
     <img src="https://candoll0430tsuyoshi-afk.github.io/candoll-reserve/logo.png"
          alt="Candoll ロゴ"
          class="logo">
 
-    <!-- ★ パスワード入力ボックス -->
     <div id="login-box">
         <p>Pass</p>
 
-        <!-- ▼ パスワード + 鍵アイコン -->
         <div style="position: relative; width: 100%;">
             <input type="password" id="admin-pass" placeholder="パスワード" style="padding-right: 45px;">
             <span id="toggle-pass" class="lock-icon locked"></span>
@@ -188,32 +216,20 @@
         </p>
     </div>
 
-    <!-- ▼▼▼ 日付ナビゲーション（追加） ▼▼▼ -->
-    <div id="day-navi" style="display:none; margin:20px 0; text-align:center;">
-        <button id="nav-prev" style="padding:8px 16px;">◀ 前の日</button>
-        <span id="nav-current" style="font-size:18px; margin:0 12px; font-weight:bold;">-</span>
-        <button id="nav-next" style="padding:8px 16px;">次の日 ▶</button>
+    <!-- ▼ 日付ナビ（新） ▼ -->
+    <div id="day-navi">
+        <button id="nav-prev">◀ 前の日</button>
+        <span id="nav-current">-</span>
+        <button id="nav-next">次の日 ▶</button>
     </div>
 
-    <!-- ▼▼▼ ここから追加：日付ナビゲーション（旧） ▼▼▼ -->
-    <div id="date-nav" style="display:none; text-align:center; margin:20px 0;">
-        <button id="prevDay" style="padding:10px 16px;">◀ 前日</button>
-        <span id="currentDay" style="font-size:18px; font-weight:bold; margin:0 12px;">-</span>
-        <button id="nextDay" style="padding:10px 16px;">翌日 ▶</button>
-    </div>
-    <!-- ▲▲▲ 追加ここまで ▲▲▲ -->
-
-    <!-- 3日分を表示するエリア -->
     <div id="days-container"></div>
-
-    <!-- 予約一覧（旧エリアは残すが内容は days-container に移行） -->
     <div id="reserve-list"></div>
 
 </div>
 
 <script src="admin.js"></script>
 
-<!-- ▼ パスワード表示切替（鍵アイコン） ▼ -->
 <script>
 const passInput = document.getElementById("admin-pass");
 const toggleBtn = document.getElementById("toggle-pass");
@@ -232,19 +248,18 @@ toggleBtn.addEventListener("click", () => {
 });
 </script>
 
-<!-- ▼ ログアウト処理 ▼ -->
 <script>
-document.getElementById("logout-btn").addEventListener("click", () => {
-    localStorage.removeItem("candoll_admin_pass");
+const menuBtn = document.getElementById("menu-btn");
+const menuBox = document.getElementById("menu-box");
 
-    document.getElementById("login-box").style.display = "block";
-    document.getElementById("reserve-list").style.display = "none";
-    document.getElementById("date-nav").style.display = "none";
-    document.getElementById("day-navi").style.display = "none";
-    document.getElementById("days-container").innerHTML = "";
-    document.getElementById("admin-pass").value = "";
+menuBtn.onclick = () => {
+    menuBox.style.display = menuBox.style.display === "block" ? "none" : "block";
+};
 
-    document.getElementById("logout-btn").style.display = "none";
+document.addEventListener("click", (e) => {
+    if (!menuBtn.contains(e.target) && !menuBox.contains(e.target)) {
+        menuBox.style.display = "none";
+    }
 });
 </script>
 
