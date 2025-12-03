@@ -62,21 +62,18 @@
         border-bottom: 1px solid #eee;
         font-size: 14px;
     }
-    #menu-box div:hover {
-        background: #f0f0f0;
-    }
-    #menu-box div:last-child {
-        border-bottom: none;
-    }
+    #menu-box div:hover { background: #f0f0f0; }
+    #menu-box div:last-child { border-bottom: none; }
 
-    /* ▼ 日付ナビ（黒ボタン左右挟み） ▼ */
+    /* ▼ 日付ナビ（左右挟み） ▼ */
     #day-navi {
         display:none;
-        margin: 20px 0;
+        margin: 10px 0 25px 0;
         text-align: center;
         font-size: 18px;
         font-weight: bold;
     }
+
     #day-navi button {
         padding: 8px 16px;
         margin: 0 20px;
@@ -87,11 +84,10 @@
         cursor: pointer;
         border: none;
     }
-    #day-navi button:hover {
-        opacity: 0.8;
-    }
+
     #nav-current {
         font-size: 20px;
+        margin: 0 10px;
         font-weight: bold;
         color: #000;
     }
@@ -104,37 +100,16 @@
         text-align: left;
     }
 
-    input, button {
-        width: 100%;
-        padding: 15px;
-        font-size: 18px;
-        border-radius: 6px;
-        box-sizing: border-box;
-    }
-
-    input {
-        margin-top: 10px;
-        border: 1px solid #ccc;
-    }
-
-    button {
-        margin-top: 20px;
-        background: #000;
-        color: #fff;
-        border: none;
-        cursor: pointer;
-    }
-
     #reserve-list {
         display: none;
-        margin-top: 30px;
+        margin-top: 10px;
     }
 
     .date-title {
         background: #000;
         color: #fff;
         padding: 10px;
-        margin-top: 25px;
+        margin-top: 20px;
         border-radius: 5px;
         font-size: 20px;
     }
@@ -145,48 +120,6 @@
         margin-top: 10px;
         border-radius: 6px;
         box-shadow: 0 1px 4px rgba(0,0,0,0.1);
-    }
-
-    .time { font-weight: bold; margin-bottom: 5px; }
-    .menu { color: #333; margin-bottom: 3px; }
-    .name { color: #666; }
-
-    .lock-icon {
-        position: absolute;
-        right: 12px;
-        top: 50%;
-        transform: translateY(-50%);
-        width: 24px;
-        height: 24px;
-        cursor: pointer;
-    }
-    .lock-icon::before,
-    .lock-icon::after {
-        content: "";
-        position: absolute;
-        left: 50%;
-        transform: translateX(-50%);
-        box-sizing: border-box;
-    }
-    .lock-icon::before {
-        top: 1px;
-        width: 14px;
-        height: 10px;
-        border: 2px solid #555;
-        border-bottom: none;
-        border-radius: 10px 10px 0 0;
-        transition: transform 0.2s ease, left 0.2s ease;
-    }
-    .lock-icon::after {
-        top: 9px;
-        width: 16px;
-        height: 11px;
-        border-radius: 3px;
-        background: #555;
-    }
-    .lock-icon.unlocked::before {
-        transform: translateX(-50%) rotate(-25deg);
-        left: 55%;
     }
 </style>
 </head>
@@ -227,7 +160,7 @@
         <button id="nav-next">次の日</button>
     </div>
 
-    <div id="days-container"></div>
+    <!-- ※ days-container は JS が使ってないため削除 -->
     <div id="reserve-list"></div>
 
 </div>
@@ -238,18 +171,10 @@
 const passInput = document.getElementById("admin-pass");
 const toggleBtn = document.getElementById("toggle-pass");
 
-toggleBtn.addEventListener("click", () => {
-    const isHidden = passInput.type === "password";
-    passInput.type = isHidden ? "text" : "password";
-
-    if (isHidden) {
-        toggleBtn.classList.remove("locked");
-        toggleBtn.classList.add("unlocked");
-    } else {
-        toggleBtn.classList.remove("unlocked");
-        toggleBtn.classList.add("locked");
-    }
-});
+toggleBtn.onclick = () => {
+    passInput.type = passInput.type === "password" ? "text" : "password";
+    toggleBtn.classList.toggle("unlocked");
+};
 </script>
 
 <script>
