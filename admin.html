@@ -93,6 +93,52 @@
     .name {
         color: #666;
     }
+
+    /* ▼ パスワード鍵アイコン ▼ */
+    .lock-icon {
+        position: absolute;
+        right: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 24px;
+        height: 24px;
+        cursor: pointer;
+    }
+
+    .lock-icon::before,
+    .lock-icon::after {
+        content: "";
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+        box-sizing: border-box;
+    }
+
+    /* 鍵のわっか部分（ロック状態） */
+    .lock-icon::before {
+        top: 1px;
+        width: 14px;
+        height: 10px;
+        border: 2px solid #555;
+        border-bottom: none;
+        border-radius: 10px 10px 0 0;
+        transition: transform 0.2s ease, left 0.2s ease;
+    }
+
+    /* 鍵の本体部分 */
+    .lock-icon::after {
+        top: 9px;
+        width: 16px;
+        height: 11px;
+        border-radius: 3px;
+        background: #555;
+    }
+
+    /* アンロック状態（わっかを少し傾ける） */
+    .lock-icon.unlocked::before {
+        transform: translateX(-50%) rotate(-25deg);
+        left: 55%;
+    }
 </style>
 </head>
 <body>
@@ -108,26 +154,13 @@
     <div id="login-box">
         <p>Pass</p>
 
-        <!-- ▼▼▼ ここだけ変更（パスワード表示切替付き） ▼▼▼ -->
+        <!-- ▼ パスワード + 鍵アイコン -->
         <div style="position: relative; width: 100%;">
             <input type="password" id="admin-pass" placeholder="パスワード" style="padding-right: 45px;">
-            <span id="toggle-pass"
-                style="
-                    position: absolute;
-                    right: 12px;
-                    top: 50%;
-                    transform: translateY(-50%);
-                    cursor: pointer;
-                    user-select: none;
-                    font-size: 18px;
-                    color: #555;
-                "
-            >👁</span>
+            <span id="toggle-pass" class="lock-icon locked"></span>
         </div>
-        <!-- ▲▲▲ ここだけ変更 ▲▲▲ -->
 
         <button id="login-btn">ログイン</button>
-
         <p id="login-error" style="color:red; display:none; margin-top:10px;">
             パスワードが違います
         </p>
@@ -151,22 +184,27 @@
 
 <script src="admin.js"></script>
 
-<!-- ▼▼▼ パスワード表示切替スクリプト ▼▼▼ -->
+<!-- ▼ パスワード表示切替（鍵アイコン） ▼ -->
 <script>
 const passInput = document.getElementById("admin-pass");
 const toggleBtn = document.getElementById("toggle-pass");
 
 toggleBtn.addEventListener("click", () => {
-    if (passInput.type === "password") {
-        passInput.type = "text";
-        toggleBtn.textContent = "🙈";
+    const isHidden = passInput.type === "password";
+    passInput.type = isHidden ? "text" : "password";
+
+    if (isHidden) {
+        // 表示中 → アンロック状態
+        toggleBtn.classList.remove("locked");
+        toggleBtn.classList.add("unlocked");
     } else {
-        passInput.type = "password";
-        toggleBtn.textContent = "👁";
+        // 非表示 → ロック状態
+        toggleBtn.classList.remove("unlocked");
+        toggleBtn.classList.add("locked");
     }
 });
 </script>
-<!-- ▲▲▲ 追加ここまで ▲▲▲ -->
 
 </body>
 </html>
+
