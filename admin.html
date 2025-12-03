@@ -107,8 +107,27 @@
     <!-- ★ パスワード入力ボックス -->
     <div id="login-box">
         <p>Pass</p>
-        <input type="password" id="admin-pass" placeholder="パスワード">
+
+        <!-- ▼▼▼ ここだけ変更（パスワード表示切替付き） ▼▼▼ -->
+        <div style="position: relative; width: 100%;">
+            <input type="password" id="admin-pass" placeholder="パスワード" style="padding-right: 45px;">
+            <span id="toggle-pass"
+                style="
+                    position: absolute;
+                    right: 12px;
+                    top: 50%;
+                    transform: translateY(-50%);
+                    cursor: pointer;
+                    user-select: none;
+                    font-size: 18px;
+                    color: #555;
+                "
+            >👁</span>
+        </div>
+        <!-- ▲▲▲ ここだけ変更 ▲▲▲ -->
+
         <button id="login-btn">ログイン</button>
+
         <p id="login-error" style="color:red; display:none; margin-top:10px;">
             パスワードが違います
         </p>
@@ -131,6 +150,23 @@
 </div>
 
 <script src="admin.js"></script>
+
+<!-- ▼▼▼ パスワード表示切替スクリプト ▼▼▼ -->
+<script>
+const passInput = document.getElementById("admin-pass");
+const toggleBtn = document.getElementById("toggle-pass");
+
+toggleBtn.addEventListener("click", () => {
+    if (passInput.type === "password") {
+        passInput.type = "text";
+        toggleBtn.textContent = "🙈";
+    } else {
+        passInput.type = "password";
+        toggleBtn.textContent = "👁";
+    }
+});
+</script>
+<!-- ▲▲▲ 追加ここまで ▲▲▲ -->
 
 </body>
 </html>
