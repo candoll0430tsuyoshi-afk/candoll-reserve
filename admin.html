@@ -27,20 +27,23 @@
         display: block;
     }
 
-    /* ▼ ログアウトボタン（追加） ▼ */
+    /* ▼ ログアウトボタン（控えめグレーデザイン） ▼ */
     #logout-btn {
         display: none;
         position: fixed;
-        top: 10px;
-        right: 10px;
-        padding: 8px 14px;
-        background: #d9534f;
-        color: #fff;
-        border: none;
-        border-radius: 5px;
+        top: 12px;
+        right: 12px;
+        padding: 6px 14px;
+        background: #f6f6f6;
+        color: #555;
+        border: 1px solid #ddd;
+        border-radius: 12px;
         cursor: pointer;
-        font-size: 14px;
+        font-size: 13px;
         z-index: 999;
+    }
+    #logout-btn:hover {
+        background: #ededed;
     }
 
     /* パスワード画面（背景をグレーに変更） */
@@ -159,7 +162,7 @@
 </head>
 <body>
 
-<!-- ★ ログアウトボタン（追加） -->
+<!-- ★ ログアウトボタン -->
 <button id="logout-btn">ログアウト</button>
 
 <div class="container">
@@ -185,16 +188,23 @@
         </p>
     </div>
 
-    <!-- ▼▼▼ ここから追加：日付ナビゲーション ▼▼▼ -->
+    <!-- ▼▼▼ 日付ナビゲーション（追加） ▼▼▼ -->
+    <div id="day-navi" style="display:none; margin:20px 0; text-align:center;">
+        <button id="nav-prev" style="padding:8px 16px;">◀ 前の日</button>
+        <span id="nav-current" style="font-size:18px; margin:0 12px; font-weight:bold;">-</span>
+        <button id="nav-next" style="padding:8px 16px;">次の日 ▶</button>
+    </div>
+
+    <!-- ▼▼▼ ここから追加：日付ナビゲーション（旧） ▼▼▼ -->
     <div id="date-nav" style="display:none; text-align:center; margin:20px 0;">
         <button id="prevDay" style="padding:10px 16px;">◀ 前日</button>
         <span id="currentDay" style="font-size:18px; font-weight:bold; margin:0 12px;">-</span>
         <button id="nextDay" style="padding:10px 16px;">翌日 ▶</button>
     </div>
+    <!-- ▲▲▲ 追加ここまで ▲▲▲ -->
 
     <!-- 3日分を表示するエリア -->
     <div id="days-container"></div>
-    <!-- ▲▲▲ 追加ここまで ▲▲▲ -->
 
     <!-- 予約一覧（旧エリアは残すが内容は days-container に移行） -->
     <div id="reserve-list"></div>
@@ -222,14 +232,15 @@ toggleBtn.addEventListener("click", () => {
 });
 </script>
 
-<!-- ▼ ログアウト処理（追加） ▼ -->
+<!-- ▼ ログアウト処理 ▼ -->
 <script>
 document.getElementById("logout-btn").addEventListener("click", () => {
-    localStorage.removeItem("candoll-admin-password");
+    localStorage.removeItem("candoll_admin_pass");
 
     document.getElementById("login-box").style.display = "block";
     document.getElementById("reserve-list").style.display = "none";
     document.getElementById("date-nav").style.display = "none";
+    document.getElementById("day-navi").style.display = "none";
     document.getElementById("days-container").innerHTML = "";
     document.getElementById("admin-pass").value = "";
 
@@ -239,5 +250,3 @@ document.getElementById("logout-btn").addEventListener("click", () => {
 
 </body>
 </html>
-
-
