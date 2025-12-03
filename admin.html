@@ -26,39 +26,41 @@
         display: block;
     }
 
-    /* ▼ 右上メニュー（▼ボタン） ▼ */
+    /* ▼ 右上プルダウン（小型） ▼ */
     #menu-btn {
         position: fixed;
-        top: 10px;
+        top: 12px;
         right: 12px;
-        padding: 6px 12px;
-        background: #f6f6f6;
-        border: 1px solid #ddd;
-        border-radius: 8px;
+        padding: 6px 10px;
+        background: #000;
+        color: #fff;
+        border-radius: 6px;
         cursor: pointer;
         font-size: 14px;
         z-index: 999;
+        width: 34px;
+        text-align: center;
     }
 
     #menu-box {
         display: none;
         position: fixed;
-        top: 46px;
+        top: 50px;
         right: 12px;
         background: #fff;
         border: 1px solid #ccc;
-        border-radius: 8px;
-        width: 140px;
+        border-radius: 6px;
+        width: 120px;
         text-align: left;
         box-shadow: 0 2px 8px rgba(0,0,0,0.15);
         z-index: 1000;
     }
 
     #menu-box div {
-        padding: 12px;
+        padding: 10px;
         cursor: pointer;
         border-bottom: 1px solid #eee;
-        font-size: 15px;
+        font-size: 14px;
     }
     #menu-box div:hover {
         background: #f0f0f0;
@@ -67,7 +69,7 @@
         border-bottom: none;
     }
 
-    /* ▼ 日付ナビ（中央に日付・左右にボタン） ▼ */
+    /* ▼ 日付ナビ（黒ボタンで左右＋中央） ▼ */
     #day-navi {
         display:none;
         margin: 20px 0;
@@ -76,20 +78,22 @@
         font-weight: bold;
     }
     #day-navi button {
-        padding: 6px 14px;
-        margin: 0 14px;
+        padding: 8px 16px;
+        margin: 0 20px;
         font-size: 15px;
-        border: 1px solid #ccc;
-        background: #fafafa;
+        background: #000;
+        color: #fff;
         border-radius: 8px;
         cursor: pointer;
+        border: none;
     }
     #day-navi button:hover {
-        background: #f0f0f0;
+        opacity: 0.8;
     }
     #nav-current {
         font-size: 20px;
         font-weight: bold;
+        color: #000;
     }
 
     #login-box {
@@ -188,7 +192,7 @@
 </head>
 <body>
 
-<!-- ▼ プルダウンメニュー ▼ -->
+<!-- ▼ 右上 ▼ メニュー -->
 <button id="menu-btn">▼</button>
 <div id="menu-box">
     <div id="m-logout">ログアウト</div>
@@ -216,11 +220,11 @@
         </p>
     </div>
 
-    <!-- ▼ 日付ナビ（新） ▼ -->
+    <!-- ▼ 黒ボタン日付ナビ（挟む形） -->
     <div id="day-navi">
-        <button id="nav-prev">◀ 前の日</button>
+        <button id="nav-prev">前の日</button>
         <span id="nav-current">-</span>
-        <button id="nav-next">次の日 ▶</button>
+        <button id="nav-next">次の日</button>
     </div>
 
     <div id="days-container"></div>
