@@ -7,6 +7,7 @@ const API_URL = "https://bcahztzetpfuklipjmxx.functions.supabase.co/admin-servic
 const loginBox = document.getElementById("login-box");
 const reserveList = document.getElementById("reserve-list");
 const loginError = document.getElementById("login-error");
+const logoutBtn = document.getElementById("logout-btn");   // ★ 追加
 
 const TIMES = [];
 for (let h = 10; h <= 18; h++) {
@@ -25,7 +26,7 @@ document.getElementById("login-btn").onclick = async () => {
   const res = await fetch(API_URL, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ mode: "list", password: pass }), // 修正
+    body: JSON.stringify({ mode: "list", password: pass }), 
   });
 
   if (!res.ok) return (loginError.style.display = "block");
@@ -37,14 +38,19 @@ document.getElementById("login-btn").onclick = async () => {
   loginBox.style.display = "none";
   reserveList.style.display = "block";
 
+  logoutBtn.style.display = "block";   // ★ 追加
+
   localStorage.setItem("candoll_admin_pass", pass);
   loadAll();
 };
 
+// ------------------------------
 // 自動ログイン
+// ------------------------------
 if (localStorage.getItem("candoll_admin_pass")) {
   loginBox.style.display = "none";
   reserveList.style.display = "block";
+  logoutBtn.style.display = "block";   // ★ 追加
   loadAll();
 }
 
@@ -57,7 +63,7 @@ async function fetchAll() {
   const res = await fetch(API_URL, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ mode: "list", password: pass }), // 修正
+    body: JSON.stringify({ mode: "list", password: pass }),
   });
 
   if (!res.ok) return null;
@@ -142,7 +148,6 @@ function renderDayBlocks(date, list, isHoliday) {
     const r = overlap(list, time);
 
     if (r) {
-      // 予約
       b.style.background = "#ffd4d4";
       b.style.textAlign = "left";
       b.innerHTML = `
@@ -222,3 +227,16 @@ function renderHolidayControl() {
     loadAll();
   };
 }
+
+// ------------------------------
+// ★ ログアウト機能 追加
+// ------------------------------
+logoutBtn.addEventListener("click", () => {
+  localStorage.removeItem("candoll_admin_pass");
+
+  loginBox.style.display = "block";
+  reserveList.style.display = "none";
+  logoutBtn.style.display = "none";
+
+  document.getElementById("admin-pass").value = "";
+});
