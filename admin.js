@@ -1,5 +1,5 @@
 // ==============================
-// Candoll 管理画面 admin.js 修正版（listAll → list に統一）
+// Candoll 管理画面 admin.js 修正版（変更部のみ最小追加）
 // ==============================
 
 const API_URL = "https://bcahztzetpfuklipjmxx.functions.supabase.co/admin-service";
@@ -7,7 +7,14 @@ const API_URL = "https://bcahztzetpfuklipjmxx.functions.supabase.co/admin-servic
 const loginBox = document.getElementById("login-box");
 const reserveList = document.getElementById("reserve-list");
 const loginError = document.getElementById("login-error");
-const logoutBtn = document.getElementById("logout-btn");   // ★ 追加
+const logoutBtn = document.getElementById("logout-btn");
+
+// ▼▼▼ 日付ナビゲーション（追加） ▼▼▼
+const dayNavi = document.getElementById("day-navi");
+const navPrev = document.getElementById("nav-prev");
+const navNext = document.getElementById("nav-next");
+const navCurrent = document.getElementById("nav-current");
+// ▲▲▲ 追加ここまで ▲▲▲
 
 const TIMES = [];
 for (let h = 10; h <= 18; h++) {
@@ -26,7 +33,7 @@ document.getElementById("login-btn").onclick = async () => {
   const res = await fetch(API_URL, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ mode: "list", password: pass }), 
+    body: JSON.stringify({ mode: "list", password: pass }),
   });
 
   if (!res.ok) return (loginError.style.display = "block");
@@ -37,20 +44,17 @@ document.getElementById("login-btn").onclick = async () => {
   loginError.style.display = "none";
   loginBox.style.display = "none";
   reserveList.style.display = "block";
-
-  logoutBtn.style.display = "block";   // ★ 追加
+  logoutBtn.style.display = "block";
 
   localStorage.setItem("candoll_admin_pass", pass);
   loadAll();
 };
 
-// ------------------------------
 // 自動ログイン
-// ------------------------------
 if (localStorage.getItem("candoll_admin_pass")) {
   loginBox.style.display = "none";
   reserveList.style.display = "block";
-  logoutBtn.style.display = "block";   // ★ 追加
+  logoutBtn.style.display = "block";
   loadAll();
 }
 
@@ -123,6 +127,11 @@ async function loadAll() {
   });
 
   renderHolidayControl();
+
+  // ▼▼▼ 日付ナビ表示更新（追加） ▼▼▼
+  dayNavi.style.display = "block";
+  navCurrent.textContent = jp(baseDate);
+  // ▲▲▲ 追加ここまで ▲▲▲
 }
 
 // ------------------------------
@@ -229,14 +238,28 @@ function renderHolidayControl() {
 }
 
 // ------------------------------
-// ★ ログアウト機能 追加
+// ▼▼▼ 日付ナビゲーション（前の日・次の日）追加 ▼▼▼
+// ------------------------------
+navPrev.onclick = () => {
+  baseDate = shiftDate(baseDate, -1);
+  loadAll();
+};
+
+navNext.onclick = () => {
+  baseDate = shiftDate(baseDate, 1);
+  loadAll();
+};
+// ▲▲▲ 追加ここまで ▲▲▲
+
+// ------------------------------
+// ログアウト
 // ------------------------------
 logoutBtn.addEventListener("click", () => {
   localStorage.removeItem("candoll_admin_pass");
 
   loginBox.style.display = "block";
   reserveList.style.display = "none";
-  logoutBtn.style.display = "none";
-
+  dayNavi.style.display = "none";
   document.getElementById("admin-pass").value = "";
+  logoutBtn.style.display = "none";
 });
