@@ -14,7 +14,7 @@
     }
 
     .container {
-        max-width: 600px;
+        max-width: 900px;
         margin: 30px auto;
         padding: 20px;
         text-align: center;
@@ -92,24 +92,30 @@
         color: #000;
     }
 
-    #login-box {
-        background: #f5f5f5;
-        padding: 25px;
-        border-radius: 10px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        text-align: left;
+    /* ▼ 3日横並び領域 ▼ */
+    #days-wrapper {
+        display: flex;
+        gap: 12px;
+        justify-content: center;
+        align-items: stretch;
+        margin-top: 10px;
     }
 
-    #reserve-list {
-        display: none;
-        margin-top: 10px;
+    .day-column {
+        background: #fafafa;
+        padding: 10px;
+        border-radius: 6px;
+        flex: 1;
+        min-width: 200px;
+        display: flex;
+        flex-direction: column;
     }
 
     .date-title {
         background: #000;
         color: #fff;
         padding: 10px;
-        margin-top: 20px;
+        margin-bottom: 10px;
         border-radius: 5px;
         font-size: 20px;
     }
@@ -125,7 +131,6 @@
 </head>
 <body>
 
-<!-- ▼ 右上 ▼ メニュー -->
 <button id="menu-btn">▼</button>
 <div id="menu-box">
     <div id="m-logout">ログアウト</div>
@@ -153,15 +158,13 @@
         </p>
     </div>
 
-    <!-- ▼ 黒ボタン日付ナビ（左右ハサミ） -->
     <div id="day-navi">
         <button id="nav-prev">前の日</button>
         <span id="nav-current">-</span>
         <button id="nav-next">次の日</button>
     </div>
 
-    <!-- ※ days-container は JS が使ってないため削除 -->
-    <div id="reserve-list"></div>
+    <div id="days-wrapper"></div>
 
 </div>
 
