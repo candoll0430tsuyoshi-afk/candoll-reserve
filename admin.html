@@ -14,7 +14,7 @@
     }
 
     .container {
-        max-width: 900px;
+        max-width: 600px; /* ← 元に戻した（ログイン画面の見た目を前のままに） */
         margin: 30px auto;
         padding: 20px;
         text-align: center;
@@ -92,13 +92,17 @@
         color: #000;
     }
 
-    /* ▼ 3日横並び領域 ▼ */
+    /* ▼ 3日横並び領域（container の外で横幅を確保） ▼ */
     #days-wrapper {
+        max-width: 900px;
+        margin: 0 auto;
+        margin-top: 10px;
+
         display: flex;
         gap: 12px;
         justify-content: center;
         align-items: stretch;
-        margin-top: 10px;
+        padding: 0 10px;
     }
 
     .day-column {
@@ -163,10 +167,10 @@
         <span id="nav-current">-</span>
         <button id="nav-next">次の日</button>
     </div>
-
-    <div id="days-wrapper"></div>
-
 </div>
+
+<!-- ▼ container の外に 3カラム配置 -->
+<div id="days-wrapper"></div>
 
 <script src="admin.js"></script>
 
