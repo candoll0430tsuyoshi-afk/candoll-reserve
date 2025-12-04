@@ -85,7 +85,7 @@ async function loadAll() {
 
   daysWrapper.innerHTML = "";
 
-  dayNavi.style.display = "block";
+  dayNavi.style.display = "flex";
   navCurrent.textContent = jp(baseDate);
 
   [0, 1, 2].forEach((n) => {
