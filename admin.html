@@ -14,7 +14,7 @@
     }
 
     .container {
-        max-width: 600px; /* ← 元に戻す（ログイン画面のサイズ） */
+        max-width: 600px; /* ← 元のログイン画面サイズに完全復元 */
         margin: 30px auto;
         padding: 20px;
         text-align: center;
@@ -26,7 +26,7 @@
         display: block;
     }
 
-    /* ▼ ログインボックス（元のまま復元） */
+    /* ▼ ログイン画面（完全復元） */
     #login-box {
         background: #f5f5f5;
         padding: 25px;
@@ -35,7 +35,28 @@
         text-align: left;
     }
 
-    /* ▼ パスワード表示切替アイコン（復元） */
+    input, button {
+        width: 100%;
+        padding: 15px;                 /* ← 元の太いデザインに復元 */
+        font-size: 18px;               /* ← 元の大きく見やすい文字 */
+        border-radius: 6px;
+        box-sizing: border-box;
+    }
+
+    input {
+        margin-top: 10px;
+        border: 1px solid #ccc;
+    }
+
+    button {
+        margin-top: 20px;
+        background: #000;
+        color: #fff;
+        border: none;
+        cursor: pointer;
+    }
+
+    /* ▼ パスワード鍵アイコン（完全復元） */
     .lock-icon {
         position: absolute;
         right: 12px;
@@ -74,7 +95,7 @@
         left: 55%;
     }
 
-    /* ▼ 右上プルダウン（変更なし） */
+    /* ▼ 右上プルダウン */
     #menu-btn {
         position: fixed;
         top: 12px;
@@ -89,6 +110,7 @@
         width: 34px;
         text-align: center;
     }
+
     #menu-box {
         display: none;
         position: fixed;
@@ -102,11 +124,17 @@
         box-shadow: 0 2px 8px rgba(0,0,0,0.15);
         z-index: 1000;
     }
-    #menu-box div { padding: 10px; cursor: pointer; border-bottom: 1px solid #eee; }
-    #menu-box div:last-child { border-bottom: none; }
-    #menu-box div:hover { background: #f0f0f0; }
 
-    /* ▼ 日付ナビ（変わらず中央挟み） */
+    #menu-box div {
+        padding: 10px;
+        cursor: pointer;
+        border-bottom: 1px solid #eee;
+        font-size: 14px;
+    }
+    #menu-box div:hover { background: #f0f0f0; }
+    #menu-box div:last-child { border-bottom: none; }
+
+    /* ▼ 日付ナビ（左右ボタンで中央挟み） */
     #day-navi {
         display:none;
         margin: 10px 0 25px 0;
@@ -114,6 +142,7 @@
         font-size: 18px;
         font-weight: bold;
     }
+
     #day-navi button {
         padding: 8px 16px;
         margin: 0 20px;
@@ -124,6 +153,7 @@
         cursor: pointer;
         border: none;
     }
+
     #nav-current {
         font-size: 20px;
         margin: 0 10px;
@@ -131,17 +161,19 @@
         color: #000;
     }
 
-    /* ▼ 3カラム（前回コード維持） */
+    /* ▼ 3カラム横並び（ログイン画面に影響しない配置） */
     #days-wrapper {
         max-width: 900px;
         margin: 0 auto;
         margin-top: 10px;
+
         display: flex;
         gap: 12px;
         justify-content: center;
         align-items: stretch;
         padding: 0 10px;
     }
+
     .day-column {
         background: #fafafa;
         padding: 10px;
@@ -151,6 +183,7 @@
         display: flex;
         flex-direction: column;
     }
+
     .date-title {
         background: #000;
         color: #fff;
@@ -197,6 +230,7 @@
     </div>
 </div>
 
+<!-- ▼ container の外に 3カラム表示 -->
 <div id="days-wrapper"></div>
 
 <script src="admin.js"></script>
