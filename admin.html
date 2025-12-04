@@ -26,7 +26,6 @@
         display: block;
     }
 
-    /* ▼ ログイン */
     #login-box {
         background: #f5f5f5;
         padding: 25px;
@@ -56,210 +55,97 @@
         cursor: pointer;
     }
 
-    /* ▼ パスワード鍵 */
-    .lock-icon {
-        position: absolute;
-        right: 12px;
-        top: 50%;
-        transform: translateY(-50%);
-        width: 24px;
-        height: 24px;
-        cursor: pointer;
-    }
-    .lock-icon::before,
-    .lock-icon::after {
-        content: "";
-        position: absolute;
-        left: 50%;
-        transform: translateX(-50%);
-        box-sizing: border-box;
-    }
-    .lock-icon::before {
-        top: 1px;
-        width: 14px;
-        height: 10px;
-        border: 2px solid #555;
-        border-bottom: none;
-        border-radius: 10px 10px 0 0;
-        transition: transform 0.2s ease, left 0.2s ease;
-    }
-    .lock-icon::after {
-        top: 9px;
-        width: 16px;
-        height: 11px;
-        border-radius: 3px;
-        background: #555;
-    }
-    .lock-icon.unlocked::before {
-        transform: translateX(-50%) rotate(-25deg);
-        left: 55%;
-    }
-
-    /* ▼ 右上プルダウン */
-    #menu-btn {
-        position: fixed;
-        top: 12px;
-        right: 12px;
-        padding: 6px 10px;
+    /* ▼ 追加：＋ボタン（小さめ） */
+    .add-btn {
         background: #000;
         color: #fff;
-        border-radius: 6px;
-        cursor: pointer;
-        font-size: 14px;
-        z-index: 999;
-        width: 34px;
-        text-align: center;
-    }
-
-    #menu-box {
-        display: none;
-        position: fixed;
-        top: 50px;
-        right: 12px;
-        background: #fff;
-        border: 1px solid #ccc;
-        border-radius: 6px;
-        width: 120px;
-        text-align: left;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-        z-index: 1000;
-    }
-
-    #menu-box div {
-        padding: 10px;
-        cursor: pointer;
-        border-bottom: 1px solid #eee;
-        font-size: 14px;
-    }
-    #menu-box div:hover { background: #f0f0f0; }
-    #menu-box div:last-child { border-bottom: none; }
-
-    /* ▼ 日付ナビ */
-    #day-navi {
-        display: none;
-        margin: 10px 0 25px 0;
-        font-size: 18px;
-        font-weight: bold;
-
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        gap: 20px;
-    }
-
-    #day-navi button {
-        padding: 8px 16px;
-        font-size: 15px;
-        background: #000;
-        color: #fff;
-        border-radius: 8px;
-        cursor: pointer;
         border: none;
-        white-space: nowrap;
+        font-size: 14px;
+        padding: 4px 10px;
+        border-radius: 4px;
+        cursor: pointer;
+        margin-left: 8px;
     }
 
-    #nav-current {
-        font-size: 20px;
-        font-weight: bold;
-        color: #000;
-        white-space: nowrap;
-    }
-
-    /* ▼ PC：3カラム */
-    #days-wrapper {
-        max-width: 1000px;
-        margin: 0 auto;
-        margin-top: 10px;
+    /* ▼▼ 予約3日間 横並びレイアウト（既存） ▼▼ */
+    #days-container {
         display: flex;
-        gap: 12px;
+        gap: 10px;
         justify-content: center;
-        align-items: stretch;
-        padding: 0 10px;
+        flex-wrap: wrap;
     }
 
     .day-column {
+        width: 32%;
+        min-width: 180px;
         background: #fafafa;
         padding: 10px;
-        border-radius: 6px;
-        flex: 1;
-        min-width: 250px;
-        display: flex;
-        flex-direction: column;
+        border-radius: 8px;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.1);
     }
 
     .date-title {
         background: #000;
         color: #fff;
-        padding: 10px;
+        padding: 8px;
+        border-radius: 4px;
+        font-size: 18px;
         margin-bottom: 10px;
-        border-radius: 5px;
-        font-size: 20px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
     }
 
-    /* ▼ スマホ：縦表示に切替 */
-    @media (max-width: 768px) {
-        #days-wrapper {
-            flex-direction: column;
-            max-width: 95%;
-        }
-        .day-column {
-            min-width: 100%;
-        }
-    }
-
-    /* ▼ 編集・追加ポップアップ */
-    #popup-bg {
+    /* ▼▼ モーダル ▼▼ */
+    #addModal {
         position: fixed;
-        top:0;
-        left:0;
-        width:100%;
-        height:100%;
+        top: 0; left: 0;
+        width: 100%; height: 100%;
         background: rgba(0,0,0,0.4);
-        display:none;
-        justify-content:center;
-        align-items:center;
-        z-index:2000;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
     }
 
-    #popup-box {
-        background:#fff;
-        padding:20px;
+    .modal-box {
         width: 90%;
-        max-width:340px;
-        border-radius:10px;
+        max-width: 360px;
+        background: #fff;
+        padding: 20px;
+        border-radius: 12px;
+        text-align: left;
     }
 
-    #popup-box input, #popup-box select {
-        width:100%;
-        padding:10px;
-        margin-top:10px;
-        font-size:16px;
-        border-radius:6px;
-        border:1px solid #ccc;
-        box-sizing:border-box;
+    .modal-box h2 {
+        margin-top: 0;
+        text-align: center;
     }
 
-    #popup-box button {
-        width:100%;
-        margin-top:15px;
-        padding:12px;
-        background:#000;
-        color:#fff;
-        border:none;
-        border-radius:6px;
-        font-size:16px;
-        cursor:pointer;
+    .modal-box input, .modal-box select {
+        width: 100%;
+        padding: 12px;
+        border: 1px solid #ccc;
+        margin-top: 8px;
+        border-radius: 6px;
+        font-size: 16px;
+    }
+
+    .modal-buttons {
+        margin-top: 20px;
+        display: flex;
+        justify-content: space-between;
+    }
+
+    .modal-buttons button {
+        width: 48%;
+        padding: 12px;
+        font-size: 16px;
+        border-radius: 6px;
     }
 </style>
 </head>
 <body>
-
-<button id="menu-btn">▼</button>
-<div id="menu-box">
-    <div id="m-logout">ログアウト</div>
-    <div id="m-add">休日追加</div>
-    <div id="m-del">休日解除</div>
-</div>
 
 <div class="container">
 
@@ -267,6 +153,7 @@
          alt="Candoll ロゴ"
          class="logo">
 
+    <!-- ログイン画面（そのまま維持） -->
     <div id="login-box">
         <p>Pass</p>
 
@@ -281,43 +168,50 @@
         </p>
     </div>
 
-    <div id="day-navi">
-        <button id="nav-prev">前の日</button>
-        <span id="nav-current">-</span>
-        <button id="nav-next">次の日</button>
+    <!-- 日付ナビ（既存） -->
+    <div id="date-nav" style="display:none; text-align:center; margin:20px 0;">
+        <button id="prevDay" style="padding:10px 16px;">◀ 前の日</button>
+        <span id="currentDay" style="font-size:18px; font-weight:bold; margin:0 12px;">-</span>
+        <button id="nextDay" style="padding:10px 16px;">次の日 ▶</button>
     </div>
+
+    <div id="days-container"></div>
 </div>
 
-<div id="days-wrapper"></div>
+<!-- ▼▼ 予約追加モーダル ▼▼ -->
+<div id="addModal">
+  <div class="modal-box">
+    <h2>予約追加</h2>
 
-<!-- ▼ ポップアップ -->
-<div id="popup-bg">
-    <div id="popup-box"></div>
+    <label>名前</label>
+    <input type="text" id="modal-name">
+
+    <label>メニュー</label>
+    <select id="modal-menu"></select>
+
+    <label>開始時間</label>
+    <select id="modal-time"></select>
+
+    <div class="modal-buttons">
+      <button id="modal-save">保存</button>
+      <button id="modal-cancel">キャンセル</button>
+    </div>
+  </div>
 </div>
 
 <script src="admin.js"></script>
 
+<!-- ▼ パスワード表示切替（既存） -->
 <script>
 const passInput = document.getElementById("admin-pass");
 const toggleBtn = document.getElementById("toggle-pass");
 
-toggleBtn.onclick = () => {
+toggleBtn.addEventListener("click", () => {
     const isHidden = passInput.type === "password";
     passInput.type = isHidden ? "text" : "password";
+
     toggleBtn.classList.toggle("unlocked", isHidden);
-};
-
-const menuBtn = document.getElementById("menu-btn");
-const menuBox = document.getElementById("menu-box");
-
-menuBtn.onclick = () => {
-    menuBox.style.display = menuBox.style.display === "block" ? "none" : "block";
-};
-
-document.addEventListener("click", (e) => {
-    if (!menuBtn.contains(e.target) && !menuBox.contains(e.target)) {
-        menuBox.style.display = "none";
-    }
+    toggleBtn.classList.toggle("locked", !isHidden);
 });
 </script>
 
