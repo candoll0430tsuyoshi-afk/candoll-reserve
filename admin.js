@@ -1,11 +1,11 @@
 // ==============================
-// Candoll 管理画面 admin.js（新UI同期・最小変更版）
+// Candoll 管理画面 admin.js（3カラム／高さ揃え対応）
 // ==============================
 
 const API_URL = "https://bcahztzetpfuklipjmxx.functions.supabase.co/admin-service";
 
 const loginBox = document.getElementById("login-box");
-const reserveList = document.getElementById("reserve-list");
+const daysWrapper = document.getElementById("days-wrapper");
 const loginError = document.getElementById("login-error");
 
 // ▼ プルダウン
@@ -13,11 +13,11 @@ const menuLogout = document.getElementById("m-logout");
 const menuAdd = document.getElementById("m-add");
 const menuDel = document.getElementById("m-del");
 
-// ▼ 日付ナビ（黒ボタン左右）
-const dayNavi = document.getElementById("day-navi");
+// ▼ 日付ナビ
 const navPrev = document.getElementById("nav-prev");
 const navNext = document.getElementById("nav-next");
 const navCurrent = document.getElementById("nav-current");
+const dayNavi = document.getElementById("day-navi");
 
 const TIMES = [];
 for (let h = 10; h <= 18; h++) {
@@ -26,9 +26,6 @@ for (let h = 10; h <= 18; h++) {
 }
 TIMES.push("19:00");
 
-// ------------------------------
-// ログイン
-// ------------------------------
 document.getElementById("login-btn").onclick = async () => {
   const pass = document.getElementById("admin-pass").value.trim();
   if (!pass) return;
@@ -39,45 +36,31 @@ document.getElementById("login-btn").onclick = async () => {
     body: JSON.stringify({ mode: "list", password: pass }),
   });
 
-  if (!res.ok) return (loginError.style.display = "block");
-
   const json = await res.json();
   if (!json.ok) return (loginError.style.display = "block");
 
   loginError.style.display = "none";
   loginBox.style.display = "none";
-  reserveList.style.display = "block";
 
   localStorage.setItem("candoll_admin_pass", pass);
   loadAll();
 };
 
-// 自動ログイン
 if (localStorage.getItem("candoll_admin_pass")) {
   loginBox.style.display = "none";
-  reserveList.style.display = "block";
   loadAll();
 }
 
-// ------------------------------
-// データ取得
-// ------------------------------
 async function fetchAll() {
   const pass = localStorage.getItem("candoll_admin_pass");
-
   const res = await fetch(API_URL, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ mode: "list", password: pass }),
   });
-
-  if (!res.ok) return null;
   return await res.json();
 }
 
-// ------------------------------
-// 日付
-// ------------------------------
 let baseDate = new Date();
 
 function ymd(d) {
@@ -95,54 +78,41 @@ function shiftDate(d, n) {
   return t;
 }
 
-// ------------------------------
-// メイン表示（reserve-list のみ使用）
-// ------------------------------
 async function loadAll() {
   const all = await fetchAll();
-  if (!all) return (reserveList.innerHTML = "読み込みエラー");
-
   const reservations = all.data;
   const holidays = all.holidays.map((h) => h.date);
 
-  // ▼ 表示クリア（2重描画防止）
-  reserveList.innerHTML = "";
+  daysWrapper.innerHTML = "";
 
-  // ▼ 日付ナビ更新（UI通りに中央）
   dayNavi.style.display = "block";
   navCurrent.textContent = jp(baseDate);
 
-  // ▼ 3日分を描画
   [0, 1, 2].forEach((n) => {
     const d = shiftDate(baseDate, n);
     const dStr = ymd(d);
 
-    // タイトル
+    const col = document.createElement("div");
+    col.className = "day-column";
+
     const title = document.createElement("div");
     title.className = "date-title";
-    title.style.cursor = "pointer";
     title.textContent = jp(d);
-
+    title.style.cursor = "pointer";
     title.onclick = () => {
       baseDate = d;
       loadAll();
     };
 
-    reserveList.appendChild(title);
+    col.appendChild(title);
 
-    // 1日分の枠を描画
-    renderDayBlocks(dStr, reservations.filter((r) => r.date === dStr), holidays.includes(dStr));
+    renderDayBlocks(col, dStr, reservations.filter((r) => r.date === dStr), holidays.includes(dStr));
+
+    daysWrapper.appendChild(col);
   });
-
-  renderHolidayControl();
 }
 
-// ------------------------------
-// 1日の詳細描画
-// ------------------------------
-function renderDayBlocks(date, list, isHoliday) {
-  const wrap = document.createElement("div");
-
+function renderDayBlocks(col, date, list, isHoliday) {
   TIMES.forEach((time) => {
     const b = document.createElement("div");
     b.style.margin = "6px 0";
@@ -153,12 +123,11 @@ function renderDayBlocks(date, list, isHoliday) {
     if (isHoliday) {
       b.style.background = "#ffb3b3";
       b.textContent = `${time} 休業日`;
-      wrap.appendChild(b);
+      col.appendChild(b);
       return;
     }
 
     const r = overlap(list, time);
-
     if (r) {
       b.style.background = "#ffd4d4";
       b.style.textAlign = "left";
@@ -172,10 +141,8 @@ function renderDayBlocks(date, list, isHoliday) {
       b.textContent = `${time}（空き）`;
     }
 
-    wrap.appendChild(b);
+    col.appendChild(b);
   });
-
-  reserveList.appendChild(wrap);
 }
 
 function overlap(list, start) {
@@ -193,54 +160,41 @@ function overlap(list, start) {
   return null;
 }
 
-// ------------------------------
-// 休日（プルダウン対応）
-// ------------------------------
-function renderHolidayControl() {
+menuAdd.onclick = () => {
   const pass = localStorage.getItem("candoll_admin_pass");
+  const d = prompt("追加する休日（YYYY-MM-DD）");
+  if (!d) return;
+  fetch(API_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ mode: "holiday_add", password: pass, date: d, reason: "休業日" }),
+  }).then(() => loadAll());
+};
 
-  menuAdd.onclick = () => {
-    const d = prompt("追加する休日（YYYY-MM-DD）");
-    if (!d) return;
-    fetch(API_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ mode: "holiday_add", password: pass, date: d, reason: "休業日" }),
-    }).then(() => loadAll());
-  };
+menuDel.onclick = () => {
+  const pass = localStorage.getItem("candoll_admin_pass");
+  const d = prompt("解除する休日（YYYY-MM-DD）");
+  if (!d) return;
+  fetch(API_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ mode: "holiday_delete", password: pass, date: d }),
+  }).then(() => loadAll());
+};
 
-  menuDel.onclick = () => {
-    const d = prompt("解除する休日（YYYY-MM-DD）");
-    if (!d) return;
-    fetch(API_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ mode: "holiday_delete", password: pass, date: d }),
-    }).then(() => loadAll());
-  };
-}
-
-// ------------------------------
-// 日付ナビ
-// ------------------------------
 navPrev.onclick = () => {
   baseDate = shiftDate(baseDate, -1);
   loadAll();
 };
-
 navNext.onclick = () => {
   baseDate = shiftDate(baseDate, 1);
   loadAll();
 };
 
-// ------------------------------
-// ログアウト
-// ------------------------------
 menuLogout.onclick = () => {
   localStorage.removeItem("candoll_admin_pass");
-
   loginBox.style.display = "block";
-  reserveList.style.display = "none";
+  daysWrapper.innerHTML = "";
   dayNavi.style.display = "none";
   document.getElementById("admin-pass").value = "";
 };
