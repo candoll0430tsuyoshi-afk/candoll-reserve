@@ -14,7 +14,7 @@
     }
 
     .container {
-        max-width: 600px; /* ログイン画面の幅 */
+        max-width: 600px;
         margin: 30px auto;
         padding: 20px;
         text-align: center;
@@ -26,7 +26,7 @@
         display: block;
     }
 
-    /* ▼ ログインボックス */
+    /* ▼ ログイン */
     #login-box {
         background: #f5f5f5;
         padding: 25px;
@@ -56,7 +56,7 @@
         cursor: pointer;
     }
 
-    /* ▼ パスワード鍵アイコン */
+    /* ▼ パスワード鍵 */
     .lock-icon {
         position: absolute;
         right: 12px;
@@ -134,39 +134,21 @@
     #menu-box div:hover { background: #f0f0f0; }
     #menu-box div:last-child { border-bottom: none; }
 
-    /* ▼ 日付ナビ（左右ボタン＋中央日付） */
+    /* ▼ 日付ナビ */
     #day-navi {
         display: none;
         margin: 10px 0 25px 0;
         font-size: 18px;
         font-weight: bold;
 
-        display: none; /* ログイン前は非表示 */
-    }
-    /* ログイン後に JS から display:block にされるので
-       横並び用のflex指定を別クラスにせずそのまま指定 */
-    #day-navi.show {
         display: flex;
         justify-content: center;
         align-items: center;
         gap: 20px;
-    }
-
-    /* 互換性のため：JSでは day-navi.style.display = "block" を使っているので
-       上記 .show が使えない。→ 直接 #day-navi に flex を指定し直す */
-    #day-navi {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        gap: 20px;
-        margin: 10px 0 25px 0;
-        font-size: 18px;
-        font-weight: bold;
     }
 
     #day-navi button {
         padding: 8px 16px;
-        margin: 0 0;
         font-size: 15px;
         background: #000;
         color: #fff;
@@ -178,15 +160,14 @@
 
     #nav-current {
         font-size: 20px;
-        margin: 0 10px;
         font-weight: bold;
         color: #000;
         white-space: nowrap;
     }
 
-    /* ▼ 3カラム横並び */
+    /* ▼ PC：3カラム */
     #days-wrapper {
-        max-width: 900px;
+        max-width: 1000px;
         margin: 0 auto;
         margin-top: 10px;
         display: flex;
@@ -201,7 +182,7 @@
         padding: 10px;
         border-radius: 6px;
         flex: 1;
-        min-width: 200px;
+        min-width: 250px;
         display: flex;
         flex-direction: column;
     }
@@ -213,6 +194,61 @@
         margin-bottom: 10px;
         border-radius: 5px;
         font-size: 20px;
+    }
+
+    /* ▼ スマホ：縦表示に切替 */
+    @media (max-width: 768px) {
+        #days-wrapper {
+            flex-direction: column;
+            max-width: 95%;
+        }
+        .day-column {
+            min-width: 100%;
+        }
+    }
+
+    /* ▼ 編集・追加ポップアップ */
+    #popup-bg {
+        position: fixed;
+        top:0;
+        left:0;
+        width:100%;
+        height:100%;
+        background: rgba(0,0,0,0.4);
+        display:none;
+        justify-content:center;
+        align-items:center;
+        z-index:2000;
+    }
+
+    #popup-box {
+        background:#fff;
+        padding:20px;
+        width: 90%;
+        max-width:340px;
+        border-radius:10px;
+    }
+
+    #popup-box input, #popup-box select {
+        width:100%;
+        padding:10px;
+        margin-top:10px;
+        font-size:16px;
+        border-radius:6px;
+        border:1px solid #ccc;
+        box-sizing:border-box;
+    }
+
+    #popup-box button {
+        width:100%;
+        margin-top:15px;
+        padding:12px;
+        background:#000;
+        color:#fff;
+        border:none;
+        border-radius:6px;
+        font-size:16px;
+        cursor:pointer;
     }
 </style>
 </head>
@@ -254,6 +290,11 @@
 
 <div id="days-wrapper"></div>
 
+<!-- ▼ ポップアップ -->
+<div id="popup-bg">
+    <div id="popup-box"></div>
+</div>
+
 <script src="admin.js"></script>
 
 <script>
@@ -265,9 +306,7 @@ toggleBtn.onclick = () => {
     passInput.type = isHidden ? "text" : "password";
     toggleBtn.classList.toggle("unlocked", isHidden);
 };
-</script>
 
-<script>
 const menuBtn = document.getElementById("menu-btn");
 const menuBox = document.getElementById("menu-box");
 
