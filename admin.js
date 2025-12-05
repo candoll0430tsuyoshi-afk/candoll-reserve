@@ -1,11 +1,10 @@
 // ==============================
-// Candoll 管理画面 admin.js 完全復旧版（ログイン前は日付ナビ非表示）
+// Candoll 管理画面 admin.js（修正版）
 // ==============================
 
-// ------ 設定 ------
 const API_URL = "https://bcahztzetpfuklipjmxx.functions.supabase.co/admin-service";
 
-// ------ DOM 取得 ------
+// DOM
 const loginBox = document.getElementById("login-box");
 const dayNavi = document.getElementById("day-navi");
 const navPrev = document.getElementById("nav-prev");
@@ -14,18 +13,42 @@ const navCurrent = document.getElementById("nav-current");
 const daysWrapper = document.getElementById("days-wrapper");
 const loginBtn = document.getElementById("login-btn");
 const loginError = document.getElementById("login-error");
+const logoutBtn = document.getElementById("m-logout");
 
-// メニュー・休日のキャッシュ
 let MENUS = [];
 let HOLIDAYS = [];
 let ALL_RES = [];
 
-// 現在表示している日付
 let baseDate = new Date();
 
-// ===============
-// 1. ログイン処理
-// ===============
+// ▼ 「2025-12-05（金）」形式
+function formatDateFull(d) {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2,"0");
+    const dd = String(d.getDate()).padStart(2,"0");
+    const youbi = ["日","月","火","水","木","金","土"][d.getDay()];
+    return `${y}-${m}-${dd}（${youbi}）`;
+}
+
+function formatDate(d) {
+    return d.toISOString().split("T")[0];
+}
+
+// ▼ API
+async function callAPI(body) {
+    try {
+        const res = await fetch(API_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(body),
+        });
+        return res.json();
+    } catch {
+        return { error: true };
+    }
+}
+
+// ▼ ログイン
 loginBtn.onclick = async () => {
     const pass = document.getElementById("admin-pass").value.trim();
     if (!pass) return;
@@ -36,110 +59,67 @@ loginBtn.onclick = async () => {
         loginError.style.display = "block";
         return;
     }
-
     loginError.style.display = "none";
 
-    // データ保持
-    ALL_RES = res.reservations || [];
-    HOLIDAYS = res.holidays || [];
-    MENUS = res.menus || [];
+    ALL_RES = res.reservations;
+    HOLIDAYS = res.holidays;
+    MENUS = res.menus;
 
-    // UI 切り替え
     loginBox.style.display = "none";
-
-    // ★ ログイン後にだけ日付ナビを表示（ここが今回の重要ポイント）
     dayNavi.style.display = "flex";
 
     render3Days();
 };
 
+// ▼ ログアウト
+logoutBtn.onclick = () => {
+    dayNavi.style.display = "none";
+    daysWrapper.innerHTML = "";
+    loginBox.style.display = "block";
+};
 
-// ===============
-// 2. API 呼び出し
-// ===============
-async function callAPI(body) {
-    try {
-        const res = await fetch(API_URL, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(body),
-        });
-        return res.json();
-    } catch (e) {
-        console.error("API Error:", e);
-        return { error: true };
-    }
-}
-
-
-// ===============
-// 3. 日付表示用
-// ===============
-function formatDate(d) {
-    return d.toISOString().split("T")[0];
-}
-
-function getYoubi(d) {
-    return ["日", "月", "火", "水", "木", "金", "土"][d.getDay()];
-}
-
-
-// ===============
-// 4. 3日分のカラム表示
-// ===============
+// ▼ 3日表示
 function render3Days() {
     daysWrapper.innerHTML = "";
 
-    const d0 = new Date(baseDate);
-    const d1 = new Date(baseDate.getTime() + 86400000);
-    const d2 = new Date(baseDate.getTime() + 86400000 * 2);
+    navCurrent.textContent = formatDateFull(baseDate);
 
-    navCurrent.textContent = `${formatDate(baseDate)} (${getYoubi(baseDate)})`;
+    const days = [
+        new Date(baseDate),
+        new Date(baseDate.getTime() + 86400000),
+        new Date(baseDate.getTime() + 86400000 * 2)
+    ];
 
-    [d0, d1, d2].forEach(dateObj => {
-        const dayStr = formatDate(dateObj);
-        const youbi = getYoubi(dateObj);
+    days.forEach(d => {
+        const dayStr = formatDate(d);
 
         const col = document.createElement("div");
         col.className = "day-column";
 
-        // 日付タイトル
+        // ▼ タイトル（日付＋＋ボタン）
         const title = document.createElement("div");
         title.className = "date-title";
-        title.textContent = `${dayStr} (${youbi})`;
+        title.innerHTML = formatDateFull(d);
+
+        const plus = document.createElement("div");
+        plus.className = "plus-btn";
+        plus.textContent = "＋";
+        plus.onclick = () => openAddPopup(dayStr);
+
+        title.appendChild(plus);
         col.appendChild(title);
 
-        // ＋（予約追加）
-        const plus = document.createElement("div");
-        plus.textContent = "＋";
-        plus.style.background = "#fff";
-        plus.style.color = "#000";
-        plus.style.fontSize = "26px";
-        plus.style.width = "50px";
-        plus.style.height = "50px";
-        plus.style.borderRadius = "6px";
-        plus.style.display = "flex";
-        plus.style.alignItems = "center";
-        plus.style.justifyContent = "center";
-        plus.style.cursor = "pointer";
-        plus.style.margin = "0 auto 15px";
-
-        plus.onclick = () => openAddPopup(dayStr);
-        col.appendChild(plus);
-
-        // 予約一覧
-        const list = ALL_RES.filter(r => r.date === dayStr);
-        list.forEach(r => {
+        // ▼ 予約一覧
+        ALL_RES.filter(r => r.date === dayStr).forEach(r => {
             const box = document.createElement("div");
             box.style.border = "1px solid #ccc";
             box.style.borderRadius = "6px";
             box.style.padding = "10px";
             box.style.marginBottom = "10px";
-            box.style.cursor = "pointer";
             box.style.background = "#fff";
 
             box.innerHTML = `
-                <div><b>${r.time}</b> 〜</div>
+                <div><b>${r.time}</b></div>
                 <div>${r.name}</div>
                 <div style="font-size:14px;color:#555;">${r.menu}</div>
             `;
@@ -152,24 +132,17 @@ function render3Days() {
     });
 }
 
-
-// ===============
-// 5. 日付移動
-// ===============
+// ▼ 日付移動
 navPrev.onclick = () => {
     baseDate = new Date(baseDate.getTime() - 86400000);
     render3Days();
 };
-
 navNext.onclick = () => {
     baseDate = new Date(baseDate.getTime() + 86400000);
     render3Days();
 };
 
-
-// =========================
-// 6. 予約追加モーダル
-// =========================
+// ▼ 予約追加
 function openAddPopup(dateStr) {
     const popupBg = document.getElementById("popup-bg");
     const box = document.getElementById("popup-box");
@@ -179,8 +152,7 @@ function openAddPopup(dateStr) {
         <input id="p-name" placeholder="名前">
         <select id="p-menu"></select>
         <select id="p-time"></select>
-
-        <button id="p-save">追加する</button>
+        <button id="p-save">追加</button>
         <button id="p-close">閉じる</button>
     `;
 
@@ -189,9 +161,8 @@ function openAddPopup(dateStr) {
 
     popupBg.style.display = "flex";
 
-    document.getElementById("p-close").onclick = () => {
-        popupBg.style.display = "none";
-    };
+    document.getElementById("p-close").onclick = () =>
+        (popupBg.style.display = "none");
 
     document.getElementById("p-save").onclick = async () => {
         const name = document.getElementById("p-name").value.trim();
@@ -200,65 +171,24 @@ function openAddPopup(dateStr) {
 
         await callAPI({
             mode: "add",
-            password: document.getElementById("admin-pass").value,
-            name, menu, date: dateStr, time,
-            end_time: null
+            password: document.getElementById("admin-pass").value.trim(),
+            name, menu, date: dateStr, time
         });
 
+        const res = await callAPI({
+            mode: "list",
+            password: document.getElementById("admin-pass").value.trim()
+        });
+
+        ALL_RES = res.reservations;
+
         popupBg.style.display = "none";
-        location.reload();
+        render3Days();
     };
 }
 
-
-// =========================
-// 7. 予約編集モーダル
-// =========================
-function openEditPopup(r) {
-    const popupBg = document.getElementById("popup-bg");
-    const box = document.getElementById("popup-box");
-
-    box.innerHTML = `
-        <h3>予約変更</h3>
-        <input id="p-name" value="${r.name}">
-        <select id="p-menu"></select>
-        <select id="p-time"></select>
-
-        <button id="p-save">変更する</button>
-        <button id="p-close">閉じる</button>
-    `;
-
-    fillMenus(r.menu);
-    fillTimes(r.time);
-
-    popupBg.style.display = "flex";
-
-    document.getElementById("p-close").onclick = () => {
-        popupBg.style.display = "none";
-    };
-
-    document.getElementById("p-save").onclick = async () => {
-        const name = document.getElementById("p-name").value.trim();
-        const menu = document.getElementById("p-menu").value;
-        const time = document.getElementById("p-time").value;
-
-        await callAPI({
-            mode: "edit",
-            password: document.getElementById("admin-pass").value,
-            id: r.id, name, menu, date: r.date, time,
-            end_time: null
-        });
-
-        popupBg.style.display = "none";
-        location.reload();
-    };
-}
-
-
-// =========================
-// 8. メニュー一覧セット
-// =========================
-function fillMenus(selected = "") {
+// ▼ メニュー
+function fillMenus(selected="") {
     const sel = document.getElementById("p-menu");
     sel.innerHTML = "";
 
@@ -271,11 +201,11 @@ function fillMenus(selected = "") {
     });
 }
 
+// ▼ 時間
+function fillTimes(selected="") {
+    const sel = document.getElementById("p-time");
+    sel.innerHTML = "";
 
-// =========================
-// 9. 時間セット
-// =========================
-function fillTimes(selected = "") {
     const TIMES = [];
     for (let h = 10; h <= 18; h++) {
         TIMES.push(`${String(h).padStart(2,"0")}:00`);
@@ -283,14 +213,11 @@ function fillTimes(selected = "") {
     }
     TIMES.push("19:00");
 
-    const sel = document.getElementById("p-time");
-    sel.innerHTML = "";
-
     TIMES.forEach(t => {
         const op = document.createElement("option");
         op.value = t;
         op.textContent = t;
-        if (t === selected) op.selected = true;
+        if (selected === t) op.selected = true;
         sel.appendChild(op);
     });
 }
