@@ -1,5 +1,5 @@
 // ==============================
-// Candoll 管理画面 admin.js 完全復旧版
+// Candoll 管理画面 admin.js 完全復旧版（ログイン前は日付ナビ非表示）
 // ==============================
 
 // ------ 設定 ------
@@ -46,6 +46,8 @@ loginBtn.onclick = async () => {
 
     // UI 切り替え
     loginBox.style.display = "none";
+
+    // ★ ログイン後にだけ日付ナビを表示（ここが今回の重要ポイント）
     dayNavi.style.display = "flex";
 
     render3Days();
@@ -292,4 +294,3 @@ function fillTimes(selected = "") {
         sel.appendChild(op);
     });
 }
-
