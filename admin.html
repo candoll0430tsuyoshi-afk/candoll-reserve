@@ -87,8 +87,8 @@
         top: 9px;
         width: 16px;
         height: 11px;
-        border-radius: 3px;
         background: #555;
+        border-radius: 3px;
     }
     .lock-icon.unlocked::before {
         transform: translateX(-50%) rotate(-25deg);
@@ -134,14 +134,12 @@
     #menu-box div:hover { background: #f0f0f0; }
     #menu-box div:last-child { border-bottom: none; }
 
-    /* ▼ 日付ナビ */
+    /* ▼ 日付ナビ（ログイン前は非表示） */
     #day-navi {
         display: none;
         margin: 10px 0 25px 0;
         font-size: 18px;
         font-weight: bold;
-
-        display: flex;
         justify-content: center;
         align-items: center;
         gap: 20px;
@@ -285,7 +283,7 @@
 
 <div id="days-wrapper"></div>
 
-<!-- ▼ popup（既存を使用） -->
+<!-- ▼ popup -->
 <div id="popup-bg">
     <div id="popup-box"></div>
 </div>
