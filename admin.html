@@ -26,6 +26,7 @@
         display: block;
     }
 
+    /* ▼ ログインボックス */
     #login-box {
         background: #f5f5f5;
         padding: 25px;
@@ -42,6 +43,11 @@
         box-sizing: border-box;
     }
 
+    input {
+        margin-top: 10px;
+        border: 1px solid #ccc;
+    }
+
     button {
         margin-top: 20px;
         background: #000;
@@ -50,12 +56,91 @@
         cursor: pointer;
     }
 
-    /* ▼ ログイン前は絶対にナビを表示しない */
+    /* ▼ パスワードロックアイコン（復元） */
+    .lock-icon {
+        position: absolute;
+        right: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 24px;
+        height: 24px;
+        cursor: pointer;
+    }
+    .lock-icon::before,
+    .lock-icon::after {
+        content: "";
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+        box-sizing: border-box;
+    }
+    .lock-icon::before {
+        top: 1px;
+        width: 14px;
+        height: 10px;
+        border: 2px solid #555;
+        border-bottom: none;
+        border-radius: 10px 10px 0 0;
+        transition: transform 0.2s ease, left 0.2s ease;
+    }
+    .lock-icon::after {
+        top: 9px;
+        width: 16px;
+        height: 11px;
+        border-radius: 3px;
+        background: #555;
+    }
+    .lock-icon.unlocked::before {
+        transform: translateX(-50%) rotate(-25deg);
+        left: 55%;
+    }
+
+    /* ▼ 右上メニュー */
+    #menu-btn {
+        position: fixed;
+        top: 12px;
+        right: 12px;
+        padding: 6px 10px;
+        background: #000;
+        color: #fff;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 14px;
+        z-index: 999;
+        width: 34px;
+        text-align: center;
+    }
+
+    #menu-box {
+        display: none;
+        position: fixed;
+        top: 50px;
+        right: 12px;
+        background: #fff;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        width: 120px;
+        text-align: left;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        z-index: 1000;
+    }
+
+    #menu-box div {
+        padding: 10px;
+        cursor: pointer;
+        border-bottom: 1px solid #eee;
+    }
+    #menu-box div:last-child { border-bottom: none; }
+    #menu-box div:hover { background: #f0f0f0; }
+
+    /* ▼ 日付ナビ（ログイン後に表示） */
     #day-navi {
-        display: none !important;
+        display: none;
         margin: 10px 0 25px;
         font-size: 18px;
         font-weight: bold;
+
+        display: flex;
         justify-content: center;
         align-items: center;
         gap: 40px;
@@ -65,7 +150,8 @@
         font-size: 20px;
         font-weight: bold;
         position: relative;
-        top: 4px;
+        top: 4px; /* → あなたが指定した「少し下げる」反映済み */
+        white-space: nowrap;
     }
 
     #day-navi button {
@@ -79,7 +165,7 @@
         white-space: nowrap;
     }
 
-    /* ▼ 3カラム */
+    /* ▼ 3 日カラム */
     #days-wrapper {
         max-width: 1000px;
         margin: 0 auto;
@@ -101,7 +187,7 @@
         flex-direction: column;
     }
 
-    /* ▼ 日付タイトル＋追加ボタン */
+    /* ▼ 日付タイトル（＋ボタン右側配置済み） */
     .date-title {
         background: #000;
         color: #fff;
@@ -154,8 +240,9 @@
 </head>
 <body>
 
+<!-- ▼ メニュー -->
 <button id="menu-btn">▼</button>
-<div id="menu-box" style="display:none;">
+<div id="menu-box">
     <div id="m-logout">ログアウト</div>
     <div id="m-add">休日追加</div>
     <div id="m-del">休日解除</div>
@@ -166,20 +253,20 @@
     <img src="https://candoll0430tsuyoshi-afk.github.io/candoll-reserve/logo.png"
          class="logo">
 
+    <!-- ▼ ログイン枠 -->
     <div id="login-box">
         <p>Pass</p>
-
         <div style="position: relative; width: 100%;">
             <input type="password" id="admin-pass" placeholder="パスワード" style="padding-right: 45px;">
-            <span id="toggle-pass" class="lock-icon locked"></span>
+            <span id="toggle-pass" class="lock-icon"></span>
         </div>
-
         <button id="login-btn">ログイン</button>
         <p id="login-error" style="color:red; display:none; margin-top:10px;">
             パスワードが違います
         </p>
     </div>
 
+    <!-- ▼ 日付ナビ -->
     <div id="day-navi">
         <button id="nav-prev">前の日</button>
         <span id="nav-current">-</span>
@@ -187,12 +274,40 @@
     </div>
 </div>
 
+<!-- ▼ カラム -->
 <div id="days-wrapper"></div>
 
+<!-- ▼ popup -->
 <div id="popup-bg">
     <div id="popup-box"></div>
 </div>
 
 <script src="admin.js"></script>
+
+<!-- ▼ パスワード表示切替 -->
+<script>
+const passInput = document.getElementById("admin-pass");
+const toggleBtn = document.getElementById("toggle-pass");
+
+toggleBtn.onclick = () => {
+    const isHidden = passInput.type === "password";
+    passInput.type = isHidden ? "text" : "password";
+    toggleBtn.classList.toggle("unlocked", isHidden);
+};
+
+const menuBtn = document.getElementById("menu-btn");
+const menuBox = document.getElementById("menu-box");
+
+menuBtn.onclick = () => {
+    menuBox.style.display = menuBox.style.display === "block" ? "none" : "block";
+};
+
+document.addEventListener("click", (e) => {
+    if (!menuBtn.contains(e.target) && !menuBox.contains(e.target)) {
+        menuBox.style.display = "none";
+    }
+});
+</script>
+
 </body>
 </html>
