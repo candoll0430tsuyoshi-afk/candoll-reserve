@@ -42,11 +42,6 @@
         box-sizing: border-box;
     }
 
-    input {
-        margin-top: 10px;
-        border: 1px solid #ccc;
-    }
-
     button {
         margin-top: 20px;
         background: #000;
@@ -55,43 +50,12 @@
         cursor: pointer;
     }
 
-    /* ▼ 右上メニュー */
-    #menu-btn {
-        position: fixed;
-        top: 12px;
-        right: 12px;
-        padding: 6px 10px;
-        background: #000;
-        color: #fff;
-        border-radius: 6px;
-        cursor: pointer;
-        font-size: 14px;
-        z-index: 999;
-        width: 34px;
-        text-align: center;
-    }
-
-    #menu-box {
-        display: none;
-        position: fixed;
-        top: 50px;
-        right: 12px;
-        background: #fff;
-        border: 1px solid #ccc;
-        border-radius: 6px;
-        width: 120px;
-        text-align: left;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-        z-index: 1000;
-    }
-
-    /* ▼ 日付ナビ（ログイン前は非表示） */
+    /* ▼ ログイン前は絶対にナビを表示しない */
     #day-navi {
-        display: none;
+        display: none !important;
         margin: 10px 0 25px;
         font-size: 18px;
         font-weight: bold;
-        display: flex;
         justify-content: center;
         align-items: center;
         gap: 40px;
@@ -101,7 +65,7 @@
         font-size: 20px;
         font-weight: bold;
         position: relative;
-        top: 4px; /* ← 高さを少し下げて左右ボタンと揃える */
+        top: 4px;
     }
 
     #day-navi button {
@@ -115,7 +79,7 @@
         white-space: nowrap;
     }
 
-    /* ▼ 3カラム枠 */
+    /* ▼ 3カラム */
     #days-wrapper {
         max-width: 1000px;
         margin: 0 auto;
@@ -137,7 +101,7 @@
         flex-direction: column;
     }
 
-    /* ▼ 日付タイトル＋追加ボタン（横並び） */
+    /* ▼ 日付タイトル＋追加ボタン */
     .date-title {
         background: #000;
         color: #fff;
@@ -150,7 +114,6 @@
         align-items: center;
     }
 
-    /* ＋ボタン（上に移動） */
     .plus-btn {
         background: #fff;
         color: #000;
@@ -192,7 +155,7 @@
 <body>
 
 <button id="menu-btn">▼</button>
-<div id="menu-box">
+<div id="menu-box" style="display:none;">
     <div id="m-logout">ログアウト</div>
     <div id="m-add">休日追加</div>
     <div id="m-del">休日解除</div>
@@ -231,30 +194,5 @@
 </div>
 
 <script src="admin.js"></script>
-
-<script>
-const passInput = document.getElementById("admin-pass");
-const toggleBtn = document.getElementById("toggle-pass");
-
-toggleBtn.onclick = () => {
-    const isHidden = passInput.type === "password";
-    passInput.type = isHidden ? "text" : "password";
-    toggleBtn.classList.toggle("unlocked", isHidden);
-};
-
-const menuBtn = document.getElementById("menu-btn");
-const menuBox = document.getElementById("menu-box");
-
-menuBtn.onclick = () => {
-    menuBox.style.display = menuBox.style.display === "block" ? "none" : "block";
-};
-
-document.addEventListener("click", (e) => {
-    if (!menuBtn.contains(e.target) && !menuBox.contains(e.target)) {
-        menuBox.style.display = "none";
-    }
-});
-</script>
-
 </body>
 </html>
