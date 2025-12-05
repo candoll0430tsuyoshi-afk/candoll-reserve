@@ -1,5 +1,6 @@
 // ==============================
-// Candoll 管理画面 admin.js（完全復元 + 修正5点反映版）
+// Candoll 管理画面 admin.js
+// （壊れる前の完全版 + 10機能 + 休日管理強化）
 // ==============================
 
 const API_URL = "https://bcahztzetpfuklipjmxx.functions.supabase.co/admin-service";
@@ -12,7 +13,10 @@ const navPrev = document.getElementById("nav-prev");
 const navNext = document.getElementById("nav-next");
 const navCurrent = document.getElementById("nav-current");
 const daysWrapper = document.getElementById("days-wrapper");
+
 const logoutBtn = document.getElementById("m-logout");
+const addHolidayBtn = document.getElementById("m-add");
+const delHolidayBtn = document.getElementById("m-del");
 
 let MENUS = [];
 let ALL_RES = [];
@@ -20,7 +24,9 @@ let HOLIDAYS = [];
 
 let baseDate = new Date();
 
-// ▼ 日付を「2025-12-05（金）」形式に統一（あなたの指定）
+// ==============================
+// ▼ 日付フォーマット（2025-12-05（金））
+// ==============================
 function formatDateFull(d) {
     const y = d.getFullYear();
     const m = String(d.getMonth() + 1).padStart(2, "0");
@@ -29,12 +35,13 @@ function formatDateFull(d) {
     return `${y}-${m}-${day}（${youbi}）`;
 }
 
-// ▼ YYYY-MM-DD
 function formatDate(d) {
     return d.toISOString().split("T")[0];
 }
 
+// ==============================
 // ▼ API 共通
+// ==============================
 async function callAPI(body) {
     try {
         const res = await fetch(API_URL, {
@@ -63,7 +70,6 @@ loginBtn.onclick = async () => {
     }
 
     loginError.style.display = "none";
-
     ALL_RES = result.reservations || [];
     HOLIDAYS = result.holidays || [];
     MENUS = result.menus || [];
@@ -75,7 +81,7 @@ loginBtn.onclick = async () => {
 };
 
 // ==============================
-// ▼ ログアウト（ログイン画面に戻す）
+// ▼ ログアウト
 // ==============================
 logoutBtn.onclick = () => {
     dayNavi.style.display = "none";
@@ -83,9 +89,8 @@ logoutBtn.onclick = () => {
     loginBox.style.display = "block";
 };
 
-
 // ==============================
-// ▼ 3日分を表示
+// ▼ 3日表示
 // ==============================
 function render3Days() {
     daysWrapper.innerHTML = "";
@@ -104,7 +109,7 @@ function render3Days() {
         const col = document.createElement("div");
         col.className = "day-column";
 
-        // ▼ 日付タイトル（＋ボタン右側配置）
+        // ▼ タイトル（日付 + ＋）
         const title = document.createElement("div");
         title.className = "date-title";
         title.innerHTML = formatDateFull(dateObj);
@@ -113,11 +118,12 @@ function render3Days() {
         plus.className = "plus-btn";
         plus.textContent = "＋";
         plus.onclick = () => openAddPopup(dayStr);
-
-        title.appendChild(plus); // ← 横に配置
+        title.appendChild(plus);
         col.appendChild(title);
 
-        // ▼ 予約一覧（元コードのまま復元）
+        // ▼ 満席判定に使う予約時間帯
+        const takenTimes = ALL_RES.filter(r => r.date === dayStr).map(r => r.time);
+
         ALL_RES.filter(r => r.date === dayStr).forEach(r => {
             const box = document.createElement("div");
             box.style.border = "1px solid #ccc";
@@ -125,6 +131,12 @@ function render3Days() {
             box.style.marginBottom = "8px";
             box.style.borderRadius = "6px";
             box.style.background = "#fff";
+
+            if (takenTimes.length >= 10) {
+                box.style.background = "#ffeaea";
+                box.style.border = "1px solid #ff5050";
+            }
+
             box.innerHTML = `
                 <div><b>${r.time}</b></div>
                 <div>${r.name}</div>
@@ -137,23 +149,74 @@ function render3Days() {
     });
 }
 
-
 // ==============================
-// ▼ 日付移動（左右ボタン）
+// ▼ 日付移動
 // ==============================
 navPrev.onclick = () => {
     baseDate = new Date(baseDate.getTime() - 86400000);
     render3Days();
 };
-
 navNext.onclick = () => {
     baseDate = new Date(baseDate.getTime() + 86400000);
     render3Days();
 };
 
+// ==============================
+// ▼ 時間選択（過去時間は選べない）
+// ==============================
+function fillTimes(dateStr, selected = "") {
+    const sel = document.getElementById("p-time");
+    sel.innerHTML = "";
+
+    const now = new Date();
+    const target = new Date(dateStr);
+
+    const TIMES = [];
+    for (let h = 10; h <= 18; h++) {
+        TIMES.push(`${String(h).padStart(2, "0")}:00`);
+        TIMES.push(`${String(h).padStart(2, "0")}:30`);
+    }
+    TIMES.push("19:00");
+
+    TIMES.forEach(t => {
+        const op = document.createElement("option");
+        op.value = t;
+        op.textContent = t;
+
+        // ▼ 過去時間は選択不可
+        if (target.toDateString() === now.toDateString()) {
+            const hour = Number(t.split(":")[0]);
+            const min = Number(t.split(":")[1]);
+            const nowHM = now.getHours() * 60 + now.getMinutes();
+            const tHM = hour * 60 + min;
+
+            if (tHM <= nowHM) op.disabled = true;
+        }
+
+        if (selected === t) op.selected = true;
+
+        sel.appendChild(op);
+    });
+}
 
 // ==============================
-// ▼ 予約追加ポップアップ（完全復元）
+// ▼ メニュー補完
+// ==============================
+function fillMenus(selected = "") {
+    const sel = document.getElementById("p-menu");
+    sel.innerHTML = "";
+
+    MENUS.forEach(m => {
+        const op = document.createElement("option");
+        op.value = m.name;
+        op.textContent = m.name;
+        if (selected === m.name) op.selected = true;
+        sel.appendChild(op);
+    });
+}
+
+// ==============================
+// ▼ 予約追加ポップアップ
 // ==============================
 function openAddPopup(dateStr) {
     const bg = document.getElementById("popup-bg");
@@ -164,13 +227,12 @@ function openAddPopup(dateStr) {
         <input id="p-name" placeholder="名前">
         <select id="p-menu"></select>
         <select id="p-time"></select>
-
         <button id="p-save">追加</button>
         <button id="p-close">閉じる</button>
     `;
 
     fillMenus();
-    fillTimes();
+    fillTimes(dateStr);
 
     bg.style.display = "flex";
 
@@ -191,55 +253,79 @@ function openAddPopup(dateStr) {
             time
         });
 
-        // ▼ ★重要：reload を使わない（ログアウト問題修正）
         const res = await callAPI({
             mode: "list",
             password: document.getElementById("admin-pass").value.trim()
         });
-        ALL_RES = res.reservations;
 
+        ALL_RES = res.reservations;
         bg.style.display = "none";
         render3Days();
     };
 }
 
+// ==============================
+// ▼ 休日追加（カレンダー入力）
+// ==============================
+addHolidayBtn.onclick = () => {
+    const bg = document.getElementById("popup-bg");
+    const box = document.getElementById("popup-box");
+
+    box.innerHTML = `
+        <h3>休日追加</h3>
+        <input type="date" id="h-day">
+        <button id="h-save">追加</button>
+        <button id="h-close">閉じる</button>
+    `;
+
+    bg.style.display = "flex";
+
+    document.getElementById("h-close").onclick = () =>
+        bg.style.display = "none";
+
+    document.getElementById("h-save").onclick = async () => {
+        const d = document.getElementById("h-day").value;
+        if (!d) return;
+
+        await callAPI({
+            mode: "addHoliday",
+            password: document.getElementById("admin-pass").value.trim(),
+            date: d
+        });
+
+        bg.style.display = "none";
+    };
+};
 
 // ==============================
-// ▼ メニュー一覧（完全復元）
+// ▼ 休日解除（カレンダー入力）
 // ==============================
-function fillMenus(selected = "") {
-    const sel = document.getElementById("p-menu");
-    sel.innerHTML = "";
+delHolidayBtn.onclick = () => {
+    const bg = document.getElementById("popup-bg");
+    const box = document.getElementById("popup-box");
 
-    MENUS.forEach(m => {
-        const op = document.createElement("option");
-        op.value = m.name;
-        op.textContent = m.name;
-        if (selected === m.name) op.selected = true;
-        sel.appendChild(op);
-    });
-}
+    box.innerHTML = `
+        <h3>休日解除</h3>
+        <input type="date" id="h-del-day">
+        <button id="h-del">解除</button>
+        <button id="h-close">閉じる</button>
+    `;
 
+    bg.style.display = "flex";
 
-// ==============================
-// ▼ 時間一覧（元コードのまま復元）
-// ==============================
-function fillTimes(selected = "") {
-    const sel = document.getElementById("p-time");
-    sel.innerHTML = "";
+    document.getElementById("h-close").onclick = () =>
+        bg.style.display = "none";
 
-    const TIMES = [];
-    for (let h = 10; h <= 18; h++) {
-        TIMES.push(`${String(h).padStart(2, "0")}:00`);
-        TIMES.push(`${String(h).padStart(2, "0")}:30`);
-    }
-    TIMES.push("19:00");
+    document.getElementById("h-del").onclick = async () => {
+        const d = document.getElementById("h-del-day").value;
+        if (!d) return;
 
-    TIMES.forEach(t => {
-        const op = document.createElement("option");
-        op.value = t;
-        op.textContent = t;
-        if (selected === t) op.selected = true;
-        sel.appendChild(op);
-    });
-}
+        await callAPI({
+            mode: "delHoliday",
+            password: document.getElementById("admin-pass").value.trim(),
+            date: d
+        });
+
+        bg.style.display = "none";
+    };
+};
