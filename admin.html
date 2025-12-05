@@ -26,7 +26,6 @@
         display: block;
     }
 
-    /* ▼ ログイン */
     #login-box {
         background: #f5f5f5;
         padding: 25px;
@@ -56,46 +55,7 @@
         cursor: pointer;
     }
 
-    /* ▼ パスワード鍵 */
-    .lock-icon {
-        position: absolute;
-        right: 12px;
-        top: 50%;
-        transform: translateY(-50%);
-        width: 24px;
-        height: 24px;
-        cursor: pointer;
-    }
-    .lock-icon::before,
-    .lock-icon::after {
-        content: "";
-        position: absolute;
-        left: 50%;
-        transform: translateX(-50%);
-        box-sizing: border-box;
-    }
-    .lock-icon::before {
-        top: 1px;
-        width: 14px;
-        height: 10px;
-        border: 2px solid #555;
-        border-bottom: none;
-        border-radius: 10px 10px 0 0;
-        transition: transform 0.2s ease, left 0.2s ease;
-    }
-    .lock-icon::after {
-        top: 9px;
-        width: 16px;
-        height: 11px;
-        background: #555;
-        border-radius: 3px;
-    }
-    .lock-icon.unlocked::before {
-        transform: translateX(-50%) rotate(-25deg);
-        left: 55%;
-    }
-
-    /* ▼ 右上プルダウン */
+    /* ▼ 右上メニュー */
     #menu-btn {
         position: fixed;
         top: 12px;
@@ -125,24 +85,23 @@
         z-index: 1000;
     }
 
-    #menu-box div {
-        padding: 10px;
-        cursor: pointer;
-        border-bottom: 1px solid #eee;
-        font-size: 14px;
-    }
-    #menu-box div:hover { background: #f0f0f0; }
-    #menu-box div:last-child { border-bottom: none; }
-
     /* ▼ 日付ナビ（ログイン前は非表示） */
     #day-navi {
         display: none;
-        margin: 10px 0 25px 0;
+        margin: 10px 0 25px;
         font-size: 18px;
         font-weight: bold;
+        display: flex;
         justify-content: center;
         align-items: center;
-        gap: 20px;
+        gap: 40px;
+    }
+
+    #nav-current {
+        font-size: 20px;
+        font-weight: bold;
+        position: relative;
+        top: 4px; /* ← 高さを少し下げて左右ボタンと揃える */
     }
 
     #day-navi button {
@@ -156,14 +115,7 @@
         white-space: nowrap;
     }
 
-    #nav-current {
-        font-size: 20px;
-        font-weight: bold;
-        color: #000;
-        white-space: nowrap;
-    }
-
-    /* ▼ PC：3カラム */
+    /* ▼ 3カラム枠 */
     #days-wrapper {
         max-width: 1000px;
         margin: 0 auto;
@@ -185,6 +137,7 @@
         flex-direction: column;
     }
 
+    /* ▼ 日付タイトル＋追加ボタン（横並び） */
     .date-title {
         background: #000;
         color: #fff;
@@ -192,36 +145,27 @@
         margin-bottom: 10px;
         border-radius: 5px;
         font-size: 20px;
-
         display: flex;
         justify-content: space-between;
         align-items: center;
     }
 
-    /* ▼ ＋ボタン */
-    .add-btn {
-        background:#fff;
-        color:#000;
-        border-radius:6px;
-        padding:4px 10px;
-        font-size:20px;
-        border:1px solid #000;
-        cursor:pointer;
-        width:auto;
+    /* ＋ボタン（上に移動） */
+    .plus-btn {
+        background: #fff;
+        color: #000;
+        font-size: 26px;
+        width: 36px;
+        height: 36px;
+        border-radius: 6px;
+        border: 1px solid #000;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        cursor: pointer;
     }
 
-    /* ▼ スマホ：縦表示に切替 */
-    @media (max-width: 768px) {
-        #days-wrapper {
-            flex-direction: column;
-            max-width: 95%;
-        }
-        .day-column {
-            min-width: 100%;
-        }
-    }
-
-    /* ▼ popup（既存） */
+    /* ▼ popup */
     #popup-bg {
         position: fixed;
         top:0;
@@ -257,7 +201,6 @@
 <div class="container">
 
     <img src="https://candoll0430tsuyoshi-afk.github.io/candoll-reserve/logo.png"
-         alt="Candoll ロゴ"
          class="logo">
 
     <div id="login-box">
@@ -283,7 +226,6 @@
 
 <div id="days-wrapper"></div>
 
-<!-- ▼ popup -->
 <div id="popup-bg">
     <div id="popup-box"></div>
 </div>
