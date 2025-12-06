@@ -16,6 +16,9 @@ const navCurrent = document.getElementById("nav-current");
 let ADMIN_PASS = "";
 let baseDate = new Date();
 
+// ✅ ログイン前は日付ナビを隠す
+dayNavi.style.display = "none";
+
 // ===== 30分枠 =====
 const TIMES = [];
 for (let h = 10; h <= 18; h++) {
@@ -25,17 +28,25 @@ for (let h = 10; h <= 18; h++) {
 TIMES.push("18:30");
 
 // ===== Utils =====
+const WEEK = ["日","月","火","水","木","金","土"];
+
 function fmt(d) {
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(
-    2,
-    "0"
-  )}-${String(d.getDate()).padStart(2, "0")}`;
+  const y = d.getFullYear();
+  const m = String(d.getMonth()+1).padStart(2,"0");
+  const day = String(d.getDate()).padStart(2,"0");
+  const w = WEEK[d.getDay()];
+  return `${y}-${m}-${day}（${w}）`;
 }
+
+function fmtDate(d){
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+}
+
 function toMin(t) {
-  const [h, m] = t.split(":").map(Number);
-  return h * 60 + m;
+  const [h,m] = t.split(":").map(Number);
+  return h*60+m;
 }
-function inRange(t, s, e) {
+function inRange(t,s,e){
   return toMin(s) <= toMin(t) && toMin(t) < toMin(e);
 }
 
@@ -44,7 +55,7 @@ async function callAPI(body) {
   const res = await fetch(API_URL, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ password: ADMIN_PASS, ...body }),
+    body: JSON.stringify({ password: ADMIN_PASS, ...body })
   });
   if (!res.ok) throw new Error("API error");
   return res.json();
@@ -52,8 +63,8 @@ async function callAPI(body) {
 
 // ===== Login =====
 document.getElementById("login-btn").onclick = async () => {
-  const pass = document.getElementById("admin-pass").value;
-  ADMIN_PASS = pass;
+  ADMIN_PASS = document.getElementById("admin-pass").value;
+
   try {
     await callAPI({ mode: "list" });
     loginBox.style.display = "none";
@@ -85,45 +96,35 @@ navNext.onclick = () => {
 // ===== Render =====
 async function render() {
   const d1 = new Date(baseDate);
-  const d2 = new Date(baseDate);
-  d2.setDate(d2.getDate() + 1);
-  const d3 = new Date(baseDate);
-  d3.setDate(d3.getDate() + 2);
-  const days = [d1, d2, d3];
+  const d2 = new Date(baseDate); d2.setDate(d2.getDate()+1);
+  const d3 = new Date(baseDate); d3.setDate(d3.getDate()+2);
+  const days = [d1,d2,d3];
 
   navCurrent.textContent = fmt(d1);
 
   const { reservations, holidays } = await callAPI({ mode: "list" });
-
   reserveList.innerHTML = "";
 
-  days.forEach((day) => {
-    const dateStr = fmt(day);
-    const isHoliday = holidays.some((h) => h.date === dateStr);
+  days.forEach(day => {
+    const dateStr = fmtDate(day);
+    const isHoliday = holidays.some(h => h.date === dateStr);
 
     const col = document.createElement("div");
     col.className = "day-column";
 
-    // ===== 日付タイトル＋＋ボタン =====
+    // ✅ 日付 + 曜日
     const title = document.createElement("div");
     title.className = "date-title";
-    title.innerHTML = `
-      <span>${dateStr}</span>
-      <button class="add-btn">＋</button>
-    `;
+    title.textContent = fmt(day);
     col.appendChild(title);
 
-    // （※ 予約追加処理は後でここに入れられる）
-    title.querySelector(".add-btn").onclick = () => {
-      alert(`${dateStr} の予約追加`);
-    };
-
-    TIMES.forEach((t) => {
+    TIMES.forEach(t => {
       const slot = document.createElement("div");
       slot.style.padding = "6px";
       slot.style.marginBottom = "6px";
       slot.style.borderRadius = "6px";
       slot.style.fontSize = "13px";
+      slot.style.cursor = "default";
 
       if (isHoliday) {
         slot.style.background = "#ccc";
@@ -132,32 +133,34 @@ async function render() {
         return;
       }
 
-      const rs = reservations.filter((r) => r.date === dateStr);
+      const rs = reservations.filter(r => r.date === dateStr);
 
-      const startHit = rs.find((r) => r.time === t);
+      const startHit = rs.find(r => r.time === t);
       if (startHit) {
         slot.style.background = "#f55";
         slot.style.color = "#fff";
-        slot.innerHTML = `
-          <b>${t}</b><br>
-          ${startHit.name}<br>
-          ${startHit.menu || startHit.menus || ""}
-        `;
+        slot.innerHTML = `<b>${t}</b><br>${startHit.name}<br>${startHit.menu || startHit.menus || ""}`;
         col.appendChild(slot);
         return;
       }
 
-      const midHit = rs.find((r) => inRange(t, r.time, r.end_time));
+      const midHit = rs.find(r => inRange(t, r.time, r.end_time));
       if (midHit) {
         slot.style.background = "#f99";
-        slot.textContent = t; // ★時間は表示
+        slot.textContent = t;
         col.appendChild(slot);
         return;
       }
 
-      // 空き
+      // ✅ 空き枠（クリックで追加）
       slot.style.background = "#8fda8f";
       slot.textContent = `${t} 空き`;
+      slot.style.cursor = "pointer";
+      slot.onclick = () => {
+        alert(`${dateStr} ${t} の予約を追加`);
+        // ← 次はここに管理者予約追加ポップアップ
+      };
+
       col.appendChild(slot);
     });
 
