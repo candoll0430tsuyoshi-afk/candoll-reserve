@@ -1,6 +1,7 @@
 // ==============================
 // Candoll 管理画面 admin.js
 // 3日表示 / 30分枠（緑=空き / 赤=予約）
+// 空き枠クリックで管理者予約追加
 // ==============================
 
 const API_URL =
@@ -13,10 +14,13 @@ const navPrev = document.getElementById("nav-prev");
 const navNext = document.getElementById("nav-next");
 const navCurrent = document.getElementById("nav-current");
 
+const popupBg = document.getElementById("popup-bg");
+const popupBox = document.getElementById("popup-box");
+
 let ADMIN_PASS = "";
 let baseDate = new Date();
 
-// ✅ ログイン前は日付ナビを隠す
+// ✅ ログイン前は日付ナビ非表示
 dayNavi.style.display = "none";
 
 // ===== 30分枠 =====
@@ -37,11 +41,9 @@ function fmt(d) {
   const w = WEEK[d.getDay()];
   return `${y}-${m}-${day}（${w}）`;
 }
-
 function fmtDate(d){
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
 }
-
 function toMin(t) {
   const [h,m] = t.split(":").map(Number);
   return h*60+m;
@@ -64,7 +66,6 @@ async function callAPI(body) {
 // ===== Login =====
 document.getElementById("login-btn").onclick = async () => {
   ADMIN_PASS = document.getElementById("admin-pass").value;
-
   try {
     await callAPI({ mode: "list" });
     loginBox.style.display = "none";
@@ -93,6 +94,46 @@ navNext.onclick = () => {
   render();
 };
 
+// ===== Popup =====
+function openAddPopup({ date, time }) {
+  popupBox.innerHTML = `
+    <h3 style="margin-top:0">予約追加</h3>
+    <p>${date} ${time}</p>
+
+    <input id="p-name" placeholder="お名前">
+    <input id="p-menu" placeholder="メニュー">
+
+    <button id="p-save">追加</button>
+    <button id="p-cancel" style="background:#aaa;margin-top:10px;">キャンセル</button>
+  `;
+
+  popupBg.style.display = "flex";
+
+  document.getElementById("p-cancel").onclick = () => {
+    popupBg.style.display = "none";
+  };
+
+  document.getElementById("p-save").onclick = async () => {
+    const name = document.getElementById("p-name").value.trim();
+    const menu = document.getElementById("p-menu").value.trim();
+    if (!name || !menu) {
+      alert("未入力があります");
+      return;
+    }
+
+    await callAPI({
+      mode: "add",
+      name,
+      menu,
+      date,
+      time
+    });
+
+    popupBg.style.display = "none";
+    render();
+  };
+}
+
 // ===== Render =====
 async function render() {
   const d1 = new Date(baseDate);
@@ -112,7 +153,6 @@ async function render() {
     const col = document.createElement("div");
     col.className = "day-column";
 
-    // ✅ 日付 + 曜日
     const title = document.createElement("div");
     title.className = "date-title";
     title.textContent = fmt(day);
@@ -124,7 +164,6 @@ async function render() {
       slot.style.marginBottom = "6px";
       slot.style.borderRadius = "6px";
       slot.style.fontSize = "13px";
-      slot.style.cursor = "default";
 
       if (isHoliday) {
         slot.style.background = "#ccc";
@@ -152,14 +191,11 @@ async function render() {
         return;
       }
 
-      // ✅ 空き枠（クリックで追加）
+      // ✅ 空き枠 → 追加
       slot.style.background = "#8fda8f";
-      slot.textContent = `${t} 空き`;
       slot.style.cursor = "pointer";
-      slot.onclick = () => {
-        alert(`${dateStr} ${t} の予約を追加`);
-        // ← 次はここに管理者予約追加ポップアップ
-      };
+      slot.textContent = `${t} 空き`;
+      slot.onclick = () => openAddPopup({ date: dateStr, time: t });
 
       col.appendChild(slot);
     });
