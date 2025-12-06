@@ -1,7 +1,6 @@
 // ==============================
 // Candoll 管理画面 admin.js
-// 3日表示 / 30分枠（緑=空き / 赤=予約）
-// 空き枠クリックで管理者予約追加
+// 空き枠クリック → 管理者予約追加（menus連動）
 // ==============================
 
 const API_URL =
@@ -19,8 +18,8 @@ const popupBox = document.getElementById("popup-box");
 
 let ADMIN_PASS = "";
 let baseDate = new Date();
+let MENU_LIST = []; // ★ menusを保持
 
-// ✅ ログイン前は日付ナビ非表示
 dayNavi.style.display = "none";
 
 // ===== 30分枠 =====
@@ -35,11 +34,7 @@ TIMES.push("18:30");
 const WEEK = ["日","月","火","水","木","金","土"];
 
 function fmt(d) {
-  const y = d.getFullYear();
-  const m = String(d.getMonth()+1).padStart(2,"0");
-  const day = String(d.getDate()).padStart(2,"0");
-  const w = WEEK[d.getDay()];
-  return `${y}-${m}-${day}（${w}）`;
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}（${WEEK[d.getDay()]}）`;
 }
 function fmtDate(d){
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
@@ -96,12 +91,20 @@ navNext.onclick = () => {
 
 // ===== Popup =====
 function openAddPopup({ date, time }) {
+  const menuOptions = MENU_LIST
+    .map(m => `<option value="${m.name}">${m.name}</option>`)
+    .join("");
+
   popupBox.innerHTML = `
     <h3 style="margin-top:0">予約追加</h3>
     <p>${date} ${time}</p>
 
     <input id="p-name" placeholder="お名前">
-    <input id="p-menu" placeholder="メニュー">
+
+    <select id="p-menu">
+      <option value="">メニューを選択</option>
+      ${menuOptions}
+    </select>
 
     <button id="p-save">追加</button>
     <button id="p-cancel" style="background:#aaa;margin-top:10px;">キャンセル</button>
@@ -115,7 +118,8 @@ function openAddPopup({ date, time }) {
 
   document.getElementById("p-save").onclick = async () => {
     const name = document.getElementById("p-name").value.trim();
-    const menu = document.getElementById("p-menu").value.trim();
+    const menu = document.getElementById("p-menu").value;
+
     if (!name || !menu) {
       alert("未入力があります");
       return;
@@ -143,7 +147,9 @@ async function render() {
 
   navCurrent.textContent = fmt(d1);
 
-  const { reservations, holidays } = await callAPI({ mode: "list" });
+  const { reservations, holidays, menus } = await callAPI({ mode: "list" });
+  MENU_LIST = menus || [];
+
   reserveList.innerHTML = "";
 
   days.forEach(day => {
@@ -178,7 +184,8 @@ async function render() {
       if (startHit) {
         slot.style.background = "#f55";
         slot.style.color = "#fff";
-        slot.innerHTML = `<b>${t}</b><br>${startHit.name}<br>${startHit.menu || startHit.menus || ""}`;
+        slot.innerHTML =
+          `<b>${t}</b><br>${startHit.name}<br>${startHit.menu || startHit.menus || ""}`;
         col.appendChild(slot);
         return;
       }
@@ -191,7 +198,7 @@ async function render() {
         return;
       }
 
-      // ✅ 空き枠 → 追加
+      // 空き枠
       slot.style.background = "#8fda8f";
       slot.style.cursor = "pointer";
       slot.textContent = `${t} 空き`;
