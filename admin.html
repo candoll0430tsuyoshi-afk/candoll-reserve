@@ -320,48 +320,33 @@
     <div id="popup-box"></div>
 </div>
 
-<script src="admin.js"></script>
-
-<!-- ▼ パスワード可視化・メニュー操作 -->
 <script>
+/* ▼ パスワード可視化 */
 const passInput = document.getElementById("admin-pass");
 const toggleBtn = document.getElementById("toggle-pass");
 
 toggleBtn.onclick = () => {
-    const isHidden = passInput.type === "password";
-    passInput.type = isHidden ? "text" : "password";
-    toggleBtn.classList.toggle("unlocked", isHidden);
+  const isHidden = passInput.type === "password";
+  passInput.type = isHidden ? "text" : "password";
+  toggleBtn.classList.toggle("unlocked", isHidden);
 };
+</script>
 
-const menuBtn = document.getElementById("menu-btn");
+<script>
+/* ▼ 右上メニュー操作（menuBtnの再宣言なし） */
 const menuBox = document.getElementById("menu-box");
 
-menuBtn.onclick = () => {
-    menuBox.style.display = menuBox.style.display === "block" ? "none" : "block";
-};
+document.getElementById("menu-btn").addEventListener("click", (e) => {
+  e.stopPropagation();
+  menuBox.style.display =
+    menuBox.style.display === "block" ? "none" : "block";
+});
 
-document.addEventListener("click", (e) => {
-    if (!menuBtn.contains(e.target) && !menuBox.contains(e.target)) {
-        menuBox.style.display = "none";
-    }
+document.addEventListener("click", () => {
+  menuBox.style.display = "none";
 });
 </script>
-<script>
-  const menuBox = document.getElementById("menu-box");
-  const menuBtnEl = document.getElementById("menu-btn");
 
-  // ▼ クリックで開閉
-  menuBtnEl.addEventListener("click", (e) => {
-    e.stopPropagation(); // ← これ重要
-    menuBox.style.display =
-      menuBox.style.display === "block" ? "none" : "block";
-  });
-
-  // ▼ 外クリックで閉じる
-  document.addEventListener("click", () => {
-    menuBox.style.display = "none";
-  });
-</script>
 
 
 </body>
