@@ -134,14 +134,12 @@
     #menu-box div:last-child { border-bottom: none; }
     #menu-box div:hover { background: #f0f0f0; }
 
-    /* ▼ 日付ナビ */
+    /* ▼ 日付ナビ（ログイン後に admin.js から display:flex にする） */
     #day-navi {
-        display: none;
+        display: none; /* ← ログイン前は非表示 */
         margin: 10px 0 25px 0;
         font-size: 18px;
         font-weight: bold;
-
-        display: flex;
         justify-content: center;
         align-items: center;
         gap: 20px;
@@ -152,7 +150,7 @@
         font-weight: bold;
         color: #000;
         position: relative;
-        top: 4px;  /* ← 高さ調整済み */
+        top: 4px;  /* 高さ調整 */
         white-space: nowrap;
     }
 
@@ -189,7 +187,7 @@
         flex-direction: column;
     }
 
-    /* ▼ 日付タイトル（＋ボタン横に置く） */
+    /* ▼ 日付タイトル（＋ボタン横に置く想定の枠） */
     .date-title {
         background: #000;
         color: #fff;
@@ -320,6 +318,10 @@
     <div id="popup-box"></div>
 </div>
 
+<!-- ▼ 管理ロジック本体 -->
+<script src="admin.js"></script>
+
+<!-- ▼ パスワード可視化・右上メニュー操作 -->
 <script>
 document.addEventListener("DOMContentLoaded", () => {
 
@@ -353,7 +355,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
 });
 </script>
-
 
 </body>
 </html>
