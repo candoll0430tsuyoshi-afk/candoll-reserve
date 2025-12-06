@@ -6,7 +6,6 @@ const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 // ===== メニュー所要時間（Supabaseから取得） =====
 let MENU_DATA = {};
 
-// ★ 必ず最初にメニューを読み込む
 async function loadMenus() {
   const { data, error } = await supabaseClient
     .from("menus")
@@ -22,11 +21,9 @@ async function loadMenus() {
     MENU_DATA[m.name] = m.duration;
   });
 
-  console.log("MENU_DATA loaded:", MENU_DATA);
-  updateTimeOptions(); // ★ 読み込み完了後に強制再計算
+  updateTimeOptions(); // 読み込み完了後に再計算
 }
 
-// ★ ここは then を使わない
 loadMenus();
 
 const greeting = document.getElementById("greeting");
@@ -97,7 +94,6 @@ document.getElementById("date").addEventListener("change", updateTimeOptions);
 
 async function updateTimeOptions() {
 
-  // ★ MENU_DATA 未読込時は何もしない（超重要）
   if (Object.keys(MENU_DATA).length === 0) return;
 
   const date = document.getElementById("date").value;
@@ -179,13 +175,16 @@ form.addEventListener("submit", async e => {
     return;
   }
 
+  const week = ["日", "月", "火", "水", "木", "金", "土"];
+  const youbi = week[new Date(date).getDay()];
+
   if (greeting) greeting.style.display = "none";
 
   confirmText.innerHTML =
     `お名前：${name}<br>
      メニュー：${menus.join(", ")}<br>
-     日付：${date}<br>
-     時間：${time} 〜`;
+     日付：${date}（${youbi}）<br>
+     時間：${time}`;
 
   form.style.display = "none";
   confirmScreen.style.display = "block";
@@ -200,6 +199,7 @@ cancelBtn.onclick = () => {
 
 // ===== OK（保存＋通知） =====
 okBtn.onclick = async () => {
+
   const name = document.getElementById("name").value;
   const menus = Array.from(menuContainer.querySelectorAll(".menu-select"))
     .map(s => s.value)
@@ -210,7 +210,6 @@ okBtn.onclick = async () => {
   const required = calcTotalMinutes(menus);
   const end_time = addMinutesToTime(time, required);
 
-  // ★ 保存直前の最終チェック
   if (await checkDuplicateFull(date, time, end_time)) {
     alert("この時間はすでに予約が入っています。");
     confirmScreen.style.display = "none";
@@ -228,11 +227,14 @@ okBtn.onclick = async () => {
   }
 
   try {
-    await fetch("https://bcahztzetpfuklipjmxx.functions.supabase.co/dynamic-service", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, menus: menus.join(", "), date, time })
-    });
+    await fetch(
+      "https://bcahztzetpfuklipjmxx.functions.supabase.co/dynamic-service",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, menus: menus.join(", "), date, time }),
+      }
+    );
   } catch (e) {
     console.error("LINE通知エラー:", e);
   }
@@ -265,8 +267,8 @@ function showCompleteScreen() {
     if (window.liff && typeof liff.closeWindow === "function") {
       try { liff.closeWindow(); return; } catch {}
     }
-    window.history.length > 1
-      ? window.history.back()
+    history.length > 1
+      ? history.back()
       : window.location.href =
         "https://candoll0430tsuyoshi-afk.github.io/candoll-reserve/";
   };
