@@ -185,7 +185,7 @@ form.addEventListener("submit", async e => {
     `お名前：${name}<br>
      メニュー：${menus.join(", ")}<br>
      日付：${date}<br>
-     時間：${time} 〜 ${end_time}`;
+     時間：${time} 〜`;
 
   form.style.display = "none";
   confirmScreen.style.display = "block";
