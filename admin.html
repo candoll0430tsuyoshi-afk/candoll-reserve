@@ -321,31 +321,37 @@
 </div>
 
 <script>
-/* ▼ パスワード可視化 */
+/* ▼ パスワード可視化（要素がある時だけ） */
 const passInput = document.getElementById("admin-pass");
 const toggleBtn = document.getElementById("toggle-pass");
 
-toggleBtn.onclick = () => {
-  const isHidden = passInput.type === "password";
-  passInput.type = isHidden ? "text" : "password";
-  toggleBtn.classList.toggle("unlocked", isHidden);
-};
+if (passInput && toggleBtn) {
+  toggleBtn.onclick = () => {
+    const isHidden = passInput.type === "password";
+    passInput.type = isHidden ? "text" : "password";
+    toggleBtn.classList.toggle("unlocked", isHidden);
+  };
+}
 </script>
 
 <script>
-/* ▼ 右上メニュー操作（menuBtnの再宣言なし） */
+/* ▼ 右上メニュー操作 */
 const menuBox = document.getElementById("menu-box");
+const menuBtn = document.getElementById("menu-btn");
 
-document.getElementById("menu-btn").addEventListener("click", (e) => {
-  e.stopPropagation();
-  menuBox.style.display =
-    menuBox.style.display === "block" ? "none" : "block";
-});
+if (menuBox && menuBtn) {
+  menuBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    menuBox.style.display =
+      menuBox.style.display === "block" ? "none" : "block";
+  });
 
-document.addEventListener("click", () => {
-  menuBox.style.display = "none";
-});
+  document.addEventListener("click", () => {
+    menuBox.style.display = "none";
+  });
+}
 </script>
+
 
 
 
