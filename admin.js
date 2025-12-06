@@ -1,6 +1,6 @@
 // ==============================
 // Candoll 管理画面 admin.js
-// （壊れる前の完全版 + 10機能 + 休日管理強化）
+// （完全版 + ログイン保持 + ナビ非表示修正）
 // ==============================
 
 const API_URL = "https://bcahztzetpfuklipjmxx.functions.supabase.co/admin-service";
@@ -23,6 +23,33 @@ let ALL_RES = [];
 let HOLIDAYS = [];
 
 let baseDate = new Date();
+
+// ★ 初期状態（ログイン前）はナビを非表示
+dayNavi.style.display = "none";
+
+// ==============================
+// ▼ ログイン保持チェック
+// ==============================
+window.onload = async () => {
+    const logged = localStorage.getItem("loggedIn");
+    if (logged === "yes") {
+        loginBox.style.display = "none";
+        dayNavi.style.display = "flex";
+
+        // データ再取得（パスワード保存を避けるため専用APIを後で作る案もある）
+        const pass = localStorage.getItem("adminPass") || "";
+        if (pass) {
+            const result = await callAPI({ mode: "list", password: pass });
+
+            if (!result.error) {
+                ALL_RES = result.reservations || [];
+                HOLIDAYS = result.holidays || [];
+                MENUS = result.menus || [];
+                render3Days();
+            }
+        }
+    }
+};
 
 // ==============================
 // ▼ 日付フォーマット（2025-12-05（金））
@@ -70,12 +97,19 @@ loginBtn.onclick = async () => {
     }
 
     loginError.style.display = "none";
+
+    // データ格納
     ALL_RES = result.reservations || [];
     HOLIDAYS = result.holidays || [];
     MENUS = result.menus || [];
 
+    // ログイン画面非表示 & ナビ表示
     loginBox.style.display = "none";
     dayNavi.style.display = "flex";
+
+    // ★ ログイン状態を保存
+    localStorage.setItem("loggedIn", "yes");
+    localStorage.setItem("adminPass", pass);
 
     render3Days();
 };
@@ -87,6 +121,10 @@ logoutBtn.onclick = () => {
     dayNavi.style.display = "none";
     daysWrapper.innerHTML = "";
     loginBox.style.display = "block";
+
+    // ★ ログイン情報削除
+    localStorage.removeItem("loggedIn");
+    localStorage.removeItem("adminPass");
 };
 
 // ==============================
@@ -109,7 +147,6 @@ function render3Days() {
         const col = document.createElement("div");
         col.className = "day-column";
 
-        // ▼ タイトル（日付 + ＋）
         const title = document.createElement("div");
         title.className = "date-title";
         title.innerHTML = formatDateFull(dateObj);
@@ -121,7 +158,6 @@ function render3Days() {
         title.appendChild(plus);
         col.appendChild(title);
 
-        // ▼ 満席判定に使う予約時間帯
         const takenTimes = ALL_RES.filter(r => r.date === dayStr).map(r => r.time);
 
         ALL_RES.filter(r => r.date === dayStr).forEach(r => {
@@ -183,7 +219,6 @@ function fillTimes(dateStr, selected = "") {
         op.value = t;
         op.textContent = t;
 
-        // ▼ 過去時間は選択不可
         if (target.toDateString() === now.toDateString()) {
             const hour = Number(t.split(":")[0]);
             const min = Number(t.split(":")[1]);
@@ -246,7 +281,7 @@ function openAddPopup(dateStr) {
 
         await callAPI({
             mode: "add",
-            password: document.getElementById("admin-pass").value.trim(),
+            password: localStorage.getItem("adminPass"),
             name,
             menu,
             date: dateStr,
@@ -255,7 +290,7 @@ function openAddPopup(dateStr) {
 
         const res = await callAPI({
             mode: "list",
-            password: document.getElementById("admin-pass").value.trim()
+            password: localStorage.getItem("adminPass")
         });
 
         ALL_RES = res.reservations;
@@ -265,7 +300,7 @@ function openAddPopup(dateStr) {
 }
 
 // ==============================
-// ▼ 休日追加（カレンダー入力）
+// ▼ 休日追加
 // ==============================
 addHolidayBtn.onclick = () => {
     const bg = document.getElementById("popup-bg");
@@ -289,7 +324,7 @@ addHolidayBtn.onclick = () => {
 
         await callAPI({
             mode: "addHoliday",
-            password: document.getElementById("admin-pass").value.trim(),
+            password: localStorage.getItem("adminPass"),
             date: d
         });
 
@@ -298,7 +333,7 @@ addHolidayBtn.onclick = () => {
 };
 
 // ==============================
-// ▼ 休日解除（カレンダー入力）
+// ▼ 休日解除
 // ==============================
 delHolidayBtn.onclick = () => {
     const bg = document.getElementById("popup-bg");
@@ -322,7 +357,7 @@ delHolidayBtn.onclick = () => {
 
         await callAPI({
             mode: "delHoliday",
-            password: document.getElementById("admin-pass").value.trim(),
+            password: localStorage.getItem("adminPass"),
             date: d
         });
 
