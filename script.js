@@ -3,9 +3,10 @@ const supabaseUrl = "https://bcahztzetpfuklipjmxx.supabase.co";
 const supabaseKey = "sb_publishable_rPyAIzNttEK3P8nsnBllYA_FTF-kxJQ";
 const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 
-// ===== メニュー所要時間（Supabaseから読み込む） =====
+// ===== メニュー所要時間（Supabaseから取得） =====
 let MENU_DATA = {};
 
+// ★ 必ず最初にメニューを読み込む
 async function loadMenus() {
   const { data, error } = await supabaseClient
     .from("menus")
@@ -20,9 +21,13 @@ async function loadMenus() {
   data.forEach(m => {
     MENU_DATA[m.name] = m.duration;
   });
+
+  console.log("MENU_DATA loaded:", MENU_DATA);
+  updateTimeOptions(); // ★ 読み込み完了後に強制再計算
 }
 
-loadMenus().then(() => updateTimeOptions());
+// ★ ここは then を使わない
+loadMenus();
 
 const greeting = document.getElementById("greeting");
 
@@ -55,9 +60,9 @@ function calcTotalMinutes(menus) {
 // ===== 時刻処理 =====
 function addMinutesToTime(time, minutes) {
   const [h, m] = time.split(":").map(Number);
-  const d = new Date(2000, 0, 1, h, m);
-  d.setMinutes(d.getMinutes() + minutes);
-  return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+  const start = new Date(2000, 0, 1, h, m);
+  const end = new Date(start.getTime() + minutes * 60000);
+  return `${String(end.getHours()).padStart(2, "0")}:${String(end.getMinutes()).padStart(2, "0")}`;
 }
 
 function toMinutes(t) {
@@ -65,8 +70,9 @@ function toMinutes(t) {
   return h * 60 + m;
 }
 
-function isOverlap(s1, e1, s2, e2) {
-  return toMinutes(s1) < toMinutes(e2) && toMinutes(s2) < toMinutes(e1);
+function isOverlap(aStart, aEnd, bStart, bEnd) {
+  return toMinutes(aStart) < toMinutes(bEnd) &&
+         toMinutes(bStart) < toMinutes(aEnd);
 }
 
 // ===== 重複チェック =====
@@ -90,6 +96,10 @@ async function checkDuplicateFull(date, start, end) {
 document.getElementById("date").addEventListener("change", updateTimeOptions);
 
 async function updateTimeOptions() {
+
+  // ★ MENU_DATA 未読込時は何もしない（超重要）
+  if (Object.keys(MENU_DATA).length === 0) return;
+
   const date = document.getElementById("date").value;
   const timeSelect = document.getElementById("time");
 
@@ -101,7 +111,8 @@ async function updateTimeOptions() {
   if (!date) return;
 
   const menus = Array.from(menuContainer.querySelectorAll(".menu-select"))
-    .map(s => s.value).filter(v => v);
+    .map(s => s.value)
+    .filter(v => v !== "");
 
   const required = calcTotalMinutes(menus);
   const closeTime = "19:00";
@@ -150,7 +161,8 @@ form.addEventListener("submit", async e => {
 
   const name = document.getElementById("name").value;
   const menus = Array.from(menuContainer.querySelectorAll(".menu-select"))
-    .map(s => s.value).filter(v => v);
+    .map(s => s.value)
+    .filter(v => v !== "");
   const date = document.getElementById("date").value;
   const time = document.getElementById("time").value;
 
@@ -179,24 +191,26 @@ form.addEventListener("submit", async e => {
   confirmScreen.style.display = "block";
 });
 
+// ===== 戻る =====
 cancelBtn.onclick = () => {
   confirmScreen.style.display = "none";
   form.style.display = "block";
   if (greeting) greeting.style.display = "block";
 };
 
-// ===== OK（保存＋通知）★ここが重要 =====
+// ===== OK（保存＋通知） =====
 okBtn.onclick = async () => {
   const name = document.getElementById("name").value;
   const menus = Array.from(menuContainer.querySelectorAll(".menu-select"))
-    .map(s => s.value).filter(v => v);
+    .map(s => s.value)
+    .filter(v => v !== "");
   const date = document.getElementById("date").value;
   const time = document.getElementById("time").value;
 
   const required = calcTotalMinutes(menus);
   const end_time = addMinutesToTime(time, required);
 
-  // ✅ 保存直前の最終重複チェック（追加）
+  // ★ 保存直前の最終チェック
   if (await checkDuplicateFull(date, time, end_time)) {
     alert("この時間はすでに予約が入っています。");
     confirmScreen.style.display = "none";
@@ -214,14 +228,11 @@ okBtn.onclick = async () => {
   }
 
   try {
-    await fetch(
-      "https://bcahztzetpfuklipjmxx.functions.supabase.co/dynamic-service",
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, menus: menus.join(", "), date, time }),
-      }
-    );
+    await fetch("https://bcahztzetpfuklipjmxx.functions.supabase.co/dynamic-service", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name, menus: menus.join(", "), date, time })
+    });
   } catch (e) {
     console.error("LINE通知エラー:", e);
   }
@@ -251,11 +262,12 @@ function showCompleteScreen() {
   document.querySelector(".container").appendChild(div);
 
   document.getElementById("closeBtn").onclick = () => {
-    if (window.liff?.closeWindow) {
+    if (window.liff && typeof liff.closeWindow === "function") {
       try { liff.closeWindow(); return; } catch {}
     }
-    history.length > 1 ? history.back() :
-      location.href =
+    window.history.length > 1
+      ? window.history.back()
+      : window.location.href =
         "https://candoll0430tsuyoshi-afk.github.io/candoll-reserve/";
   };
 }
