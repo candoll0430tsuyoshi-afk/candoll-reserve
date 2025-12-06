@@ -2,7 +2,8 @@
 // Candoll 管理画面 admin.js
 // 3日表示 / 30分枠
 // 空き：追加 / 予約：変更・削除
-// end_time 自動計算対応
+// menus.duration 使用
+// 時間変更対応
 // ==============================
 
 const API_URL =
@@ -22,7 +23,7 @@ let ADMIN_PASS = "";
 let baseDate = new Date();
 let MENU_LIST = [];
 
-// ---- ログイン前はナビ非表示
+// ログイン前は日付ナビ非表示
 dayNavi.style.display = "none";
 
 // ===== 30分枠 =====
@@ -55,9 +56,11 @@ function addMinutes(time, minutes){
   d.setMinutes(d.getMinutes() + minutes);
   return `${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`;
 }
+
+// ★ duration を使用
 function getMenuMinutes(menuName){
   const m = MENU_LIST.find(x => x.name === menuName);
-  return Number(m?.minutes || 30); // ← ★minutes名が違う場合ここだけ変更
+  return Number(m?.duration || 30);
 }
 
 // ===== API =====
@@ -96,14 +99,20 @@ document.getElementById("m-logout").onclick = ()=>{
 navPrev.onclick = ()=>{ baseDate.setDate(baseDate.getDate()-1); render(); };
 navNext.onclick = ()=>{ baseDate.setDate(baseDate.getDate()+1); render(); };
 
-// ===== Popup: 追加 =====
+// ===== Popup：追加 =====
 function openAddPopup({ date, time }){
-  const opts = MENU_LIST.map(m=>`<option value="${m.name}">${m.name}</option>`).join("");
+  const timeOpts = TIMES.map(t=>`<option value="${t}" ${t===time?'selected':''}>${t}</option>`).join("");
+  const menuOpts = MENU_LIST.map(m=>`<option value="${m.name}">${m.name}</option>`).join("");
+
   popupBox.innerHTML = `
     <h3>予約追加</h3>
-    <p>${date} ${time}</p>
+    <p>${date}</p>
     <input id="p-name" placeholder="お名前">
-    <select id="p-menu"><option value="">メニュー選択</option>${opts}</select>
+    <select id="p-time">${timeOpts}</select>
+    <select id="p-menu">
+      <option value="">メニュー選択</option>
+      ${menuOpts}
+    </select>
     <button id="p-save">追加</button>
     <button id="p-cancel" style="background:#aaa;margin-top:10px">キャンセル</button>
   `;
@@ -113,51 +122,54 @@ function openAddPopup({ date, time }){
 
   document.getElementById("p-save").onclick = async ()=>{
     const name = document.getElementById("p-name").value.trim();
+    const timeVal = document.getElementById("p-time").value;
     const menu = document.getElementById("p-menu").value;
-    if(!name || !menu){ alert("未入力があります"); return; }
+    if(!name || !menu){ alert("未入力"); return; }
 
     const minutes = getMenuMinutes(menu);
-    const end_time = addMinutes(time, minutes);
+    const end_time = addMinutes(timeVal, minutes);
 
     await callAPI({
       mode:"add",
       name,
       menu,
       date,
-      time,
+      time: timeVal,
       end_time
     });
 
-    popupBg.style.display = "none";
+    popupBg.style.display="none";
     render();
   };
 }
 
-// ===== Popup: 変更 / 削除 =====
+// ===== Popup：変更 / 削除 =====
 function openEditPopup(res){
-  const opts = MENU_LIST.map(m =>
-    `<option value="${m.name}" ${m.name===res.menu?'selected':''}>${m.name}</option>`
-  ).join("");
+  const timeOpts = TIMES.map(t=>`<option value="${t}" ${t===res.time?'selected':''}>${t}</option>`).join("");
+  const menuOpts = MENU_LIST.map(m=>`<option value="${m.name}" ${m.name===res.menu?'selected':''}>${m.name}</option>`).join("");
+
   popupBox.innerHTML = `
     <h3>予約変更 / 削除</h3>
-    <p>${res.date} ${res.time}</p>
+    <p>${res.date}</p>
     <input id="e-name" value="${res.name}">
-    <select id="e-menu">${opts}</select>
+    <select id="e-time">${timeOpts}</select>
+    <select id="e-menu">${menuOpts}</select>
     <button id="e-save">変更</button>
     <button id="e-del" style="background:#c00;margin-top:10px">削除</button>
     <button id="e-cancel" style="background:#aaa;margin-top:10px">閉じる</button>
   `;
-  popupBg.style.display = "flex";
+  popupBg.style.display="flex";
 
-  document.getElementById("e-cancel").onclick = ()=> popupBg.style.display = "none";
+  document.getElementById("e-cancel").onclick = ()=> popupBg.style.display="none";
 
   document.getElementById("e-save").onclick = async ()=>{
     const name = document.getElementById("e-name").value.trim();
+    const timeVal = document.getElementById("e-time").value;
     const menu = document.getElementById("e-menu").value;
     if(!name || !menu){ alert("未入力"); return; }
 
     const minutes = getMenuMinutes(menu);
-    const end_time = addMinutes(res.time, minutes);
+    const end_time = addMinutes(timeVal, minutes);
 
     await callAPI({
       mode:"edit",
@@ -165,18 +177,18 @@ function openEditPopup(res){
       name,
       menu,
       date: res.date,
-      time: res.time,
+      time: timeVal,
       end_time
     });
 
-    popupBg.style.display = "none";
+    popupBg.style.display="none";
     render();
   };
 
   document.getElementById("e-del").onclick = async ()=>{
     if(!confirm("削除しますか？")) return;
     await callAPI({ mode:"delete", id: res.id });
-    popupBg.style.display = "none";
+    popupBg.style.display="none";
     render();
   };
 }
@@ -209,10 +221,10 @@ async function render(){
 
     TIMES.forEach(t=>{
       const slot = document.createElement("div");
-      slot.style.padding = "6px";
-      slot.style.marginBottom = "6px";
-      slot.style.borderRadius = "6px";
-      slot.style.fontSize = "13px";
+      slot.style.padding="6px";
+      slot.style.marginBottom="6px";
+      slot.style.borderRadius="6px";
+      slot.style.fontSize="13px";
 
       if(isHoliday){
         slot.style.background="#ccc";
