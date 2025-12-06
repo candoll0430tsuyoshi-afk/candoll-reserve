@@ -6,7 +6,6 @@ const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 // ===== メニュー所要時間（Supabaseから読み込む） =====
 let MENU_DATA = {};
 
-// ★ Supabase menus から duration を取得
 async function loadMenus() {
   const { data, error } = await supabaseClient
     .from("menus")
@@ -23,10 +22,7 @@ async function loadMenus() {
   });
 }
 
-// ページ読み込み後にメニュー取得
-loadMenus().then(() => {
-  updateTimeOptions();
-});
+loadMenus().then(() => updateTimeOptions());
 
 const greeting = document.getElementById("greeting");
 
@@ -35,14 +31,13 @@ const menuContainer = document.getElementById("menuContainer");
 const addMenuButton = document.getElementById("addMenu");
 
 function attachMenuUpdate() {
-  const selects = menuContainer.querySelectorAll(".menu-select");
-  selects.forEach(sel => {
+  menuContainer.querySelectorAll(".menu-select").forEach(sel => {
     sel.addEventListener("change", updateTimeOptions);
   });
 }
 attachMenuUpdate();
 
-addMenuButton.addEventListener("click", function () {
+addMenuButton.addEventListener("click", () => {
   const selects = menuContainer.querySelectorAll(".menu-select");
   if (selects.length < 4) {
     const newSelect = selects[0].cloneNode(true);
@@ -53,20 +48,16 @@ addMenuButton.addEventListener("click", function () {
 });
 
 // ===== 所要時間計算 =====
-function calcTotalMinutes(selectedMenus) {
-  return selectedMenus
-    .map(m => MENU_DATA[m] || 0)
-    .reduce((a, b) => a + b, 0);
+function calcTotalMinutes(menus) {
+  return menus.map(m => MENU_DATA[m] || 0).reduce((a, b) => a + b, 0);
 }
 
 // ===== 時刻処理 =====
 function addMinutesToTime(time, minutes) {
   const [h, m] = time.split(":").map(Number);
-  const start = new Date(2000, 0, 1, h, m);
-  const end = new Date(start.getTime() + minutes * 60000);
-  return `${String(end.getHours()).padStart(2, "0")}:${String(
-    end.getMinutes()
-  ).padStart(2, "0")}`;
+  const d = new Date(2000, 0, 1, h, m);
+  d.setMinutes(d.getMinutes() + minutes);
+  return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
 }
 
 function toMinutes(t) {
@@ -74,9 +65,8 @@ function toMinutes(t) {
   return h * 60 + m;
 }
 
-function isOverlap(startA, endA, startB, endB) {
-  return toMinutes(startA) < toMinutes(endB) &&
-         toMinutes(startB) < toMinutes(endA);
+function isOverlap(s1, e1, s2, e2) {
+  return toMinutes(s1) < toMinutes(e2) && toMinutes(s2) < toMinutes(e1);
 }
 
 // ===== 重複チェック =====
@@ -88,9 +78,12 @@ async function checkDuplicateFull(date, start, end) {
 
   if (error) return true;
 
-  return data.some(r =>
-    isOverlap(start, end, r.time.trim(), r.end_time.trim())
-  );
+  for (const r of data) {
+    if (isOverlap(start, end, r.time.trim(), r.end_time.trim())) {
+      return true;
+    }
+  }
+  return false;
 }
 
 // ===== 時間グレーアウト =====
@@ -108,8 +101,7 @@ async function updateTimeOptions() {
   if (!date) return;
 
   const menus = Array.from(menuContainer.querySelectorAll(".menu-select"))
-    .map(s => s.value)
-    .filter(v => v !== "");
+    .map(s => s.value).filter(v => v);
 
   const required = calcTotalMinutes(menus);
   const closeTime = "19:00";
@@ -121,7 +113,7 @@ async function updateTimeOptions() {
 
   const reserved = (data || []).map(r => ({
     start: r.time.trim(),
-    end: r.end_time.trim(),
+    end: r.end_time.trim()
   }));
 
   Array.from(timeSelect.options).forEach(o => {
@@ -136,14 +128,17 @@ async function updateTimeOptions() {
       return;
     }
 
-    if (reserved.some(r => isOverlap(start, end, r.start, r.end))) {
-      o.disabled = true;
-      o.style.color = "#aaa";
+    for (const r of reserved) {
+      if (isOverlap(start, end, r.start, r.end)) {
+        o.disabled = true;
+        o.style.color = "#aaa";
+        return;
+      }
     }
   });
 }
 
-// ===== フォーム送信（確認画面） =====
+// ===== 確認画面 =====
 const form = document.getElementById("reserveForm");
 const confirmScreen = document.getElementById("confirm-screen");
 const confirmText = document.getElementById("confirm-text");
@@ -155,8 +150,7 @@ form.addEventListener("submit", async e => {
 
   const name = document.getElementById("name").value;
   const menus = Array.from(menuContainer.querySelectorAll(".menu-select"))
-    .map(s => s.value)
-    .filter(v => v !== "");
+    .map(s => s.value).filter(v => v);
   const date = document.getElementById("date").value;
   const time = document.getElementById("time").value;
 
@@ -185,24 +179,30 @@ form.addEventListener("submit", async e => {
   confirmScreen.style.display = "block";
 });
 
-// ===== 戻る =====
 cancelBtn.onclick = () => {
   confirmScreen.style.display = "none";
   form.style.display = "block";
   if (greeting) greeting.style.display = "block";
 };
 
-// ===== 確定（保存＋通知） =====
+// ===== OK（保存＋通知）★ここが重要 =====
 okBtn.onclick = async () => {
   const name = document.getElementById("name").value;
   const menus = Array.from(menuContainer.querySelectorAll(".menu-select"))
-    .map(s => s.value)
-    .filter(v => v !== "");
+    .map(s => s.value).filter(v => v);
   const date = document.getElementById("date").value;
   const time = document.getElementById("time").value;
 
   const required = calcTotalMinutes(menus);
   const end_time = addMinutesToTime(time, required);
+
+  // ✅ 保存直前の最終重複チェック（追加）
+  if (await checkDuplicateFull(date, time, end_time)) {
+    alert("この時間はすでに予約が入っています。");
+    confirmScreen.style.display = "none";
+    form.style.display = "block";
+    return;
+  }
 
   const { error } = await supabaseClient
     .from("reservations")
