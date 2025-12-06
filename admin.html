@@ -345,7 +345,23 @@ document.addEventListener("click", (e) => {
         menuBox.style.display = "none";
     }
 });
+<script>
+  const menuBox = document.getElementById("menu-box");
+  const menuBtnEl = document.getElementById("menu-btn");
+
+  // ▼ クリックで開閉
+  menuBtnEl.addEventListener("click", (e) => {
+    e.stopPropagation(); // ← これ重要
+    menuBox.style.display =
+      menuBox.style.display === "block" ? "none" : "block";
+  });
+
+  // ▼ 外クリックで閉じる
+  document.addEventListener("click", () => {
+    menuBox.style.display = "none";
+  });
 </script>
+
 
 </body>
 </html>
