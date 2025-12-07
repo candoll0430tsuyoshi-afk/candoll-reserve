@@ -72,6 +72,7 @@ const hasConflict = ({date,start,end,ignoreId=null}) =>
 
 // ---------- API ----------
 async function callAPI(body){
+  console.log("CALL API", body);
   const res = await fetch(API_URL,{
     method:"POST",
     headers:{ "Content-Type":"application/json" },
