@@ -145,10 +145,13 @@ function openAdd({date,time}){
   document.getElementById("a-cancel").onclick = () => popupBg.style.display="none";
 
   document.getElementById("a-save").onclick = async () => {
-    const name = document.getElementById("a-name").value.trim();
+
+  console.log("ADD BUTTON CLICKED"); // ← 追加
+
+  const name = document.getElementById("a-name").value.trim();
     const t    = document.getElementById("a-time").value;
     const m    = document.getElementById("a-menu").value;
-
+：
     if(!name || !m){ alert("未入力があります"); return; }
 
     const end = addMin(t, menuDuration(m));
@@ -182,6 +185,7 @@ function openEdit(r){
   document.getElementById("e-close").onclick = () => popupBg.style.display="none";
 
   document.getElementById("e-save").onclick = async () => {
+   console.log("EDIT BUTTON CLICKED");
     const name = document.getElementById("e-name").value.trim();
     const t    = document.getElementById("e-time").value;
     const m    = document.getElementById("e-menu").value;
