@@ -275,7 +275,7 @@ function openAdd({date,time}){
 // Edit
 // ------------------------------
 function openEdit(r){
-  const curMenu = r.menus || "";
+  const curMenu = r.menus || r.menu || "";
 
   popupBox.innerHTML = `
     <h3>予約変更</h3>
