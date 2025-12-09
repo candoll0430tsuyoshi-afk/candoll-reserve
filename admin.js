@@ -1,6 +1,6 @@
 // ==============================
 // Candoll 管理画面 admin.js
-// 基準版 + 予約時間帯塗り対応
+// 基準版 + 赤枠表示調整
 // ==============================
 
 const API_URL =
@@ -189,16 +189,11 @@ function renderDay(dateObj){
 
   TIMES.slice(0,-1).forEach(t=>{
 
-    // ★★★ ここだけ修正 ★★★
     const r = RESERVATIONS.find(x => {
       if (x.date !== date) return false;
       if (!x.end_time) return false;
-
-      const start = toMin(x.time);
-      const end   = toMin(x.end_time);
-      const slot  = toMin(t);
-
-      return slot >= start && slot < end;
+      return toMin(t) >= toMin(x.time) &&
+             toMin(t) <  toMin(x.end_time);
     });
 
     const div = document.createElement("div");
@@ -207,9 +202,15 @@ function renderDay(dateObj){
     div.style.cursor = "pointer";
 
     if(r){
-      const menuText = r.menu || r.menus || "";
       div.style.background = "#fdd";
-      div.textContent = `${t} ${r.name} ${menuText}`;
+
+      // ★ここだけ変更★
+      if (t === r.time) {
+        div.textContent = `${t} ${r.name} ${(r.menus || "")}`;
+      } else {
+        div.textContent = t;
+      }
+
       div.onclick = ()=>openEdit(r);
     }else{
       div.style.background = "#dfd";
@@ -270,7 +271,7 @@ function openAdd({date,time}){
 // Edit
 // ------------------------------
 function openEdit(r){
-  const curMenu = r.menu || r.menus || "";
+  const curMenu = r.menus || "";
 
   popupBox.innerHTML = `
     <h3>予約変更</h3>
