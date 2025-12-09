@@ -1,6 +1,6 @@
 // ==============================
 // Candoll 管理画面 admin.js
-// 基準版 + 施術時間分の赤枠拡張表示
+// 基準版 + ログイン維持 + menu表示修正
 // ==============================
 
 const API_URL =
@@ -38,13 +38,13 @@ let RESERVATIONS = [];
 let MENUS = [];
 
 // ------------------------------
-// 初期表示制御
+// 初期表示
 // ------------------------------
 dayNavi.style.display = "none";
 menuBtn.style.display = "none";
 
 // ------------------------------
-// 時間枠（30分）
+// 時間枠
 // ------------------------------
 const TIMES = [];
 for (let h = 10; h <= 18; h++) {
@@ -97,12 +97,7 @@ async function callAPI(body){
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ ...body, password: ADMIN_PASS })
   });
-
-  if (!res.ok) {
-    const txt = await res.text();
-    alert("API Error:\n" + txt);
-    throw new Error(txt);
-  }
+  if (!res.ok) throw new Error(await res.text());
   return res.json();
 }
 
@@ -114,50 +109,64 @@ loginBtn.onclick = async () => {
   loginError.style.display = "none";
 
   try {
-    const res = await callAPI({ mode: "list" });
+    const res = await callAPI({ mode:"list" });
+
+    // ★ ログイン保持
+    localStorage.setItem("candoll_admin_pass", ADMIN_PASS);
+
     RESERVATIONS = res.reservations || [];
     MENUS = res.menus || [];
 
     loginBox.style.display = "none";
     dayNavi.style.display = "flex";
     menuBtn.style.display = "block";
-
     render();
   } catch {
     loginError.style.display = "block";
   }
 };
 
+// ★ ページ更新時もログイン維持
+window.addEventListener("DOMContentLoaded", async () => {
+  const saved = localStorage.getItem("candoll_admin_pass");
+  if (!saved) return;
+
+  ADMIN_PASS = saved;
+  try {
+    const res = await callAPI({ mode:"list" });
+    RESERVATIONS = res.reservations || [];
+    MENUS = res.menus || [];
+
+    loginBox.style.display = "none";
+    dayNavi.style.display = "flex";
+    menuBtn.style.display = "block";
+    render();
+  } catch {
+    localStorage.removeItem("candoll_admin_pass");
+  }
+});
+
 // ------------------------------
 // Menu
 // ------------------------------
-menuBtn.onclick = (e)=>{
+menuBtn.onclick = e=>{
   e.stopPropagation();
   menuBox.style.display =
     menuBox.style.display === "block" ? "none" : "block";
 };
 document.addEventListener("click",()=>{
-  menuBox.style.display="none";
+  menuBox.style.display = "none";
 });
 mLogout.onclick = ()=>{
-  ADMIN_PASS = "";
-  loginBox.style.display = "block";
-  dayNavi.style.display = "none";
-  menuBtn.style.display = "none";
-  daysWrap.innerHTML = "";
+  localStorage.removeItem("candoll_admin_pass");
+  location.reload();
 };
 
 // ------------------------------
 // Date nav
 // ------------------------------
-navPrev.onclick = ()=>{
-  baseDate.setDate(baseDate.getDate()-1);
-  render();
-};
-navNext.onclick = ()=>{
-  baseDate.setDate(baseDate.getDate()+1);
-  render();
-};
+navPrev.onclick = ()=>{ baseDate.setDate(baseDate.getDate()-1); render(); };
+navNext.onclick = ()=>{ baseDate.setDate(baseDate.getDate()+1); render(); };
 
 // ------------------------------
 // Render
@@ -166,7 +175,7 @@ async function render(){
   navCurrent.textContent = fmtLabel(baseDate);
   daysWrap.innerHTML = "";
 
-  const res = await callAPI({ mode: "list" });
+  const res = await callAPI({ mode:"list" });
   RESERVATIONS = res.reservations || [];
   MENUS = res.menus || [];
 
@@ -190,38 +199,32 @@ function renderDay(dateObj){
 
   TIMES.slice(0,-1).forEach(t=>{
     const r = RESERVATIONS.find(x=>{
-      if(x.date !== date) return false;
-      if(!x.end_time) return false;
+      if(x.date !== date || !x.end_time) return false;
       return toMin(t) >= toMin(x.time) &&
              toMin(t) <  toMin(x.end_time);
     });
 
     const div = document.createElement("div");
-    div.style.padding = "12px";        // ★ 枠高さUP
-    div.style.minHeight = "42px";      // ★ 2行想定
+    div.style.padding = "12px";
+    div.style.minHeight = "42px";
     div.style.borderBottom = "1px solid #ddd";
     div.style.cursor = "pointer";
 
     if(r){
       div.style.background = "#fdd";
-
-      // ★ 開始枠だけ 名前＋メニュー表示
       if(t === r.time){
-        div.innerHTML = `
-          <div><strong>${t}</strong></div>
-          <div>${r.name} ${r.menus || ""}</div>
-        `;
+        // ★ menu / menus 両対応
+        div.innerHTML = `<div><strong>${t}</strong></div>
+                         <div>${r.name} ${r.menus || r.menu || ""}</div>`;
       }else{
-        div.innerHTML = `<div>${t}</div>`;
+        div.textContent = t;
       }
       div.onclick = ()=>openEdit(r);
-
     }else{
       div.style.background = "#dfd";
       div.textContent = `${t} 空き`;
       div.onclick = ()=>openAdd({date,time:t});
     }
-
     col.appendChild(div);
   });
 
@@ -242,28 +245,19 @@ function openAdd({date,time}){
       ${MENUS.map(m=>`<option>${m.name}</option>`).join("")}
     </select>
     <button id="a-save">追加</button>
-    <button id="a-cancel" style="background:#aaa">キャンセル</button>
+    <button id="a-cancel">キャンセル</button>
   `;
   popupBg.style.display="flex";
 
-  document.getElementById("a-cancel").onclick =
-    ()=>popupBg.style.display="none";
-
+  document.getElementById("a-cancel").onclick=()=>popupBg.style.display="none";
   document.getElementById("a-save").onclick = async ()=>{
     const name = document.getElementById("a-name").value.trim();
     const t    = document.getElementById("a-time").value;
     const m    = document.getElementById("a-menu").value;
-
-    if(!name || !m){
-      alert("未入力があります");
-      return;
-    }
+    if(!name || !m) return alert("未入力");
 
     const end = addMin(t, menuDuration(m));
-    if(hasConflict({date,start:t,end})){
-      alert("この時間帯は予約があります");
-      return;
-    }
+    if(hasConflict({date,start:t,end})) return alert("重複");
 
     await callAPI({ mode:"add", name, menu:m, date, time:t, end_time:end });
     popupBg.style.display="none";
@@ -284,39 +278,24 @@ function openEdit(r){
     <select id="e-time">${TIMES.map(t=>`<option ${t===r.time?"selected":""}>${t}</option>`).join("")}</select>
     <select id="e-menu">${MENUS.map(m=>`<option ${m.name===curMenu?"selected":""}>${m.name}</option>`).join("")}</select>
     <button id="e-save">変更</button>
-    <button id="e-del" style="background:#c00">削除</button>
-    <button id="e-close" style="background:#aaa">閉じる</button>
+    <button id="e-del">削除</button>
+    <button id="e-close">閉じる</button>
   `;
   popupBg.style.display="flex";
 
-  document.getElementById("e-close").onclick =
-    ()=>popupBg.style.display="none";
-
+  document.getElementById("e-close").onclick=()=>popupBg.style.display="none";
   document.getElementById("e-save").onclick = async ()=>{
-    const name = document.getElementById("e-name").value.trim();
-    const t    = document.getElementById("e-time").value;
-    const m    = document.getElementById("e-menu").value;
+    const name=document.getElementById("e-name").value.trim();
+    const t=document.getElementById("e-time").value;
+    const m=document.getElementById("e-menu").value;
 
     const end = addMin(t, menuDuration(m));
-    if(hasConflict({date:r.date,start:t,end,ignoreId:r.id})){
-      alert("時間が重複します");
-      return;
-    }
+    if(hasConflict({date:r.date,start:t,end,ignoreId:r.id})) return alert("重複");
 
-    await callAPI({
-      mode:"edit",
-      id:r.id,
-      name,
-      menu:m,
-      date:r.date,
-      time:t,
-      end_time:end
-    });
-
+    await callAPI({ mode:"edit", id:r.id, name, menu:m, date:r.date, time:t, end_time:end });
     popupBg.style.display="none";
     render();
   };
-
   document.getElementById("e-del").onclick = async ()=>{
     if(!confirm("削除しますか？")) return;
     await callAPI({ mode:"delete", id:r.id });
