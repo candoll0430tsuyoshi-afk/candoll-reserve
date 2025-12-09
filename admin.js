@@ -1,6 +1,6 @@
 // ==============================
 // Candoll 管理画面 admin.js
-// 基準版 + 赤枠表示調整
+// 基準版 + 施術時間分の赤枠拡張表示
 // ==============================
 
 const API_URL =
@@ -38,7 +38,7 @@ let RESERVATIONS = [];
 let MENUS = [];
 
 // ------------------------------
-// 初期非表示
+// 初期表示制御
 // ------------------------------
 dayNavi.style.display = "none";
 menuBtn.style.display = "none";
@@ -95,10 +95,7 @@ async function callAPI(body){
   const res = await fetch(API_URL, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      ...body,
-      password: ADMIN_PASS
-    })
+    body: JSON.stringify({ ...body, password: ADMIN_PASS })
   });
 
   if (!res.ok) {
@@ -188,30 +185,33 @@ function renderDay(dateObj){
   col.appendChild(title);
 
   TIMES.slice(0,-1).forEach(t=>{
-
-    const r = RESERVATIONS.find(x => {
-      if (x.date !== date) return false;
-      if (!x.end_time) return false;
+    const r = RESERVATIONS.find(x=>{
+      if(x.date !== date) return false;
+      if(!x.end_time) return false;
       return toMin(t) >= toMin(x.time) &&
              toMin(t) <  toMin(x.end_time);
     });
 
     const div = document.createElement("div");
-    div.style.padding = "6px";
+    div.style.padding = "12px";        // ★ 枠高さUP
+    div.style.minHeight = "42px";      // ★ 2行想定
     div.style.borderBottom = "1px solid #ddd";
     div.style.cursor = "pointer";
 
     if(r){
       div.style.background = "#fdd";
 
-      // ★ここだけ変更★
-      if (t === r.time) {
-        div.textContent = `${t} ${r.name} ${(r.menus || "")}`;
-      } else {
-        div.textContent = t;
+      // ★ 開始枠だけ 名前＋メニュー表示
+      if(t === r.time){
+        div.innerHTML = `
+          <div><strong>${t}</strong></div>
+          <div>${r.name} ${r.menus || ""}</div>
+        `;
+      }else{
+        div.innerHTML = `<div>${t}</div>`;
       }
-
       div.onclick = ()=>openEdit(r);
+
     }else{
       div.style.background = "#dfd";
       div.textContent = `${t} 空き`;
@@ -240,7 +240,7 @@ function openAdd({date,time}){
     <button id="a-save">追加</button>
     <button id="a-cancel" style="background:#aaa">キャンセル</button>
   `;
-  popupBg.style.display = "flex";
+  popupBg.style.display="flex";
 
   document.getElementById("a-cancel").onclick =
     ()=>popupBg.style.display="none";
@@ -283,7 +283,7 @@ function openEdit(r){
     <button id="e-del" style="background:#c00">削除</button>
     <button id="e-close" style="background:#aaa">閉じる</button>
   `;
-  popupBg.style.display = "flex";
+  popupBg.style.display="flex";
 
   document.getElementById("e-close").onclick =
     ()=>popupBg.style.display="none";
