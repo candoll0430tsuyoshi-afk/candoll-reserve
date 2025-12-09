@@ -1,6 +1,6 @@
 // ==============================
 // Candoll 管理画面 admin.js
-// 基準版 + 予約追加/編集/削除 修正済
+// 基準版 + 予約時間帯塗り対応
 // ==============================
 
 const API_URL =
@@ -89,7 +89,7 @@ function hasConflict({date,start,end,ignoreId}){
 }
 
 // ------------------------------
-// API（★エラー可視化）
+// API
 // ------------------------------
 async function callAPI(body){
   const res = await fetch(API_URL, {
@@ -126,7 +126,7 @@ loginBtn.onclick = async () => {
     menuBtn.style.display = "block";
 
     render();
-  } catch (e) {
+  } catch {
     loginError.style.display = "block";
   }
 };
@@ -188,9 +188,18 @@ function renderDay(dateObj){
   col.appendChild(title);
 
   TIMES.slice(0,-1).forEach(t=>{
-    const r = RESERVATIONS.find(x =>
-      x.date === date && x.time === t
-    );
+
+    // ★★★ ここだけ修正 ★★★
+    const r = RESERVATIONS.find(x => {
+      if (x.date !== date) return false;
+      if (!x.end_time) return false;
+
+      const start = toMin(x.time);
+      const end   = toMin(x.end_time);
+      const slot  = toMin(t);
+
+      return slot >= start && slot < end;
+    });
 
     const div = document.createElement("div");
     div.style.padding = "6px";
@@ -198,7 +207,7 @@ function renderDay(dateObj){
     div.style.cursor = "pointer";
 
     if(r){
-      const menuText = r.menu || r.menus || ""; // ★両対応
+      const menuText = r.menu || r.menus || "";
       div.style.background = "#fdd";
       div.textContent = `${t} ${r.name} ${menuText}`;
       div.onclick = ()=>openEdit(r);
