@@ -140,7 +140,11 @@ document.addEventListener("click",()=>{
   menuBox.style.display="none";
 });
 mLogout.onclick = ()=>{
-  location.reload();
+  ADMIN_PASS = "";
+  loginBox.style.display = "block";
+  dayNavi.style.display = "none";
+  menuBtn.style.display = "none";
+  daysWrap.innerHTML = "";
 };
 
 // ------------------------------
