@@ -1,7 +1,6 @@
 /* ==============================
    Candoll 管理画面 admin.js
-   基準コード＋ menus 統一
-   ★ 修正点：aName / aTime / aMenu の未定義エラーのみ修正
+   ★ 基準コード + 右上メニュー修正のみ
    ============================== */
 
 const API_URL = "https://bcahztzetpfuklipjmxx.functions.supabase.co/admin-service";
@@ -93,7 +92,7 @@ loginBtn.onclick = async ()=>{
   }
 };
 
-window.addEventListener("DOMContentLoaded",async()=>{
+window.addEventListener("DOMContentLoaded", async ()=>{
   if(!ADMIN_PASS) return;
   try{
     const res = await callAPI({mode:"list"});
@@ -107,31 +106,27 @@ window.addEventListener("DOMContentLoaded",async()=>{
   }catch{
     localStorage.removeItem("candoll_admin_pass");
   }
+
+  // ✅ 右上メニュー（三角）【ここだけ修正】
+  menuBtn.onclick = (e)=>{
+    e.stopPropagation();
+    menuBox.style.display =
+      menuBox.style.display === "block" ? "none" : "block";
+  };
+
+  menuBox.onclick = (e)=>{
+    e.stopPropagation();
+  };
+
+  document.onclick = ()=>{
+    menuBox.style.display="none";
+  };
+
+  mLogout.onclick = ()=>{
+    localStorage.removeItem("candoll_admin_pass");
+    location.reload();
+  };
 });
-
-/* ---------- MENU ---------- */
-// ▼ 右上メニュー（三角）
-menuBtn.onclick = (e) => {
-  e.stopPropagation();
-  menuBox.style.display =
-    menuBox.style.display === "block" ? "none" : "block";
-};
-
-// ▼ メニュー自体のクリックは閉じない
-menuBox.onclick = (e) => {
-  e.stopPropagation();
-};
-
-// ▼ 画面のどこかをクリックしたら閉じる
-document.onclick = () => {
-  menuBox.style.display = "none";
-};
-
-// ▼ ログアウト
-mLogout.onclick = () => {
-  localStorage.removeItem("candoll_admin_pass");
-  location.reload();
-};
 
 /* ---------- DATE NAV ---------- */
 navPrev.onclick=()=>{BASE_DATE.setDate(BASE_DATE.getDate()-1);render();};
@@ -173,7 +168,7 @@ function renderDay(d){
     if(r){
       div.style.background="#fdd";
       if(t===r.time){
-        div.innerHTML = `<strong>${t}</strong><br>${r.name}<br>${r.menus||""}`;
+        div.innerHTML = `<strong>${t}</strong><br>${r.name}<br>${r.menus || r.menu || ""}`;
       }else{
         div.textContent=t;
       }
@@ -202,9 +197,9 @@ function openAdd({date,time}){
   `;
   popupBg.style.display="flex";
 
-  const aName = document.getElementById("a-name");
-  const aTime = document.getElementById("a-time");
-  const aMenu = document.getElementById("a-menu");
+  const aName=document.getElementById("a-name");
+  const aTime=document.getElementById("a-time");
+  const aMenu=document.getElementById("a-menu");
 
   document.getElementById("a-cancel").onclick=()=>popupBg.style.display="none";
   document.getElementById("a-save").onclick=async()=>{
@@ -213,7 +208,7 @@ function openAdd({date,time}){
     const m=aMenu.value;
     const end=addMin(t,menuDuration(m));
     if(!name||!m) return alert("未入力");
-    if(hasConflict({date,start:t,end})) return alert("時間が重複で予約不可");
+    if(hasConflict({date,start:t,end})) return alert("重複");
     await callAPI({mode:"add",name,menus:m,date,time:t,end_time:end});
     popupBg.style.display="none"; render();
   };
@@ -225,31 +220,24 @@ function openEdit(r){
     <h3>予約変更</h3>
     <input id="e-name" value="${r.name}">
     <select id="e-time">${TIMES.map(t=>`<option ${t===r.time?"selected":""}>${t}</option>`).join("")}</select>
-    <select id="e-menu">${MENUS.map(m=>`<option ${m.name===r.menus?"selected":""}>${m.name}</option>`).join("")}</select>
+    <select id="e-menu">${MENUS.map(m=>`<option ${m.name===(r.menus||r.menu)?"selected":""}>${m.name}</option>`).join("")}</select>
     <button id="e-save">変更</button>
     <button id="e-del">削除</button>
     <button id="e-close">閉じる</button>
   `;
   popupBg.style.display="flex";
 
-  const eName  = document.getElementById("e-name");
-  const eTime  = document.getElementById("e-time");
-  const eMenu  = document.getElementById("e-menu");
-  const eSave  = document.getElementById("e-save");
-  const eDel   = document.getElementById("e-del");
-  const eClose = document.getElementById("e-close");
-
-  eClose.onclick=()=>popupBg.style.display="none";
-  eSave.onclick=async()=>{
-    const name=eName.value;
-    const t=eTime.value;
-    const m=eMenu.value;
+  document.getElementById("e-close").onclick=()=>popupBg.style.display="none";
+  document.getElementById("e-save").onclick=async()=>{
+    const name=document.getElementById("e-name").value;
+    const t=document.getElementById("e-time").value;
+    const m=document.getElementById("e-menu").value;
     const end=addMin(t,menuDuration(m));
     if(hasConflict({date:r.date,start:t,end,ignoreId:r.id})) return alert("重複");
     await callAPI({mode:"edit",id:r.id,name,menus:m,date:r.date,time:t,end_time:end});
     popupBg.style.display="none"; render();
   };
-  eDel.onclick=async()=>{
+  document.getElementById("e-del").onclick=async()=>{
     if(!confirm("削除？")) return;
     await callAPI({mode:"delete",id:r.id});
     popupBg.style.display="none"; render();
