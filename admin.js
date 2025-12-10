@@ -118,7 +118,7 @@ window.addEventListener("DOMContentLoaded", async ()=>{
     e.stopPropagation();
   };
 
-  document.onclick = ()=>{
+  document.addEventListener("click", () => {
     menuBox.style.display="none";
   };
 
