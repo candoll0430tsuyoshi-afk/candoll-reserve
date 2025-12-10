@@ -1,7 +1,7 @@
 /* ==============================
    Candoll 管理画面 admin.js
-   基準コード復元版 + menus 統一のみ反映
-   ※ 既存ロジック削除なし／構造維持
+   基準コード＋ menus 統一
+   ★ 修正点：aName / aTime / aMenu の未定義エラーのみ修正
    ============================== */
 
 const API_URL = "https://bcahztzetpfuklipjmxx.functions.supabase.co/admin-service";
@@ -22,8 +22,6 @@ const daysWrap   = document.getElementById("days-wrapper");
 const menuBtn    = document.getElementById("menu-btn");
 const menuBox    = document.getElementById("menu-box");
 const mLogout    = document.getElementById("m-logout");
-const mAdd       = document.getElementById("m-add");
-const mDel       = document.getElementById("m-del");
 
 const popupBg    = document.getElementById("popup-bg");
 const popupBox   = document.getElementById("popup-box");
@@ -163,7 +161,7 @@ function renderDay(d){
     if(r){
       div.style.background="#fdd";
       if(t===r.time){
-        div.innerHTML = `<strong>${t}</strong><br>${r.name}<br>${r.menus||r.menu||""}`;
+        div.innerHTML = `<strong>${t}</strong><br>${r.name}<br>${r.menus||""}`;
       }else{
         div.textContent=t;
       }
@@ -191,6 +189,11 @@ function openAdd({date,time}){
     <button id="a-cancel">キャンセル</button>
   `;
   popupBg.style.display="flex";
+
+  const aName = document.getElementById("a-name");
+  const aTime = document.getElementById("a-time");
+  const aMenu = document.getElementById("a-menu");
+
   document.getElementById("a-cancel").onclick=()=>popupBg.style.display="none";
   document.getElementById("a-save").onclick=async()=>{
     const name=aName.value.trim();
@@ -216,6 +219,13 @@ function openEdit(r){
     <button id="e-close">閉じる</button>
   `;
   popupBg.style.display="flex";
+
+  const eName  = document.getElementById("e-name");
+  const eTime  = document.getElementById("e-time");
+  const eMenu  = document.getElementById("e-menu");
+  const eSave  = document.getElementById("e-save");
+  const eDel   = document.getElementById("e-del");
+  const eClose = document.getElementById("e-close");
 
   eClose.onclick=()=>popupBg.style.display="none";
   eSave.onclick=async()=>{
