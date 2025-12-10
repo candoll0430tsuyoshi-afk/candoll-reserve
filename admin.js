@@ -118,9 +118,23 @@ window.addEventListener("DOMContentLoaded", async ()=>{
     e.stopPropagation();
   };
 
-  document.addEventListener("click", () => {
-    menuBox.style.display="none";
-  };
+// ▼ 右上メニュー開閉
+menuBtn.onclick = (e) => {
+  e.stopPropagation();
+  menuBox.style.display =
+    menuBox.style.display === "block" ? "none" : "block";
+};
+
+// ▼ メニュー内クリックは閉じない
+menuBox.onclick = (e) => {
+  e.stopPropagation();
+};
+
+// ▼ 外クリックで閉じる（※ここ重要）
+document.addEventListener("click", () => {
+  menuBox.style.display = "none";
+});
+
 
   mLogout.onclick = ()=>{
     localStorage.removeItem("candoll_admin_pass");
