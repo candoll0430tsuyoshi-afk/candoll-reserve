@@ -337,22 +337,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  /* ▼ 右上メニュー操作 */
-  const menuBox = document.getElementById("menu-box");
-  const menuBtn = document.getElementById("menu-btn");
-
-  if (menuBox && menuBtn) {
-    menuBtn.addEventListener("click", (e) => {
-      e.stopPropagation();
-      menuBox.style.display =
-        menuBox.style.display === "block" ? "none" : "block";
-    });
-
-    document.addEventListener("click", () => {
-      menuBox.style.display = "none";
-    });
-  }
-
 });
 </script>
 
