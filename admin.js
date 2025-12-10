@@ -110,13 +110,21 @@ window.addEventListener("DOMContentLoaded",async()=>{
 });
 
 /* ---------- MENU ---------- */
-menuBtn.onclick = e=>{
+menuBtn.addEventListener("click", (e) => {
   e.stopPropagation();
-  menuBox.style.display = menuBox.style.display==="block"?"none":"block";
-};
-document.addEventListener("click",()=>menuBox.style.display="none");
+  menuBox.style.display =
+    menuBox.style.display === "block" ? "none" : "block";
+});
 
-mLogout.onclick = ()=>{
+menuBox.addEventListener("click", (e) => {
+  e.stopPropagation();
+});
+
+document.addEventListener("click", () => {
+  menuBox.style.display = "none";
+});
+
+mLogout.onclick = () => {
   localStorage.removeItem("candoll_admin_pass");
   location.reload();
 };
