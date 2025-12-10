@@ -110,20 +110,24 @@ window.addEventListener("DOMContentLoaded",async()=>{
 });
 
 /* ---------- MENU ---------- */
-menuBtn.addEventListener("click", (e) => {
+// ▼ 右上メニュー（三角）
+menuBtn.onclick = (e) => {
   e.stopPropagation();
   menuBox.style.display =
     menuBox.style.display === "block" ? "none" : "block";
-});
+};
 
-menuBox.addEventListener("click", (e) => {
+// ▼ メニュー自体のクリックは閉じない
+menuBox.onclick = (e) => {
   e.stopPropagation();
-});
+};
 
-document.addEventListener("click", () => {
+// ▼ 画面のどこかをクリックしたら閉じる
+document.onclick = () => {
   menuBox.style.display = "none";
-});
+};
 
+// ▼ ログアウト
 mLogout.onclick = () => {
   localStorage.removeItem("candoll_admin_pass");
   location.reload();
