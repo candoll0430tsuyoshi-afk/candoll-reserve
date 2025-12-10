@@ -238,7 +238,7 @@ function openEdit(r){
     popupBg.style.display="none"; render();
   };
   document.getElementById("e-del").onclick=async()=>{
-    if(!confirm("削除？")) return;
+    if(!confirm("キャンセルしますか？")) return;
     await callAPI({mode:"delete",id:r.id});
     popupBg.style.display="none"; render();
   };
