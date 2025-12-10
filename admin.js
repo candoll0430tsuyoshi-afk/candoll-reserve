@@ -108,19 +108,19 @@ window.addEventListener("DOMContentLoaded", async ()=>{
   }
 });
 
-/* ---------- 右上メニュー（確定版・単一） ---------- */
+// ===== 右上メニュー：単一・確定版 =====
 menuBtn.onclick = (e) => {
-  e.stopPropagation();
+  e.stopPropagation(); // 外クリックに伝播させない
   menuBox.style.display =
     menuBox.style.display === "block" ? "none" : "block";
 };
 
 menuBox.onclick = (e) => {
-  e.stopPropagation();
+  e.stopPropagation(); // メニュー内クリックでも閉じない
 };
 
 document.addEventListener("click", () => {
-  menuBox.style.display = "none";
+  menuBox.style.display = "none"; // 外クリックで閉じる
 });
 
 /* ---------- Logout ---------- */
