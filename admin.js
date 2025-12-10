@@ -201,7 +201,7 @@ function openAdd({date,time}){
     const m=aMenu.value;
     const end=addMin(t,menuDuration(m));
     if(!name||!m) return alert("未入力");
-    if(hasConflict({date,start:t,end})) return alert("重複");
+    if(hasConflict({date,start:t,end})) return alert("時間が重複で予約不可");
     await callAPI({mode:"add",name,menus:m,date,time:t,end_time:end});
     popupBg.style.display="none"; render();
   };
