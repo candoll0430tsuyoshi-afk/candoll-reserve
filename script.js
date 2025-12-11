@@ -182,7 +182,7 @@ async function updateTimeOptions(){
   const { data } = await supabaseClient
     .from("reservations")
     .select("time,end_time")
-    .eq("date", normalizedDate);
+    .eq("date", date);
 
   const reserved = (data || []).map(r => ({
     start: r.time.trim(),
