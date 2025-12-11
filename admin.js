@@ -287,3 +287,43 @@ function openHolidayAdd() {
     render();
   };
 }
+// ▼ 休日解除ポップアップ
+function openHolidayDel() {
+  popupBox.innerHTML = `
+    <h3>休日解除</h3>
+    <input type="date" id="hd-date">
+    <button id="hd-save">解除</button>
+    <button id="hd-cancel" style="background:#aaa;margin-top:10px;">キャンセル</button>
+  `;
+
+  popupBg.style.display = "flex";
+
+  // キャンセル → 閉じるだけ
+  document.getElementById("hd-cancel").onclick = () => {
+    popupBg.style.display = "none";
+  };
+
+  // 解除実行
+  document.getElementById("hd-save").onclick = async () => {
+    const d = document.getElementById("hd-date").value;
+    if (!d) {
+      alert("日付を選択してください");
+      return;
+    }
+
+    // holidays から削除
+    await callAPI({
+      mode: "delHoliday",
+      date: d
+    });
+
+    popupBg.style.display = "none";
+
+    // 最新データを再取得して画面更新
+    const res = await callAPI({ mode: "list" });
+    RESERVATIONS = res.reservations || [];
+    HOLIDAYS     = res.holidays     || [];
+    MENUS        = res.menus        || [];
+    render();
+  };
+}
