@@ -5,6 +5,11 @@ const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 
 // ===== 休日データ（admin-service から取得）=====
 let HOLIDAYS = [];
+// ▼ 日付フォーマットを "YYYY-MM-DD" に統一するユーティリティ
+function normalizeDate(value) {
+  if (!value) return value;
+  return value.split("T")[0];  // Safari の "2025-12-31T00:00" → "2025-12-31"
+}
 
 // ===== メニュー所要時間（Supabaseから取得） =====
 let MENU_DATA = {};
