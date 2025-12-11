@@ -38,25 +38,20 @@ async function loadHolidays() {
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ mode: "list" })
+        body: JSON.stringify({ mode: "publicList" })
       }
     );
 
-    if (!res.ok) {
-      console.error("休日取得 API エラー:", await res.text());
-      return;
-    }
-
     const json = await res.json();
     HOLIDAYS = (json.holidays || []).map(h => h.date);
-    console.log("HOLIDAYS loaded:", HOLIDAYS);
 
-    updateTimeOptions(); // 読み込み後、時間枠更新
+    console.log("Loaded HOLIDAYS:", HOLIDAYS);
 
   } catch (e) {
     console.error("休日取得エラー:", e);
   }
 }
+
 
 const greeting = document.getElementById("greeting");
 
