@@ -49,6 +49,7 @@ addMenuButton.addEventListener("click", () => {
     attachMenuUpdate();
   }
 });
+
 // ===== 休日データ =====
 let HOLIDAYS = [];
 
@@ -108,6 +109,22 @@ async function checkDuplicateFull(date, start, end) {
 
 // ===== 時間グレーアウト =====
 document.getElementById("date").addEventListener("change", updateTimeOptions);
+
+// ★ 休業日を選択させないためのガード
+const dateInput = document.getElementById("date");
+dateInput.addEventListener("change", (e) => {
+  const value = e.target.value;
+  if (HOLIDAYS.includes(value)) {
+    alert("この日は休業日のため、ご予約いただけません。");
+    e.target.value = "";
+    const timeSelect = document.getElementById("time");
+    Array.from(timeSelect.options).forEach(o => {
+      if (!o.value) return;
+      o.disabled = true;
+      o.style.color = "#aaa";
+    });
+  }
+});
 
 async function updateTimeOptions(){
   const date = document.getElementById("date").value;
