@@ -55,7 +55,6 @@ async function loadHolidays() {
     // ▼ 重複除去（最小追加）
     HOLIDAYS = Array.from(new Set((json.holidays || []).map(h => h.date)));
 
-    console.log("Loaded HOLIDAYS:", HOLIDAYS);
 
     updateTimeOptions();
 
