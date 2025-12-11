@@ -51,9 +51,6 @@ addMenuButton.addEventListener("click", () => {
 });
 
 // ===== 休日データ =====
-let HOLIDAYS = [];
-
-// Supabase から休日を取得
 async function loadHolidays() {
   const { data, error } = await supabaseClient
     .from("holidays")
@@ -64,8 +61,9 @@ async function loadHolidays() {
     return;
   }
 
-  HOLIDAYS = data.map(h => h.date); // ["2025-12-10", ...] 形式
+  HOLIDAYS = data.map(h => h.date);
 }
+
 
 // ===== 所要時間計算 =====
 function calcTotalMinutes(menus) {
