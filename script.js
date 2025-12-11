@@ -50,8 +50,6 @@ async function loadHolidays() {
     const json = await res.json();
     HOLIDAYS = (json.holidays || []).map(h => h.date);
 
-    console.log("Loaded HOLIDAYS:", HOLIDAYS);
-
   } catch (e) {
     console.error("休日取得エラー:", e);
   }
