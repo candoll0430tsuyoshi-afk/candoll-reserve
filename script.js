@@ -149,37 +149,40 @@ dateInput.addEventListener("change", (e) => {
 });
 
 // ===== 日付一覧生成（休業日は削除）=====
-async function updateDateOptions(){
+function updateDateOptions() {
   const dateSelect = document.getElementById("date");
   if (!dateSelect) return;
 
   dateSelect.innerHTML = "";
 
   const today = new Date();
+  today.setHours(0, 0, 0, 0);
 
-  for (let i = 0; i < 60; i++) {
+  for (let i = 0; i < 180; i++) {
     const d = new Date(today);
     d.setDate(today.getDate() + i);
 
     const y = d.getFullYear();
-    const m = ("0" + (d.getMonth() + 1)).slice(-2);
-    const day = ("0" + d.getDate()).slice(-2);
+    const m = ("0" + (d.getMonth() + 1)).slice(-2);  // ★修正済み
+    const day = ("0" + d.getDate()).slice(-2);       // ★修正済み
 
-    const label = `${y}/${m}/${day}(${youbi})`;
+    const value = `${y}-${m}-${day}`;
+
+    // ★休日はスキップ（正常動作のまま）
+    if (HOLIDAYS.includes(value)) continue;
+
+    // ★曜日の追加（label を1回だけ宣言）
     const week = ["日", "月", "火", "水", "木", "金", "土"];
     const youbi = week[d.getDay()];
-    
+    const label = `${y}/${m}/${day}(${youbi})`;
 
-    // ★ 休業日はそもそも一覧に追加しない（あなたの希望）
-    if (HOLIDAYS.includes(normalizeDate(value))) continue;
-
-    const opt = document.createElement("option");
-    opt.value = value;
-    opt.textContent = label;
-
-    dateSelect.appendChild(opt);
+    const op = document.createElement("option");
+    op.value = value;
+    op.textContent = label;
+    dateSelect.appendChild(op);
   }
 }
+
 
 // ===== 時刻オプション生成 =====
 async function updateTimeOptions(){
