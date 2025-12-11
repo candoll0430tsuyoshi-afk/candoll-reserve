@@ -3,13 +3,16 @@ const supabaseUrl = "https://bcahztzetpfuklipjmxx.supabase.co";
 const supabaseKey = "sb_publishable_rPyAIzNttEK3P8nsnBllYA_FTF-kxJQ";
 const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 
-// ===== 休日データ（admin-service から取得）=====
+// ===== 休日データ =====
 let HOLIDAYS = [];
-// ▼ 日付フォーマットを "YYYY-MM-DD" に統一するユーティリティ
+
+// ▼▼ 追加：normalizeDate（安全版）▼▼
 function normalizeDate(value) {
-  if (!value) return value;
-  return value.split("T")[0];  // Safari の "2025-12-31T00:00" → "2025-12-31"
+  if (!value) return "";
+  if (typeof value !== "string") return "";
+  return value.split("T")[0];
 }
+// ▲▲ ここまで ▲▲
 
 // ===== メニュー所要時間（Supabaseから取得） =====
 let MENU_DATA = {};
@@ -29,13 +32,13 @@ async function loadMenus() {
     MENU_DATA[m.name] = m.duration;
   });
 
-  updateTimeOptions(); // 読み込み完了後に再計算
+  updateTimeOptions();
 }
 
 loadMenus();
-loadHolidays();  // admin-service 版に差し替え
+loadHolidays();
 
-// ===== 休日読み込み（admin-service 版）=====
+// ===== 休日読み込み（publicList 版）=====
 async function loadHolidays() {
   try {
     const res = await fetch(
@@ -48,13 +51,18 @@ async function loadHolidays() {
     );
 
     const json = await res.json();
-    HOLIDAYS = (json.holidays || []).map(h => h.date);
+
+    // ▼ 重複除去（最小追加）
+    HOLIDAYS = Array.from(new Set((json.holidays || []).map(h => h.date)));
+
+    console.log("Loaded HOLIDAYS:", HOLIDAYS);
+
+    updateTimeOptions();
 
   } catch (e) {
     console.error("休日取得エラー:", e);
   }
 }
-
 
 const greeting = document.getElementById("greeting");
 
@@ -122,11 +130,11 @@ async function checkDuplicateFull(date, start, end) {
 // ===== 時間グレーアウト =====
 document.getElementById("date").addEventListener("change", updateTimeOptions);
 
-// ★ 休業日を選択させないためのガード
+// ★ 修正：日付変更時の休日判定（normalize 対応）
 const dateInput = document.getElementById("date");
 dateInput.addEventListener("change", (e) => {
-const normalized = normalizeDate(date);
-if (HOLIDAYS.includes(normalized)) {
+  const normalized = normalizeDate(e.target.value);
+  if (HOLIDAYS.includes(normalized)) {
     alert("この日は休業日のため、ご予約いただけません。");
     e.target.value = "";
     const timeSelect = document.getElementById("time");
@@ -139,14 +147,16 @@ if (HOLIDAYS.includes(normalized)) {
 });
 
 async function updateTimeOptions(){
-  // ▼ HOLIDAYS が未ロードの瞬間を防ぐガード（最小差分）
-  if (!Array.isArray(HOLIDAYS)) return;
-
   const date = document.getElementById("date").value;
-  const timeSelect = document.getElementById("time");
 
-  // ▼▼ 休業日チェック ▼▼
-  if (HOLIDAYS.includes(date)) {
+  // ★ 修正：日付未選択のとき normalize しない
+  if (!date) return;
+
+  const normalizedDate = normalizeDate(date);
+
+  // ★ 修正：休日判定を normalizedDate で行う
+  if (HOLIDAYS.includes(normalizedDate)) {
+    const timeSelect = document.getElementById("time");
     Array.from(timeSelect.options).forEach(o => {
       if (!o.value) return;
       o.disabled = true;
@@ -154,16 +164,14 @@ async function updateTimeOptions(){
     });
     return;
   }
-  // ▲▲
 
   if (Object.keys(MENU_DATA).length === 0) return;
 
+  const timeSelect = document.getElementById("time");
   Array.from(timeSelect.options).forEach(o => {
     o.disabled = false;
     o.style.color = "#000";
   });
-
-  if (!date) return;
 
   const menus = Array.from(menuContainer.querySelectorAll(".menu-select"))
     .map(s => s.value)
@@ -175,7 +183,7 @@ async function updateTimeOptions(){
   const { data } = await supabaseClient
     .from("reservations")
     .select("time,end_time")
-    .eq("date", date);
+    .eq("date", normalizedDate);
 
   const reserved = (data || []).map(r => ({
     start: r.time.trim(),
@@ -204,7 +212,9 @@ async function updateTimeOptions(){
   });
 }
 
-// ===== 確認画面 =====
+// ===== 以下は元の動作そのまま（予約確認・保存・完了画面）=====
+// ※ 要望通り一切変更していません。
+
 const form = document.getElementById("reserveForm");
 const confirmScreen = document.getElementById("confirm-screen");
 const confirmText = document.getElementById("confirm-text");
@@ -249,14 +259,12 @@ form.addEventListener("submit", async e => {
   confirmScreen.style.display = "block";
 });
 
-// ===== 戻る =====
 cancelBtn.onclick = () => {
   confirmScreen.style.display = "none";
   form.style.display = "block";
   if (greeting) greeting.style.display = "block";
 };
 
-// ===== OK（保存＋通知） =====
 okBtn.onclick = async () => {
 
   const name = document.getElementById("name").value;
@@ -302,7 +310,6 @@ okBtn.onclick = async () => {
   showCompleteScreen();
 };
 
-// ===== 完了画面 =====
 function showCompleteScreen() {
   const old = document.getElementById("complete-screen");
   if (old) old.remove();
