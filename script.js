@@ -169,7 +169,6 @@ async function updateDateOptions(){
     const week = ["日", "月", "火", "水", "木", "金", "土"];
     const youbi = week[d.getDay()];
     const label = `${y}/${m}/${day}(${youbi})`;
-    const value = `${y}-${m}-${day}`;
 
     // ★ 休業日はそもそも一覧に追加しない（あなたの希望）
     if (HOLIDAYS.includes(normalizeDate(value))) continue;
