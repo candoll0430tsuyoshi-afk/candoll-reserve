@@ -52,10 +52,10 @@ async function loadHolidays() {
 
     const json = await res.json();
 
-    // ▼ 重複除去（最小追加）
-    HOLIDAYS = Array.from(new Set((json.holidays || []).map(h => h.date)));
+    // ▼ Supabase の holidays はオブジェクト配列なので date だけ抽出する
+    HOLIDAYS = (json.holidays || []).map(h => h.date);
 
-    updateTimeOptions();
+    console.log("Loaded HOLIDAYS:", HOLIDAYS);
 
   } catch (e) {
     console.error("休日取得エラー:", e);
