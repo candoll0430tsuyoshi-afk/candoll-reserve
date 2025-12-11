@@ -25,6 +25,7 @@ async function loadMenus() {
 }
 
 loadMenus();
+loadHolidays();  // 追加
 
 const greeting = document.getElementById("greeting");
 
@@ -48,6 +49,22 @@ addMenuButton.addEventListener("click", () => {
     attachMenuUpdate();
   }
 });
+// ===== 休日データ =====
+let HOLIDAYS = [];
+
+// Supabase から休日を取得
+async function loadHolidays() {
+  const { data, error } = await supabaseClient
+    .from("holidays")
+    .select("date");
+
+  if (error) {
+    console.error("休日取得エラー:", error);
+    return;
+  }
+
+  HOLIDAYS = data.map(h => h.date); // ["2025-12-10", ...] 形式
+}
 
 // ===== 所要時間計算 =====
 function calcTotalMinutes(menus) {
@@ -92,7 +109,20 @@ async function checkDuplicateFull(date, start, end) {
 // ===== 時間グレーアウト =====
 document.getElementById("date").addEventListener("change", updateTimeOptions);
 
-async function updateTimeOptions() {
+async function updateTimeOptions(){
+  const date = document.getElementById("date").value;
+  const timeSelect = document.getElementById("time");
+
+  // ▼▼ 休業日チェックを追加 ▼▼
+  if (HOLIDAYS.includes(date)) {
+    Array.from(timeSelect.options).forEach(o => {
+      if (!o.value) return;
+      o.disabled = true;
+      o.style.color = "#aaa";
+    });
+    return; // ← 休業日はここで終了
+  }
+  // ▲▲ 追加ここまで ▲▲
 
   if (Object.keys(MENU_DATA).length === 0) return;
 
