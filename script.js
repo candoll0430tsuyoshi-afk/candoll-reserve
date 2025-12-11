@@ -162,8 +162,8 @@ async function updateDateOptions(){
     d.setDate(today.getDate() + i);
 
     const y = d.getFullYear();
-    const m = ("0" + (d.getMonth() + 1)).slice(0, 2);
-    const day = ("0" + d.getDate()).slice(0, 2);
+    const m = ("0" + (d.getMonth() + 1)).slice(-2);
+    const day = ("0" + d.getDate()).slice(-2);
 
     const label = `${y}/${m}/${day}`;
     const value = `${y}-${m}-${day}`;
