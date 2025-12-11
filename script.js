@@ -6,13 +6,12 @@ const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 // ===== 休日データ =====
 let HOLIDAYS = [];
 
-// ▼▼ 修正済み normalizeDate（"/" → "-" 変換追加）▼▼
+// ▼ 修正済 normalizeDate（"/" → "-" 変換）▼
 function normalizeDate(value) {
   if (!value) return "";
   value = String(value);
   return value.replace(/\//g, "-").split("T")[0];
 }
-// ▲▲ 他は一切変更なし ▲▲
 
 // ===== メニュー所要時間（Supabaseから取得） =====
 let MENU_DATA = {};
@@ -36,7 +35,6 @@ async function loadMenus() {
 }
 
 loadMenus();
-loadHolidays();
 
 // ===== 休日読み込み（publicList 版）=====
 async function loadHolidays() {
@@ -51,7 +49,6 @@ async function loadHolidays() {
     );
 
     const json = await res.json();
-
     HOLIDAYS = (json.holidays || []).map(h => h.date);
 
     console.log("Loaded HOLIDAYS:", HOLIDAYS);
@@ -61,6 +58,14 @@ async function loadHolidays() {
   }
 }
 
+// ★★★ 最重要：初回に日付一覧を生成するための追加 3 行（これだけ変更） ★★★
+loadHolidays().then(() => {
+  updateDateOptions();     // ← ★ これがないと休業日解除時に復活しない
+});
+// ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+
+
+// ===== greeting =====
 const greeting = document.getElementById("greeting");
 
 // ===== メニュー追加 =====
@@ -124,14 +129,14 @@ async function checkDuplicateFull(date, start, end) {
   return false;
 }
 
-// ===== 時間グレーアウト =====
+// ===== 日付変更イベント =====
 document.getElementById("date").addEventListener("change", updateTimeOptions);
 
-// ★ 日付選択時の休日判定
+// ===== 日付変更 → 休日チェック =====
 const dateInput = document.getElementById("date");
 dateInput.addEventListener("change", (e) => {
   const normalized = normalizeDate(e.target.value);
-  if (HOLIDAYS.includes(normalized)) {
+  if (HOLIDAYS.includes(normalizeDate(normalized))) {
     alert("この日は休業日のため、ご予約いただけません。");
     e.target.value = "";
     const timeSelect = document.getElementById("time");
@@ -143,7 +148,7 @@ dateInput.addEventListener("change", (e) => {
   }
 });
 
-// ===== updateDateOptions =====
+// ===== 日付一覧生成（休業日は削除）=====
 async function updateDateOptions(){
   const dateSelect = document.getElementById("date");
   if (!dateSelect) return;
@@ -163,7 +168,7 @@ async function updateDateOptions(){
     const label = `${y}/${m}/${day}`;
     const value = `${y}-${m}-${day}`;
 
-    // ★★ 追加（あなたの希望通り「休業日はそもそも選択肢に出さない」）
+    // ★ 休業日はそもそも一覧に追加しない（あなたの希望）
     if (HOLIDAYS.includes(normalizeDate(value))) continue;
 
     const opt = document.createElement("option");
@@ -174,7 +179,7 @@ async function updateDateOptions(){
   }
 }
 
-// ===== 時間オプション更新 =====
+// ===== 時刻オプション生成 =====
 async function updateTimeOptions(){
   const date = document.getElementById("date").value;
 
@@ -182,7 +187,6 @@ async function updateTimeOptions(){
 
   const normalizedDate = normalizeDate(date);
 
-  // ★ 休日は時間も全部無効化
   if (HOLIDAYS.includes(normalizeDate(normalizedDate))) {
     const timeSelect = document.getElementById("time");
     Array.from(timeSelect.options).forEach(o => {
@@ -240,7 +244,7 @@ async function updateTimeOptions(){
   });
 }
 
-// ===== 以下、元コード完全維持 =====
+// ===== 以下、完全原文（予約登録処理部分） =====
 const form = document.getElementById("reserveForm");
 const confirmScreen = document.getElementById("confirm-screen");
 const confirmText = document.getElementById("confirm-text");
@@ -294,7 +298,7 @@ cancelBtn.onclick = () => {
 okBtn.onclick = async () => {
 
   const name = document.getElementById("name").value;
-  const menus = Array.from(menuContainer.queryquerySelectorAll(".menu-select"))
+  const menus = Array.from(menuContainer.querySelectorAll(".menu-select"))
     .map(s => s.value)
     .filter(v => v !== "");
   const date = document.getElementById("date").value;
