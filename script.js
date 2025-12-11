@@ -122,7 +122,7 @@ document.getElementById("date").addEventListener("change", updateTimeOptions);
 // ★ 休業日を選択させないためのガード
 const dateInput = document.getElementById("date");
 dateInput.addEventListener("change", (e) => {
-  const value = e.target.value;
+  const value = normalizeDate(e.target.value);
   if (HOLIDAYS.includes(value)) {
     alert("この日は休業日のため、ご予約いただけません。");
     e.target.value = "";
