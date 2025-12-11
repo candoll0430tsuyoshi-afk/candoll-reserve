@@ -14,7 +14,7 @@ function normalizeDate(value) {
 }
 // ▲▲ ここまで ▲▲
 
-// ===== メニュー所要時間（Supabaseから取得）=====
+// ===== メニュー所要時間（Supabaseから取得） =====
 let MENU_DATA = {};
 
 async function loadMenus() {
@@ -52,9 +52,11 @@ async function loadHolidays() {
 
     const json = await res.json();
 
+    // ▼ 重複除去（最小追加）
     HOLIDAYS = Array.from(new Set((json.holidays || []).map(h => h.date)));
 
     updateTimeOptions();
+
   } catch (e) {
     console.error("休日取得エラー:", e);
   }
@@ -111,7 +113,7 @@ async function checkDuplicateFull(date, start, end) {
   const { data, error } = await supabaseClient
     .from("reservations")
     .select("time,end_time")
-    .eq("date", normalizedDate);
+    .eq("date", date);   // ★ 修正：normalizedDate → date に戻す（元の正しい形）
 
   if (error) return true;
 
@@ -126,7 +128,7 @@ async function checkDuplicateFull(date, start, end) {
 // ===== 時間グレーアウト =====
 document.getElementById("date").addEventListener("change", updateTimeOptions);
 
-// ★ 日付変更時の休日判定
+// ★ 修正：日付変更時の休日判定（normalize 対応）
 const dateInput = document.getElementById("date");
 dateInput.addEventListener("change", (e) => {
   const normalized = normalizeDate(e.target.value);
@@ -142,8 +144,7 @@ dateInput.addEventListener("change", (e) => {
   }
 });
 
-
-// ===== ★ updateTimeOptions（休日判定ブロックを最優先へ移動済み）=====
+// ===== updateTimeOptions（休日判定を最優先へ移動）=====
 async function updateTimeOptions(){
   const date = document.getElementById("date").value;
 
@@ -151,7 +152,7 @@ async function updateTimeOptions(){
 
   const normalizedDate = normalizeDate(date);
 
-  // ★★★★★ ここだけ移動（後ろの処理を上書きしないため） ★★★★★
+  // ★★★ 休日判定ブロック（上に移動） ★★★
   if (HOLIDAYS.includes(normalizedDate)) {
     const timeSelect = document.getElementById("time");
     Array.from(timeSelect.options).forEach(o => {
@@ -161,7 +162,7 @@ async function updateTimeOptions(){
     });
     return;
   }
-  // ★★★★★ ここまで休日処理 ★★★★★
+  // ★★★ ここまで休日処理 ★★★
 
   if (Object.keys(MENU_DATA).length === 0) return;
 
@@ -210,8 +211,7 @@ async function updateTimeOptions(){
   });
 }
 
-// ===== ここから下はあなたの元コードそのまま =====
-
+// ===== 以下は元の動作そのまま（予約確認・保存・完了画面）=====
 const form = document.getElementById("reserveForm");
 const confirmScreen = document.getElementById("confirm-screen");
 const confirmText = document.getElementById("confirm-text");
@@ -241,7 +241,7 @@ form.addEventListener("submit", async e => {
     return;
   }
 
-  const week = ["日", "月", "火", "水", "木", "木", "金", "土"];
+  const week = ["日", "月", "火", "水", "木", "金", "土"];
   const youbi = week[new Date(date).getDay()];
 
   if (greeting) greeting.style.display = "none";
