@@ -167,10 +167,21 @@ function renderDay(d){
       toMin(t)>=toMin(x.time)&&toMin(t)<toMin(x.end_time)
     );
 
-    // ▼ 休日判定
-    const isHoliday = HOLIDAYS.some(h => h.date === date);
+    // ▼ 固定定休日（毎週月曜＆第1・第3火曜）
+    const w = d.getDay();
+    const weekIndex = Math.floor((d.getDate() - 1) / 7) + 1;
 
-    // ▼ 初期色（休日 赤 / 通常 緑）
+    const isFixedHoliday =
+      w === 1 ||
+      (w === 2 && (weekIndex === 1 || weekIndex === 3));
+
+    // ▼ テーブルの休日（臨時休）
+    const isCustomHoliday = HOLIDAYS.some(h => h.date === date);
+
+    // ▼ 最終休日判定
+    const isHoliday = isFixedHoliday || isCustomHoliday;
+
+    // ▼ 色
     let bgColor = isHoliday ? "#ffdddd" : "#ddffdd";
 
     const div=document.createElement("div");
@@ -180,21 +191,21 @@ function renderDay(d){
     div.style.cursor="pointer";
 
     if(r){
-      // 予約がある場合は予約色を優先
-      div.style.background = "#fdd";
-
+      div.style.background="#fdd";
       if(t===r.time){
         div.innerHTML = `<strong>${t}</strong><br>${r.name}<br>${r.menus || ""}`;
       }else{
-        div.textContent = t;
+        div.textContent=t;
       }
-
       div.onclick=()=>openEdit(r);
 
     }else{
-      // 予約がない場合：休日 or 緑
       div.style.background = bgColor;
       div.textContent = t;
+
+      // 休日は予約追加を禁止したいならここで return する
+      // if(isHoliday) { div.onclick = null; return; }
+
       div.onclick=()=>openAdd({date,time:t});
     }
 
@@ -203,6 +214,7 @@ function renderDay(d){
 
   daysWrap.appendChild(col);
 }
+
 
 
 /* ---------- ADD ---------- */
