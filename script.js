@@ -3,6 +3,9 @@ const supabaseUrl = "https://bcahztzetpfuklipjmxx.supabase.co";
 const supabaseKey = "sb_publishable_rPyAIzNttEK3P8nsnBllYA_FTF-kxJQ";
 const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 
+// ===== 休日データ（admin-service から取得）=====
+let HOLIDAYS = [];
+
 // ===== メニュー所要時間（Supabaseから取得） =====
 let MENU_DATA = {};
 
@@ -25,7 +28,35 @@ async function loadMenus() {
 }
 
 loadMenus();
-loadHolidays();  // 追加
+loadHolidays();  // admin-service 版に差し替え
+
+// ===== 休日読み込み（admin-service 版）=====
+async function loadHolidays() {
+  try {
+    const res = await fetch(
+      "https://bcahztzetpfuklipjmxx.functions.supabase.co/admin-service",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mode: "list" })
+      }
+    );
+
+    if (!res.ok) {
+      console.error("休日取得 API エラー:", await res.text());
+      return;
+    }
+
+    const json = await res.json();
+    HOLIDAYS = (json.holidays || []).map(h => h.date);
+    console.log("HOLIDAYS loaded:", HOLIDAYS);
+
+    updateTimeOptions(); // 読み込み後、時間枠更新
+
+  } catch (e) {
+    console.error("休日取得エラー:", e);
+  }
+}
 
 const greeting = document.getElementById("greeting");
 
@@ -49,21 +80,6 @@ addMenuButton.addEventListener("click", () => {
     attachMenuUpdate();
   }
 });
-
-// ===== 休日データ =====
-async function loadHolidays() {
-  const { data, error } = await supabaseClient
-    .from("holidays")
-    .select("date");
-
-  if (error) {
-    console.error("休日取得エラー:", error);
-    return;
-  }
-
-  HOLIDAYS = data.map(h => h.date);
-}
-
 
 // ===== 所要時間計算 =====
 function calcTotalMinutes(menus) {
@@ -125,19 +141,22 @@ dateInput.addEventListener("change", (e) => {
 });
 
 async function updateTimeOptions(){
+  // ▼ HOLIDAYS が未ロードの瞬間を防ぐガード（最小差分）
+  if (!Array.isArray(HOLIDAYS)) return;
+
   const date = document.getElementById("date").value;
   const timeSelect = document.getElementById("time");
 
-  // ▼▼ 休業日チェックを追加 ▼▼
+  // ▼▼ 休業日チェック ▼▼
   if (HOLIDAYS.includes(date)) {
     Array.from(timeSelect.options).forEach(o => {
       if (!o.value) return;
       o.disabled = true;
       o.style.color = "#aaa";
     });
-    return; // ← 休業日はここで終了
+    return;
   }
-  // ▲▲ 追加ここまで ▲▲
+  // ▲▲
 
   if (Object.keys(MENU_DATA).length === 0) return;
 
