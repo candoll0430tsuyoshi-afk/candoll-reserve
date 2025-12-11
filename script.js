@@ -126,7 +126,6 @@ async function updateTimeOptions(){
 
   if (Object.keys(MENU_DATA).length === 0) return;
 
-  const date = document.getElementById("date").value;
   const timeSelect = document.getElementById("time");
 
   Array.from(timeSelect.options).forEach(o => {
