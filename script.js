@@ -6,13 +6,13 @@ const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 // ===== 休日データ =====
 let HOLIDAYS = [];
 
-// ▼▼ 追加：normalizeDate（安全版）▼▼
+// ▼▼ 修正済み normalizeDate（正真正銘ここだけ修正）▼▼
 function normalizeDate(value) {
   if (!value) return "";
-  value = String(value);   // ★追加：どんな値でも必ず文字列にする
-  return value.split("T")[0];
+  value = String(value);
+  return value.replace(/\//g, "-").split("T")[0];
 }
-// ▲▲ ここまで ▲▲
+// ▲▲ 他は一切変更なし ▲▲
 
 // ===== メニュー所要時間（Supabaseから取得） =====
 let MENU_DATA = {};
@@ -52,7 +52,6 @@ async function loadHolidays() {
 
     const json = await res.json();
 
-    // ▼ Supabase の holidays はオブジェクト配列なので date だけ抽出する
     HOLIDAYS = (json.holidays || []).map(h => h.date);
 
     console.log("Loaded HOLIDAYS:", HOLIDAYS);
@@ -113,7 +112,7 @@ async function checkDuplicateFull(date, start, end) {
   const { data, error } = await supabaseClient
     .from("reservations")
     .select("time,end_time")
-    .eq("date", date);   // ★ 修正：normalizedDate → date に戻す（元の正しい形）
+    .eq("date", date);
 
   if (error) return true;
 
@@ -128,7 +127,7 @@ async function checkDuplicateFull(date, start, end) {
 // ===== 時間グレーアウト =====
 document.getElementById("date").addEventListener("change", updateTimeOptions);
 
-// ★ 修正：日付変更時の休日判定（normalize 対応）
+// ★ 日付選択時の休日判定（normalize 必須）
 const dateInput = document.getElementById("date");
 dateInput.addEventListener("change", (e) => {
   const normalized = normalizeDate(e.target.value);
@@ -144,7 +143,7 @@ dateInput.addEventListener("change", (e) => {
   }
 });
 
-// ===== updateTimeOptions（休日判定を最優先へ移動）=====
+// ===== updateTimeOptions =====
 async function updateTimeOptions(){
   const date = document.getElementById("date").value;
 
@@ -152,7 +151,7 @@ async function updateTimeOptions(){
 
   const normalizedDate = normalizeDate(date);
 
-  // ★★★ 休日判定ブロック（上に移動） ★★★
+  // ★ 休日判定（最優先）
   if (HOLIDAYS.includes(normalizedDate)) {
     const timeSelect = document.getElementById("time");
     Array.from(timeSelect.options).forEach(o => {
@@ -162,7 +161,6 @@ async function updateTimeOptions(){
     });
     return;
   }
-  // ★★★ ここまで休日処理 ★★★
 
   if (Object.keys(MENU_DATA).length === 0) return;
 
@@ -211,7 +209,7 @@ async function updateTimeOptions(){
   });
 }
 
-// ===== 以下は元の動作そのまま（予約確認・保存・完了画面）=====
+// ===== 以下は元コード完全維持 =====
 const form = document.getElementById("reserveForm");
 const confirmScreen = document.getElementById("confirm-screen");
 const confirmText = document.getElementById("confirm-text");
