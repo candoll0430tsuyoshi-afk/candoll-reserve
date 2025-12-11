@@ -6,7 +6,7 @@ const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 // ===== 休日データ =====
 let HOLIDAYS = [];
 
-// ▼▼ 修正済み normalizeDate（正真正銘ここだけ修正）▼▼
+// ▼▼ 修正済み normalizeDate（"/" → "-" 変換追加）▼▼
 function normalizeDate(value) {
   if (!value) return "";
   value = String(value);
@@ -127,7 +127,7 @@ async function checkDuplicateFull(date, start, end) {
 // ===== 時間グレーアウト =====
 document.getElementById("date").addEventListener("change", updateTimeOptions);
 
-// ★ 日付選択時の休日判定（normalize 必須）
+// ★ 日付選択時の休日判定
 const dateInput = document.getElementById("date");
 dateInput.addEventListener("change", (e) => {
   const normalized = normalizeDate(e.target.value);
@@ -143,7 +143,38 @@ dateInput.addEventListener("change", (e) => {
   }
 });
 
-// ===== updateTimeOptions =====
+// ===== updateDateOptions =====
+async function updateDateOptions(){
+  const dateSelect = document.getElementById("date");
+  if (!dateSelect) return;
+
+  dateSelect.innerHTML = "";
+
+  const today = new Date();
+
+  for (let i = 0; i < 60; i++) {
+    const d = new Date(today);
+    d.setDate(today.getDate() + i);
+
+    const y = d.getFullYear();
+    const m = ("0" + (d.getMonth() + 1)).slice(0, 2);
+    const day = ("0" + d.getDate()).slice(0, 2);
+
+    const label = `${y}/${m}/${day}`;
+    const value = `${y}-${m}-${day}`;
+
+    // ★★ 追加（あなたの希望通り「休業日はそもそも選択肢に出さない」）
+    if (HOLIDAYS.includes(normalizeDate(value))) continue;
+
+    const opt = document.createElement("option");
+    opt.value = value;
+    opt.textContent = label;
+
+    dateSelect.appendChild(opt);
+  }
+}
+
+// ===== 時間オプション更新 =====
 async function updateTimeOptions(){
   const date = document.getElementById("date").value;
 
@@ -151,8 +182,8 @@ async function updateTimeOptions(){
 
   const normalizedDate = normalizeDate(date);
 
-  // ★ 休日判定（最優先）
-  if (HOLIDAYS.includes(normalizedDate)) {
+  // ★ 休日は時間も全部無効化
+  if (HOLIDAYS.includes(normalizeDate(normalizedDate))) {
     const timeSelect = document.getElementById("time");
     Array.from(timeSelect.options).forEach(o => {
       if (!o.value) return;
@@ -209,7 +240,7 @@ async function updateTimeOptions(){
   });
 }
 
-// ===== 以下は元コード完全維持 =====
+// ===== 以下、元コード完全維持 =====
 const form = document.getElementById("reserveForm");
 const confirmScreen = document.getElementById("confirm-screen");
 const confirmText = document.getElementById("confirm-text");
@@ -263,7 +294,7 @@ cancelBtn.onclick = () => {
 okBtn.onclick = async () => {
 
   const name = document.getElementById("name").value;
-  const menus = Array.from(menuContainer.querySelectorAll(".menu-select"))
+  const menus = Array.from(menuContainer.queryquerySelectorAll(".menu-select"))
     .map(s => s.value)
     .filter(v => v !== "");
   const date = document.getElementById("date").value;
