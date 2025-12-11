@@ -14,7 +14,7 @@ function normalizeDate(value) {
 }
 // ▲▲ ここまで ▲▲
 
-// ===== メニュー所要時間（Supabaseから取得） =====
+// ===== メニュー所要時間（Supabaseから取得）=====
 let MENU_DATA = {};
 
 async function loadMenus() {
@@ -52,12 +52,9 @@ async function loadHolidays() {
 
     const json = await res.json();
 
-    // ▼ 重複除去（最小追加）
     HOLIDAYS = Array.from(new Set((json.holidays || []).map(h => h.date)));
 
-
     updateTimeOptions();
-
   } catch (e) {
     console.error("休日取得エラー:", e);
   }
@@ -129,7 +126,7 @@ async function checkDuplicateFull(date, start, end) {
 // ===== 時間グレーアウト =====
 document.getElementById("date").addEventListener("change", updateTimeOptions);
 
-// ★ 修正：日付変更時の休日判定（normalize 対応）
+// ★ 日付変更時の休日判定
 const dateInput = document.getElementById("date");
 dateInput.addEventListener("change", (e) => {
   const normalized = normalizeDate(e.target.value);
@@ -145,15 +142,16 @@ dateInput.addEventListener("change", (e) => {
   }
 });
 
+
+// ===== ★ updateTimeOptions（休日判定ブロックを最優先へ移動済み）=====
 async function updateTimeOptions(){
   const date = document.getElementById("date").value;
 
-  // ★ 修正：日付未選択のとき normalize しない
   if (!date) return;
 
   const normalizedDate = normalizeDate(date);
 
-  // ★ 修正：休日判定を normalizedDate で行う
+  // ★★★★★ ここだけ移動（後ろの処理を上書きしないため） ★★★★★
   if (HOLIDAYS.includes(normalizedDate)) {
     const timeSelect = document.getElementById("time");
     Array.from(timeSelect.options).forEach(o => {
@@ -163,6 +161,7 @@ async function updateTimeOptions(){
     });
     return;
   }
+  // ★★★★★ ここまで休日処理 ★★★★★
 
   if (Object.keys(MENU_DATA).length === 0) return;
 
@@ -182,7 +181,7 @@ async function updateTimeOptions(){
   const { data } = await supabaseClient
     .from("reservations")
     .select("time,end_time")
-    .eq("date", date);
+    .eq("date", normalizedDate);
 
   const reserved = (data || []).map(r => ({
     start: r.time.trim(),
@@ -211,8 +210,7 @@ async function updateTimeOptions(){
   });
 }
 
-// ===== 以下は元の動作そのまま（予約確認・保存・完了画面）=====
-// ※ 要望通り一切変更していません。
+// ===== ここから下はあなたの元コードそのまま =====
 
 const form = document.getElementById("reserveForm");
 const confirmScreen = document.getElementById("confirm-screen");
@@ -243,7 +241,7 @@ form.addEventListener("submit", async e => {
     return;
   }
 
-  const week = ["日", "月", "火", "水", "木", "金", "土"];
+  const week = ["日", "月", "火", "水", "木", "木", "金", "土"];
   const youbi = week[new Date(date).getDay()];
 
   if (greeting) greeting.style.display = "none";
