@@ -108,20 +108,26 @@ window.addEventListener("DOMContentLoaded", async ()=>{
   }
 });
 
-// ===== 右上メニュー：単一・確定版 =====
 menuBtn.onclick = (e) => {
-  e.stopPropagation(); // 外クリックに伝播させない
+  e.stopPropagation();
   menuBox.style.display =
     menuBox.style.display === "block" ? "none" : "block";
 };
 
 menuBox.onclick = (e) => {
-  e.stopPropagation(); // メニュー内クリックでも閉じない
+  e.stopPropagation();
 };
 
 document.addEventListener("click", () => {
-  menuBox.style.display = "none"; // 外クリックで閉じる
+  menuBox.style.display = "none";
 });
+
+// ▼ 必ず document.addEventListener の外に置く
+const mAddHoliday = document.getElementById("m-add");
+const mDelHoliday = document.getElementById("m-del");
+
+mAddHoliday.onclick = () => openHolidayAdd();
+mDelHoliday.onclick = () => openHolidayDel();
 
 /* ---------- Logout ---------- */
 mLogout.onclick = ()=>{
@@ -242,5 +248,42 @@ function openEdit(r){
     if(!confirm("削除しますか？")) return;
     await callAPI({mode:"delete",id:r.id});
     popupBg.style.display="none"; render();
+  };
+}
+// ▼ 休日追加ポップアップ
+function openHolidayAdd() {
+  popupBox.innerHTML = `
+    <h3>休日追加</h3>
+    <input type="date" id="h-date">
+    <button id="h-save">登録</button>
+    <button id="h-cancel" style="background:#aaa;margin-top:10px;">キャンセル</button>
+  `;
+
+  popupBg.style.display = "flex";
+
+  document.getElementById("h-cancel").onclick = () => {
+    popupBg.style.display = "none";
+  };
+
+  document.getElementById("h-save").onclick = async () => {
+    const d = document.getElementById("h-date").value;
+    if (!d) {
+      alert("日付を選択してください");
+      return;
+    }
+
+    await callAPI({
+      mode: "addHoliday",
+      date: d
+    });
+
+    popupBg.style.display = "none";
+
+    // 最新の状態を再読み込み
+    const res = await callAPI({ mode: "list" });
+    RESERVATIONS = res.reservations || [];
+    HOLIDAYS = res.holidays || [];
+    MENUS = res.menus || [];
+    render();
   };
 }
