@@ -126,8 +126,6 @@ async function updateTimeOptions(){
 
   if (Object.keys(MENU_DATA).length === 0) return;
 
-  const timeSelect = document.getElementById("time");
-
   Array.from(timeSelect.options).forEach(o => {
     o.disabled = false;
     o.style.color = "#000";
