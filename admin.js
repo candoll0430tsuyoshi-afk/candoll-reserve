@@ -160,11 +160,18 @@ function renderDay(d){
   col.innerHTML=`<div class="date-title">${fmtLabel(d)}</div>`;
 
   TIMES.slice(0,-1).forEach(t=>{
+
     const r=RESERVATIONS.find(x=>
       x.date===date &&
       x.end_time &&
       toMin(t)>=toMin(x.time)&&toMin(t)<toMin(x.end_time)
     );
+
+    // ▼ 休日判定
+    const isHoliday = HOLIDAYS.some(h => h.date === date);
+
+    // ▼ 初期色（休日 赤 / 通常 緑）
+    let bgColor = isHoliday ? "#ffdddd" : "#ddffdd";
 
     const div=document.createElement("div");
     div.style.padding="12px";
@@ -173,23 +180,30 @@ function renderDay(d){
     div.style.cursor="pointer";
 
     if(r){
-      div.style.background="#fdd";
+      // 予約がある場合は予約色を優先
+      div.style.background = "#fdd";
+
       if(t===r.time){
         div.innerHTML = `<strong>${t}</strong><br>${r.name}<br>${r.menus || ""}`;
       }else{
-        div.textContent=t;
+        div.textContent = t;
       }
+
       div.onclick=()=>openEdit(r);
+
     }else{
-      div.style.background="#dfd";
-      div.textContent=t;
+      // 予約がない場合：休日 or 緑
+      div.style.background = bgColor;
+      div.textContent = t;
       div.onclick=()=>openAdd({date,time:t});
     }
+
     col.appendChild(div);
   });
 
   daysWrap.appendChild(col);
 }
+
 
 /* ---------- ADD ---------- */
 function openAdd({date,time}){
