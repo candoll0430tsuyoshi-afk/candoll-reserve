@@ -9,7 +9,7 @@ let HOLIDAYS = [];
 // ▼▼ 追加：normalizeDate（安全版）▼▼
 function normalizeDate(value) {
   if (!value) return "";
-  if (typeof value !== "string") return "";
+  value = String(value);   // ★追加：どんな値でも必ず文字列にする
   return value.split("T")[0];
 }
 // ▲▲ ここまで ▲▲
