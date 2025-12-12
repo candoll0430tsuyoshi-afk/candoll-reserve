@@ -32,6 +32,8 @@ let BASE_DATE = new Date();
 let RESERVATIONS = [];
 let HOLIDAYS = [];
 let MENUS = [];
+let CURRENT_YMD = new Date().toISOString().slice(0, 10);
+
 
 /* ---------- 初期表示 ---------- */
 dayNavi.style.display = "none";
