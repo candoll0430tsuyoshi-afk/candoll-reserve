@@ -148,7 +148,8 @@ dateInput.addEventListener("change", (e) => {
   }
 });
 
-// ===== 日付一覧生成（休業日は削除）=====function updateDateOptions() {
+// ===== 日付一覧生成（休業日は削除）=====
+function updateDateOptions() {
   const dateSelect = document.getElementById("date");
   if (!dateSelect) return;
 
