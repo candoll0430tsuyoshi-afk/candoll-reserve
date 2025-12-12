@@ -356,7 +356,6 @@ function openHolidayDel() {
 // ===========================
 // ▼ 日付クリック → カレンダー表示
 // ===========================
-const navCurrent = document.getElementById("nav-current");
 const calendarPicker = document.getElementById("calendarPicker");
 
 if (navCurrent && calendarPicker) {
