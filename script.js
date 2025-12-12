@@ -376,4 +376,24 @@ function showCompleteScreen() {
     <h2>予約を受付ました。</h2>
     <p>ありがとうございます。</p>
     <button id="closeBtn"
-      style="padding:
+      style="padding:15px 25px; font-size:18px; border-radius:8px;
+             background:#000; color:#fff; border:none;">
+      閉じる
+    </button>
+  `;
+
+  document.querySelector(".container").appendChild(div);
+
+  document.getElementById("closeBtn").onclick = () => {
+    if (window.liff && typeof liff.closeWindow === "function") {
+      try { 
+        liff.closeWindow(); 
+        return; 
+      } catch (e) {}
+    }
+    history.length > 1
+      ? history.back()
+      : window.location.href =
+        "https://candoll0430tsuyoshi-afk.github.io/candoll-reserve/";
+  };
+}
