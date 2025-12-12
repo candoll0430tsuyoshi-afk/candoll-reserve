@@ -317,6 +317,21 @@
 <div id="popup-bg">
     <div id="popup-box"></div>
 </div>
+<!-- ▼ カレンダー（nav-current をクリックしたときに表示） -->
+<input type="date" id="calendarPicker"
+       style="
+          display:none;
+          position:fixed;
+          top:50%;
+          left:50%;
+          transform:translate(-50%, -50%);
+          padding:20px;
+          font-size:20px;
+          z-index:5000;
+          background:#fff;
+          border:1px solid #ccc;
+          border-radius:10px;
+       ">
 
 <!-- ▼ 管理ロジック本体 -->
 <script src="admin.js"></script>
