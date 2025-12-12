@@ -355,30 +355,3 @@ function openHolidayDel() {
     render();
   };
 }
-// ===========================
-// ▼ 日付クリック → カレンダー表示
-// ===========================
-const calendarPicker = document.getElementById("calendarPicker");
-
-if (navCurrent && calendarPicker) {
-
-    // 日付をクリックでカレンダーを開く
-    navCurrent.addEventListener("click", () => {
-        calendarPicker.value = CURRENT_YMD;  // 現在の日付を初期値に
-        calendarPicker.style.display = "block";
-    });
-
-    // 日付選択されたらその日付へ移動
-    calendarPicker.addEventListener("change", () => {
-        const ymd = calendarPicker.value;
-        if (!ymd) return;
-
-        CURRENT_YMD = ymd;
-        calendarPicker.style.display = "none";
-
-        // ▼ 既に admin.js にある日付切替処理を再利用
-        updateDayNavi();
-        renderThreeDays();
-        loadReservations();
-    });
-}
