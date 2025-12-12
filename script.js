@@ -161,7 +161,7 @@ function updateDateOptions() {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  for (let i = 0; i < 180; i++) {
+  for (let i = 1; i < 90; i++) {
     const d = new Date(today);
     d.setDate(today.getDate() + i);
 
