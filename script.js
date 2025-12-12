@@ -148,12 +148,14 @@ dateInput.addEventListener("change", (e) => {
   }
 });
 
-// ===== 日付一覧生成（休業日は削除）=====
-function updateDateOptions() {
+// ===== 日付一覧生成（休業日は削除）=====function updateDateOptions() {
   const dateSelect = document.getElementById("date");
   if (!dateSelect) return;
 
   dateSelect.innerHTML = "";
+
+  // ★ 追加：最初に「日付を選択」を入れる
+  dateSelect.innerHTML = '<option value="">日付を選択</option>';
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -191,7 +193,7 @@ function updateDateOptions() {
     dateSelect.appendChild(op);
   }
 
-  // ★ 初期表示は「日付を選択」に戻す
+  // ★ 初期表示は必ず空欄（＝日付を選択）
   dateSelect.value = "";
 }
 
