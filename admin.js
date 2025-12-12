@@ -140,7 +140,30 @@ mLogout.onclick = ()=>{
 /* ---------- DATE NAV ---------- */
 navPrev.onclick=()=>{BASE_DATE.setDate(BASE_DATE.getDate()-1);render();};
 navNext.onclick=()=>{BASE_DATE.setDate(BASE_DATE.getDate()+1);render();};
+// ===========================
+// ▼ 日付クリック → カレンダー表示
+// ===========================
+const calendarPicker = document.getElementById("calendarPicker");
 
+if (navCurrent && calendarPicker) {
+
+    navCurrent.addEventListener("click", () => {
+        calendarPicker.value = CURRENT_YMD;
+        calendarPicker.style.display = "block";
+    });
+
+    calendarPicker.addEventListener("change", () => {
+        const ymd = calendarPicker.value;
+        if (!ymd) return;
+
+        CURRENT_YMD = ymd;
+        calendarPicker.style.display = "none";
+
+        updateDayNavi();
+        renderThreeDays();
+        loadReservations();
+    });
+}
 /* ---------- RENDER ---------- */
 async function render(){
   navCurrent.textContent = fmtLabel(BASE_DATE);
