@@ -60,7 +60,7 @@ async function loadHolidays() {
 
 // ★★★ 最重要：初回に日付一覧を生成するための追加 3 行（これだけ変更） ★★★
 loadHolidays().then(() => {
-  updateDateOptions();     // ← ★ これがないと休業日解除時に復活しない
+  updateDateOptions();
 });
 // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
 
@@ -163,15 +163,24 @@ function updateDateOptions() {
     d.setDate(today.getDate() + i);
 
     const y = d.getFullYear();
-    const m = ("0" + (d.getMonth() + 1)).slice(-2);  // ★修正済み
-    const day = ("0" + d.getDate()).slice(-2);       // ★修正済み
+    const m = ("0" + (d.getMonth() + 1)).slice(-2);
+    const day = ("0" + d.getDate()).slice(-2);
 
     const value = `${y}-${m}-${day}`;
 
-    // ★休日はスキップ（正常動作のまま）
+    // ★ 管理画面の個別休日
     if (HOLIDAYS.includes(value)) continue;
 
-    // ★曜日の追加（label を1回だけ宣言）
+    // ★ 毎週月曜は除外
+    if (d.getDay() === 1) continue;
+
+    // ★ 第1火曜（1〜7日の火曜）除外
+    if (d.getDay() === 2 && d.getDate() <= 7) continue;
+
+    // ★ 第3火曜（15〜21日の火曜）除外
+    if (d.getDay() === 2 && d.getDate() >= 15 && d.getDate() <= 21) continue;
+
+    // ★ 曜日表示
     const week = ["日", "月", "火", "水", "木", "金", "土"];
     const youbi = week[d.getDay()];
     const label = `${y}/${m}/${day}(${youbi})`;
@@ -181,6 +190,9 @@ function updateDateOptions() {
     op.textContent = label;
     dateSelect.appendChild(op);
   }
+
+  // ★ 初期表示は「日付を選択」に戻す
+  dateSelect.value = "";
 }
 
 
@@ -249,6 +261,7 @@ async function updateTimeOptions(){
   });
 }
 
+
 // ===== 以下、完全原文（予約登録処理部分） =====
 const form = document.getElementById("reserveForm");
 const confirmScreen = document.getElementById("confirm-screen");
@@ -266,7 +279,13 @@ form.addEventListener("submit", async e => {
   const date = document.getElementById("date").value;
   const time = document.getElementById("time").value;
 
-  if (!name || !menus.length || !date || !time) {
+  // ★ お名前未入力メッセージを変更
+  if (!name.trim()) {
+    alert("お名前が未入力です");
+    return;
+  }
+
+  if (!menus.length || !date || !time) {
     alert("未入力があります");
     return;
   }
@@ -357,20 +376,4 @@ function showCompleteScreen() {
     <h2>予約を受付ました。</h2>
     <p>ありがとうございます。</p>
     <button id="closeBtn"
-      style="padding:15px 25px;font-size:18px;border-radius:8px;
-             background:#000;color:#fff;border:none;">
-      閉じる
-    </button>
-  `;
-  document.querySelector(".container").appendChild(div);
-
-  document.getElementById("closeBtn").onclick = () => {
-    if (window.liff && typeof liff.closeWindow === "function") {
-      try { liff.closeWindow(); return; } catch {}
-    }
-    history.length > 1
-      ? history.back()
-      : window.location.href =
-        "https://candoll0430tsuyoshi-afk.github.io/candoll-reserve/";
-  };
-}
+      style="padding:
