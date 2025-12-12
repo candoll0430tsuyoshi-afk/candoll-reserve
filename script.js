@@ -1,3 +1,5 @@
+// :contentReference[oaicite:0]{index=0}
+
 // ===== Supabase 初期化 =====
 const supabaseUrl = "https://bcahztzetpfuklipjmxx.supabase.co";
 const supabaseKey = "sb_publishable_rPyAIzNttEK3P8nsnBllYA_FTF-kxJQ";
@@ -74,7 +76,10 @@ const addMenuButton = document.getElementById("addMenu");
 
 function attachMenuUpdate() {
   menuContainer.querySelectorAll(".menu-select").forEach(sel => {
-    sel.addEventListener("change", updateTimeOptions);
+    sel.addEventListener("change", () => {
+      resetTimeSelect();      // ★追加：時間を「時間を選択」に戻す
+      updateTimeOptions();    // ★追加：空き時間を再計算
+    });
   });
 }
 attachMenuUpdate();
@@ -112,6 +117,19 @@ function isOverlap(aStart, aEnd, bStart, bEnd) {
          toMinutes(bStart) < toMinutes(aEnd);
 }
 
+// ★追加：時間を「時間を選択」に戻して、選択状態をクリアする
+function resetTimeSelect() {
+  const timeSelect = document.getElementById("time");
+  if (!timeSelect) return;
+
+  timeSelect.value = "";
+  Array.from(timeSelect.options).forEach(o => {
+    if (!o.value) return;
+    o.disabled = true;
+    o.style.color = "#aaa";
+  });
+}
+
 // ===== 重複チェック =====
 async function checkDuplicateFull(date, start, end) {
   const { data, error } = await supabaseClient
@@ -130,7 +148,10 @@ async function checkDuplicateFull(date, start, end) {
 }
 
 // ===== 日付変更イベント =====
-document.getElementById("date").addEventListener("change", updateTimeOptions);
+document.getElementById("date").addEventListener("change", () => {
+  resetTimeSelect();      // ★追加：時間を「時間を選択」に戻す
+  updateTimeOptions();    // ★追加：空き時間を再計算
+});
 
 // ===== 日付変更 → 休日チェック =====
 const dateInput = document.getElementById("date");
@@ -139,6 +160,7 @@ dateInput.addEventListener("change", (e) => {
   if (HOLIDAYS.includes(normalizeDate(normalized))) {
     alert("この日は休業日のため、ご予約いただけません。");
     e.target.value = "";
+    resetTimeSelect(); // ★追加：時間を「時間を選択」に戻す
     const timeSelect = document.getElementById("time");
     Array.from(timeSelect.options).forEach(o => {
       if (!o.value) return;
