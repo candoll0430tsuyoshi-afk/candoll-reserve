@@ -2,6 +2,21 @@
 const supabaseUrl = "https://bcahztzetpfuklipjmxx.supabase.co";
 const supabaseKey = "sb_publishable_rPyAIzNttEK3P8nsnBllYA_FTF-kxJQ";
 const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
+// ===== LINE userId（LIFF用）=====
+let LINE_USER_ID = null;
+
+if (window.liff) {
+  try {
+    liff.ready.then(() => {
+      if (liff.isLoggedIn()) {
+        const idToken = liff.getDecodedIDToken();
+        LINE_USER_ID = idToken?.sub || null;
+      }
+    });
+  } catch (e) {
+    console.warn("LIFF userId 取得失敗:", e);
+  }
+}
 
 // ===== 休日データ =====
 let HOLIDAYS = [];
