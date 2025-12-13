@@ -1,5 +1,3 @@
-// :contentReference[oaicite:0]{index=0}
-
 // ===== Supabase 初期化 =====
 const supabaseUrl = "https://bcahztzetpfuklipjmxx.supabase.co";
 const supabaseKey = "sb_publishable_rPyAIzNttEK3P8nsnBllYA_FTF-kxJQ";
@@ -35,10 +33,9 @@ async function loadMenus() {
 
   updateTimeOptions();
 }
-
 loadMenus();
 
-// ===== 休日読み込み（publicList 版）=====
+// ===== 休日読み込み =====
 async function loadHolidays() {
   try {
     const res = await fetch(
@@ -49,23 +46,13 @@ async function loadHolidays() {
         body: JSON.stringify({ mode: "publicList" })
       }
     );
-
     const json = await res.json();
     HOLIDAYS = (json.holidays || []).map(h => h.date);
-
-    console.log("Loaded HOLIDAYS:", HOLIDAYS);
-
   } catch (e) {
     console.error("休日取得エラー:", e);
   }
 }
-
-// ★★★ 最重要：初回に日付一覧を生成するための追加 3 行（これだけ変更） ★★★
-loadHolidays().then(() => {
-  updateDateOptions();
-});
-// ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
-
+loadHolidays().then(updateDateOptions);
 
 // ===== greeting =====
 const greeting = document.getElementById("greeting");
@@ -77,8 +64,8 @@ const addMenuButton = document.getElementById("addMenu");
 function attachMenuUpdate() {
   menuContainer.querySelectorAll(".menu-select").forEach(sel => {
     sel.addEventListener("change", () => {
-      resetTimeSelect();      // ★追加：時間を「時間を選択」に戻す
-      updateTimeOptions();    // ★追加：空き時間を再計算
+      resetTimeSelect();
+      updateTimeOptions();
     });
   });
 }
@@ -117,11 +104,10 @@ function isOverlap(aStart, aEnd, bStart, bEnd) {
          toMinutes(bStart) < toMinutes(aEnd);
 }
 
-// ★追加：時間を「時間を選択」に戻して、選択状態をクリアする
+// ===== 時間リセット =====
 function resetTimeSelect() {
   const timeSelect = document.getElementById("time");
   if (!timeSelect) return;
-
   timeSelect.value = "";
   Array.from(timeSelect.options).forEach(o => {
     if (!o.value) return;
@@ -149,8 +135,8 @@ async function checkDuplicateFull(date, start, end) {
 
 // ===== 日付変更イベント =====
 document.getElementById("date").addEventListener("change", () => {
-  resetTimeSelect();      // ★追加：時間を「時間を選択」に戻す
-  updateTimeOptions();    // ★追加：空き時間を再計算
+  resetTimeSelect();
+  updateTimeOptions();
 });
 
 // ===== 日付変更 → 休日チェック =====
@@ -160,24 +146,15 @@ dateInput.addEventListener("change", (e) => {
   if (HOLIDAYS.includes(normalizeDate(normalized))) {
     alert("この日は休業日のため、ご予約いただけません。");
     e.target.value = "";
-    resetTimeSelect(); // ★追加：時間を「時間を選択」に戻す
-    const timeSelect = document.getElementById("time");
-    Array.from(timeSelect.options).forEach(o => {
-      if (!o.value) return;
-      o.disabled = true;
-      o.style.color = "#aaa";
-    });
+    resetTimeSelect();
   }
 });
 
-// ===== 日付一覧生成（休業日は削除）=====
+// ===== 日付一覧生成 =====
 function updateDateOptions() {
   const dateSelect = document.getElementById("date");
   if (!dateSelect) return;
 
-  dateSelect.innerHTML = "";
-
-  // ★ 追加：最初に「日付を選択」を入れる
   dateSelect.innerHTML = '<option value="">日付を選択</option>';
 
   const today = new Date();
@@ -190,55 +167,28 @@ function updateDateOptions() {
     const y = d.getFullYear();
     const m = ("0" + (d.getMonth() + 1)).slice(-2);
     const day = ("0" + d.getDate()).slice(-2);
-
     const value = `${y}-${m}-${day}`;
 
-    // ★ 管理画面の個別休日
     if (HOLIDAYS.includes(value)) continue;
-
-    // ★ 毎週月曜は除外
     if (d.getDay() === 1) continue;
-
-    // ★ 第1火曜（1〜7日の火曜）除外
     if (d.getDay() === 2 && d.getDate() <= 7) continue;
-
-    // ★ 第3火曜（15〜21日の火曜）除外
     if (d.getDay() === 2 && d.getDate() >= 15 && d.getDate() <= 21) continue;
 
-    // ★ 曜日表示
     const week = ["日", "月", "火", "水", "木", "金", "土"];
-    const youbi = week[d.getDay()];
-    const label = `${y}/${m}/${day}(${youbi})`;
-
     const op = document.createElement("option");
     op.value = value;
-    op.textContent = label;
+    op.textContent = `${y}/${m}/${day}(${week[d.getDay()]})`;
     dateSelect.appendChild(op);
   }
-
-  // ★ 初期表示は必ず空欄（＝日付を選択）
   dateSelect.value = "";
 }
 
-
 // ===== 時刻オプション生成 =====
-async function updateTimeOptions(){
+async function updateTimeOptions() {
   const date = document.getElementById("date").value;
-
   if (!date) return;
 
   const normalizedDate = normalizeDate(date);
-
-  if (HOLIDAYS.includes(normalizeDate(normalizedDate))) {
-    const timeSelect = document.getElementById("time");
-    Array.from(timeSelect.options).forEach(o => {
-      if (!o.value) return;
-      o.disabled = true;
-      o.style.color = "#aaa";
-    });
-    return;
-  }
-
   if (Object.keys(MENU_DATA).length === 0) return;
 
   const timeSelect = document.getElementById("time");
@@ -286,16 +236,7 @@ async function updateTimeOptions(){
   });
 }
 
-
-// ===== 以下、完全原文（予約登録処理部分） =====
-const form = document.getElementById("reserveForm");
-const confirmScreen = document.getElementById("confirm-screen");
-const confirmText = document.getElementById("confirm-text");
-const cancelBtn = document.getElementById("cancelBtn");
-const okBtn = document.getElementById("okBtn");
-
-form.addEventListener("submit", async e => {
-  e.preventDefault();
+// ===== 予約登録処理 =====
 const form = document.getElementById("reserveForm");
 const confirmScreen = document.getElementById("confirm-screen");
 const confirmText = document.getElementById("confirm-text");
@@ -305,30 +246,55 @@ const okBtn = document.getElementById("okBtn");
 form.addEventListener("submit", async e => {
   e.preventDefault();
 
-  const nameInput = document.getElementById("nameInput").value;
+  const errorBox = document.getElementById("errorBox");
+  errorBox.style.display = "none";
+  errorBox.innerHTML = "";
+
+  const nameInput = document.getElementById("name");
+  const dateSelect = document.getElementById("date");
+  const timeSelect = document.getElementById("time");
+  const menuSelects = document.querySelectorAll(".menu-select");
+
+  [nameInput, dateSelect, timeSelect, ...menuSelects].forEach(el => {
+    if (el) el.classList.remove("input-error");
+  });
+
+  const errors = [];
+
+  if (!nameInput.value.trim()) {
+    errors.push("お名前を入力してください。");
+    nameInput.classList.add("input-error");
+  }
+
+  const selectedMenus = Array.from(menuSelects).filter(s => s.value !== "");
+  if (selectedMenus.length === 0) {
+    errors.push("メニューを選択してください。");
+    menuSelects[0].classList.add("input-error");
+  }
+
+  if (!dateSelect.value) {
+    errors.push("日付を選択してください。");
+    dateSelect.classList.add("input-error");
+  }
+
+  if (!timeSelect.value) {
+    errors.push("時間を選択してください。");
+    timeSelect.classList.add("input-error");
+  }
+
+  if (errors.length > 0) {
+    errorBox.innerHTML = errors.map(e => `・${e}`).join("<br>");
+    errorBox.style.display = "block";
+    return;
+  }
+
+  // ===== 以下は元の既存処理（alert行は残るが到達しない） =====
+  const name = nameInput.value;
   const menus = Array.from(menuContainer.querySelectorAll(".menu-select"))
     .map(s => s.value)
     .filter(v => v !== "");
-  const dateForCheck = document.getElementById("dateForCheck").value;
-  const timeForCheck = document.getElementById("timeForCheck").value;
-
-  const name = document.getElementById("name").value;
-  const selectedMenusForCheck = Array.from(menuContainer.querySelectorAll(".menu-select"))
-    .map(s => s.value)
-    .filter(v => v !== "");
-  const date = document.getElementById("date").value;
-  const time = document.getElementById("time").value;
-
-  // ★ お名前未入力メッセージを変更
-  if (!name.trim()) {
-    alert("お名前が未入力です");
-    return;
-  }
-
-  if (!menus.length || !date || !time) {
-    alert("未入力があります");
-    return;
-  }
+  const date = dateSelect.value;
+  const time = timeSelect.value;
 
   const required = calcTotalMinutes(menus);
   const end_time = addMinutesToTime(time, required);
@@ -360,7 +326,6 @@ cancelBtn.onclick = () => {
 };
 
 okBtn.onclick = async () => {
-
   const name = document.getElementById("name").value;
   const menus = Array.from(menuContainer.querySelectorAll(".menu-select"))
     .map(s => s.value)
@@ -421,15 +386,11 @@ function showCompleteScreen() {
       閉じる
     </button>
   `;
-
   document.querySelector(".container").appendChild(div);
 
   document.getElementById("closeBtn").onclick = () => {
     if (window.liff && typeof liff.closeWindow === "function") {
-      try { 
-        liff.closeWindow(); 
-        return; 
-      } catch (e) {}
+      try { liff.closeWindow(); return; } catch (e) {}
     }
     history.length > 1
       ? history.back()
