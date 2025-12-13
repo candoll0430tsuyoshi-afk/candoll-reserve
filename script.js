@@ -296,6 +296,21 @@ const okBtn = document.getElementById("okBtn");
 
 form.addEventListener("submit", async e => {
   e.preventDefault();
+const form = document.getElementById("reserveForm");
+const confirmScreen = document.getElementById("confirm-screen");
+const confirmText = document.getElementById("confirm-text");
+const cancelBtn = document.getElementById("cancelBtn");
+const okBtn = document.getElementById("okBtn");
+
+form.addEventListener("submit", async e => {
+  e.preventDefault();
+
+  const name = document.getElementById("name").value;
+  const menus = Array.from(menuContainer.querySelectorAll(".menu-select"))
+    .map(s => s.value)
+    .filter(v => v !== "");
+  const date = document.getElementById("date").value;
+  const time = document.getElementById("time").value;
 
   const name = document.getElementById("name").value;
   const menus = Array.from(menuContainer.querySelectorAll(".menu-select"))
