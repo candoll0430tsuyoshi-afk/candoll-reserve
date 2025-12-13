@@ -305,7 +305,7 @@ const okBtn = document.getElementById("okBtn");
 form.addEventListener("submit", async e => {
   e.preventDefault();
 
-  const name = document.getElementById("name").value;
+  const nameInput = document.getElementById("nameInput").value;
   const menus = Array.from(menuContainer.querySelectorAll(".menu-select"))
     .map(s => s.value)
     .filter(v => v !== "");
