@@ -373,7 +373,14 @@ okBtn.onclick = async () => {
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, menus: menus.join(", "), date, time }),
+        body: JSON.stringify({
+  name,
+  menus: menus.join(", "),
+  date,
+  time,
+  customerUserId: LINE_USER_ID
+}),
+
       }
     );
   } catch (e) {
