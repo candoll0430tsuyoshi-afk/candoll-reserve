@@ -313,7 +313,7 @@ form.addEventListener("submit", async e => {
   const time = document.getElementById("time").value;
 
   const name = document.getElementById("name").value;
-  const menus = Array.from(menuContainer.querySelectorAll(".menu-select"))
+  const selectedMenusForCheck = Array.from(menuContainer.querySelectorAll(".menu-select"))
     .map(s => s.value)
     .filter(v => v !== "");
   const date = document.getElementById("date").value;
