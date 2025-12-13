@@ -398,3 +398,35 @@ function showCompleteScreen() {
         "https://candoll0430tsuyoshi-afk.github.io/candoll-reserve/";
   };
 }
+// ===== 追加：入力し直したら errorBox を自動で消す =====
+function clearErrorOnInput() {
+  const errorBox = document.getElementById("errorBox");
+  if (!errorBox) return;
+
+  errorBox.style.display = "none";
+  errorBox.innerHTML = "";
+  this.classList.remove("input-error");
+}
+
+// 名前
+const nameInput = document.getElementById("name");
+if (nameInput) {
+  nameInput.addEventListener("input", clearErrorOnInput);
+}
+
+// 日付
+const dateSelectForClear = document.getElementById("date");
+if (dateSelectForClear) {
+  dateSelectForClear.addEventListener("change", clearErrorOnInput);
+}
+
+// 時間
+const timeSelectForClear = document.getElementById("time");
+if (timeSelectForClear) {
+  timeSelectForClear.addEventListener("change", clearErrorOnInput);
+}
+
+// メニュー（複数あるので forEach）
+document.querySelectorAll(".menu-select").forEach(sel => {
+  sel.addEventListener("change", clearErrorOnInput);
+});
