@@ -236,12 +236,14 @@ async function updateTimeOptions() {
     .from("reservations")
     .select("time,end_time")
     .eq("date", normalizedDate);
-
+console.log("DB予約 raw:", data);
   const reserved = (data || []).map(r => ({
     start: r.time.trim(),
     end: r.end_time.trim()
   }));
-
+  
+console.log("DB予約 整形後:", reserved);
+  
   Array.from(timeSelect.options).forEach(o => {
     if (!o.value) return;
 
