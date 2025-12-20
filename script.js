@@ -2,8 +2,7 @@
 const supabaseUrl = "https://bcahztzetpfuklipjmxx.supabase.co";
 const supabaseKey = "sb_publishable_rPyAIzNttEK3P8nsnBllYA_FTF-kxJQ";
 const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
-// ===== LINE userId（LIFF用）=====
-let LINE_USER_ID = null;
+
 // ===== LIFF 初期化 =====
 if (window.liff) {
   liff.init({
@@ -11,18 +10,6 @@ if (window.liff) {
   }).catch(err => {
     console.error("LIFF init error:", err);
   });
-}
-if (window.liff) {
-  try {
-    liff.ready.then(() => {
-      if (liff.isLoggedIn()) {
-const profile = await liff.getProfile();
-customerUserId = profile.userId;
-      }
-    });
-  } catch (e) {
-    console.warn("LIFF userId 取得失敗:", e);
-  }
 }
 
 // ===== 休日データ =====
