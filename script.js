@@ -148,7 +148,7 @@ async function checkDuplicateFull(date, start, end) {
   const { data, error } = await supabaseClient
     .from("reservations")
     .select("time,end_time")
-    .eq("date", date);
+    .eq("date", normalizedDate);
 
   if (error) return true;
 
