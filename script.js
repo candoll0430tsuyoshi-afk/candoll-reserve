@@ -12,6 +12,24 @@ if (window.liff) {
   });
 }
 
+// ===== 追記：customerUserId を保持 =====
+let customerUserId = null;
+
+// ===== 追記：LINEミニアプリ用 userId 取得関数 =====
+async function getCustomerUserIdForLine() {
+  try {
+    if (!window.liff) return null;
+    await liff.ready;
+    if (!liff.isLoggedIn()) return null;
+
+    const profile = await liff.getProfile();
+    return profile?.userId || null;
+  } catch (e) {
+    console.warn("customerUserId取得失敗:", e);
+    return null;
+  }
+}
+
 // ===== 休日データ =====
 let HOLIDAYS = [];
 
