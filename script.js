@@ -385,7 +385,10 @@ okBtn.onclick = async () => {
   "https://bcahztzetpfuklipjmxx.functions.supabase.co/dynamic-service",
   {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${supabaseKey}` // ★これを追加
+      },
     body: JSON.stringify({
       name,
       menus: menus.join(", "),
