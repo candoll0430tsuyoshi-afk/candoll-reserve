@@ -145,6 +145,7 @@ function resetTimeSelect() {
 
 // ===== 重複チェック =====
 async function checkDuplicateFull(date, start, end) {
+  const normalizedDate = normalizeDate(date);
   const { data, error } = await supabaseClient
     .from("reservations")
     .select("time,end_time")
