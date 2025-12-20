@@ -376,20 +376,19 @@ okBtn.onclick = async () => {
 
   try {
     await fetch(
-      "https://bcahztzetpfuklipjmxx.functions.supabase.co/dynamic-service",
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-  name,
-  menus: menus.join(", "),
-  date,
-  time,
-  customerUserId: LINE_USER_ID
-}),
-
-      }
-    );
+  "https://bcahztzetpfuklipjmxx.functions.supabase.co/dynamic-service",
+  {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      name,
+      menus: menus.join(", "),
+      date,
+      time,
+      customerUserId
+    }),
+  }
+);
   } catch (e) {
     console.error("LINE通知エラー:", e);
   }
