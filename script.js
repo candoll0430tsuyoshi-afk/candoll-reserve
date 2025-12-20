@@ -380,6 +380,7 @@ okBtn.onclick = async () => {
   }
 
   try {
+    customerUserId = await getCustomerUserIdForLine();
     await fetch(
   "https://bcahztzetpfuklipjmxx.functions.supabase.co/dynamic-service",
   {
