@@ -16,8 +16,8 @@ if (window.liff) {
   try {
     liff.ready.then(() => {
       if (liff.isLoggedIn()) {
-        const idToken = liff.getDecodedIDToken();
-        LINE_USER_ID = idToken?.sub || null;
+const profile = await liff.getProfile();
+customerUserId = profile.userId;
       }
     });
   } catch (e) {
