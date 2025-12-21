@@ -384,6 +384,23 @@ okBtn.onclick = async () => {
 
   try {
     customerUserId = await getCustomerUserIdForLine();
+    // ★ここから追加（customerUserId 取得チェック）
+customerUserId = await getCustomerUserIdForLine();
+console.log("LINE userId:", customerUserId);
+
+if (!customerUserId) {
+  alert("LINE IDが取得できませんでした");
+  return;
+}
+
+// ★Botを友だち追加しているかチェック
+const friendship = await liff.getFriendship();
+console.log("isFriend:", friendship.friendFlag);
+
+if (!friendship.friendFlag) {
+  alert("LINE公式アカウントを友だち追加してください");
+  return;
+}
     await fetch(
   "https://bcahztzetpfuklipjmxx.functions.supabase.co/dynamic-service",
   {
