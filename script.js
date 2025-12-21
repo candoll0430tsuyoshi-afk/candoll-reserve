@@ -381,45 +381,36 @@ okBtn.onclick = async () => {
     alert("予約保存エラー");
     return;
   }
-  // ===== 管理者通知（必ず送る）=====
 
-  try {
-  // LINE ID 取得
+
+// LINE ID 取得（取れたら使う、取れなくてもOK）
+try {
   customerUserId = await getCustomerUserIdForLine();
   console.log("LINE userId:", customerUserId);
-
-  if (!customerUserId) {
-    console.warn("LINE ID取得不可：通知スキップ");
-  } else {
-    const friendship = await liff.getFriendship();
-    console.log("isFriend:", friendship.friendFlag);
-
-    if (!friendship.friendFlag) {
-      console.warn("Bot未追加：通知スキップ");
-    } else {
-      console.log("dynamic-service 呼び出し直前");
-      await fetch(
-        "https://bcahztzetpfuklipjmxx.functions.supabase.co/dynamic-service",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${supabaseKey}`
-          },
-          body: JSON.stringify({
-            name,
-            menus: menus.join(", "),
-            date,
-            time,
-            customerUserId
-          })
-        }
-      );
-    }
-  }
 } catch (e) {
-  console.error("LINE通知エラー（予約は成功）:", e);
+  console.warn("LINE ID取得時エラー:", e);
 }
+
+// ★ここは必ず通す（条件分岐しない）
+console.log("dynamic-service 呼び出し直前");
+
+await fetch(
+  "https://bcahztzetpfuklipjmxx.functions.supabase.co/dynamic-service",
+  {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      name,
+      menus: menus.join(", "),
+      date,
+      time,
+      customerUserId // nullでもOK
+    })
+  }
+);
+
 
 
   confirmScreen.style.display = "none";
