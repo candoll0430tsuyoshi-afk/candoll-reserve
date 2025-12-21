@@ -388,9 +388,6 @@ okBtn.onclick = async () => {
 customerUserId = await getCustomerUserIdForLine();
 console.log("LINE userId:", customerUserId);
 
-if (!customerUserId) {
-  alert("LINE IDが取得できませんでした");
-  return;
 }
 
 // ★Botを友だち追加しているかチェック
