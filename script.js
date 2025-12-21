@@ -383,41 +383,42 @@ okBtn.onclick = async () => {
   }
 
   try {
-    customerUserId = await getCustomerUserIdForLine();
-    // ★ここから追加（customerUserId 取得チェック）
-customerUserId = await getCustomerUserIdForLine();
-console.log("LINE userId:", customerUserId);
+  // LINE ID 取得
+  customerUserId = await getCustomerUserIdForLine();
+  console.log("LINE userId:", customerUserId);
 
+  if (!customerUserId) {
+    console.warn("LINE ID取得不可：通知スキップ");
+  } else {
+    const friendship = await liff.getFriendship();
+    console.log("isFriend:", friendship.friendFlag);
+
+    if (!friendship.friendFlag) {
+      console.warn("Bot未追加：通知スキップ");
+    } else {
+      await fetch(
+        "https://bcahztzetpfuklipjmxx.functions.supabase.co/dynamic-service",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${supabaseKey}`
+          },
+          body: JSON.stringify({
+            name,
+            menus: menus.join(", "),
+            date,
+            time,
+            customerUserId
+          })
+        }
+      );
+    }
+  }
+} catch (e) {
+  console.error("LINE通知エラー（予約は成功）:", e);
 }
 
-// ★Botを友だち追加しているかチェック
-const friendship = await liff.getFriendship();
-console.log("isFriend:", friendship.friendFlag);
-
-if (!friendship.friendFlag) {
-  alert("LINE公式アカウントを友だち追加してください");
-  return;
-}
-    await fetch(
-  "https://bcahztzetpfuklipjmxx.functions.supabase.co/dynamic-service",
-  {
-    method: "POST",
-    headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${supabaseKey}` // ★これを追加
-      },
-    body: JSON.stringify({
-      name,
-      menus: menus.join(", "),
-      date,
-      time,
-      customerUserId
-    }),
-  }
-);
-  } catch (e) {
-    console.error("LINE通知エラー:", e);
-  }
 
   confirmScreen.style.display = "none";
   showCompleteScreen();
