@@ -382,25 +382,6 @@ okBtn.onclick = async () => {
     return;
   }
   // ===== 管理者通知（必ず送る）=====
-try {
-  await fetch(
-    "https://bcahztzetpfuklipjmxx.functions.supabase.co/admin-service",
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        mode: "notify",
-        name,
-        menus: menus.join(", "),
-        date,
-        time
-      })
-    }
-  );
-} catch (e) {
-  console.error("管理者通知失敗:", e);
-}
-
 
   try {
   // LINE ID 取得
