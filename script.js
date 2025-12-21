@@ -397,6 +397,7 @@ okBtn.onclick = async () => {
     if (!friendship.friendFlag) {
       console.warn("Bot未追加：通知スキップ");
     } else {
+      console.log("dynamic-service 呼び出し直前");
       await fetch(
         "https://bcahztzetpfuklipjmxx.functions.supabase.co/dynamic-service",
         {
