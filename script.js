@@ -15,27 +15,24 @@ if (window.liff) {
 // ===== 追記：customerUserId を保持 =====
 let customerUserId = null;
 
-// ===== 追加：LIFF初期化 & LINE Login =====
-async function initLiffAndLogin() {
-  if (!window.liff) return;
-
+// ===== 追記：LINEミニアプリ用 userId 取得関数 =====
+if (window.liff) {
   try {
     await liff.init({ liffId: "2008611644-EZd5nkl0" });
 
-   if (!liff.isLoggedIn()) {
-           liff.login({ redirectUri: location.href });
+    if (!liff.isLoggedIn()) {
+      liff.login({ redirectUri: location.href });
       return;
     }
 
     const profile = await liff.getProfile();
     customerUserId = profile.userId;
     console.log("LINE profile:", profile);
+
   } catch (e) {
-    console.error("LIFF error:", e);
+    console.error("LIFF init/login error:", e);
   }
 }
-
-
 
 // ===== 休日データ =====
 let HOLIDAYS = [];
@@ -143,7 +140,11 @@ function resetTimeSelect() {
   const timeSelect = document.getElementById("time");
   if (!timeSelect) return;
   timeSelect.value = "";
-
+  Array.from(timeSelect.options).forEach(o => {
+    if (!o.value) return;
+    o.disabled = true;
+    o.style.color = "#aaa";
+  });
 }
 
 // ===== 重複チェック =====
@@ -252,15 +253,12 @@ console.log("DB予約 整形後:", reserved);
 
     const start = o.value.trim();
     const end = addMinutesToTime(start, required);
-if (end > closeTime || reserved.some(r => isOverlap(start, end, r.start, r.end))) {
-   o.disabled = true;
-   o.style.color = "#aaa";
- } else {
-   o.disabled = false;
-   o.style.color = "#000";
- }
-});
 
+    if (end > closeTime) {
+      o.disabled = true;
+      o.style.color = "#aaa";
+      return;
+    }
 
     for (const r of reserved) {
       if (isOverlap(start, end, r.start, r.end)) {
@@ -389,6 +387,14 @@ okBtn.onclick = async () => {
   }
 
 
+// LINE ID 取得（取れたら使う、取れなくてもOK）
+try {
+  customerUserId = await getCustomerUserIdForLine();
+  console.log("LINE userId:", customerUserId);
+} catch (e) {
+  console.warn("LINE ID取得時エラー:", e);
+}
+
 // ★ここは必ず通す（条件分岐しない）
 console.log("dynamic-service 呼び出し直前");
 
@@ -475,7 +481,4 @@ if (timeSelectForClear) {
 // メニュー（複数あるので forEach）
 document.querySelectorAll(".menu-select").forEach(sel => {
   sel.addEventListener("change", clearErrorOnInput);
-});
-document.addEventListener("DOMContentLoaded", () => {
-  initLiffAndLogin();
 });
