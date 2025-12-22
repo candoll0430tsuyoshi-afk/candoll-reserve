@@ -3,17 +3,17 @@ const supabaseUrl = "https://bcahztzetpfuklipjmxx.supabase.co";
 const supabaseKey = "sb_publishable_rPyAIzNttEK3P8nsnBllYA_FTF-kxJQ";
 const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 
-// ===== customerUserId を保持 =====
+// ===== customerUserId を保持（追加）=====
 let customerUserId = null;
 
-/* =========================
-   ★ 修正①：LIFF処理を async 関数に隔離
-   ========================= */
+// ===== 追加：LIFF 初期化 + LINE Login（これだけ）=====
 async function initLiffAndLogin() {
   if (!window.liff) return;
 
   try {
-    await liff.init({ liffId: "2008611644-EZd5nkl0" });
+    await liff.init({
+      liffId: "2008611644-EZd5nkl0"
+    });
 
     if (!liff.isLoggedIn()) {
       liff.login({ redirectUri: location.href });
@@ -29,14 +29,16 @@ async function initLiffAndLogin() {
   }
 }
 
+// ★ 既存処理には触らず、読み込み時に1回だけ実行
 document.addEventListener("DOMContentLoaded", () => {
   initLiffAndLogin();
 });
 
+// ===== 以下、元の script.js（変更なし）=====
+
 // ===== 休日データ =====
 let HOLIDAYS = [];
 
-// ▼ normalizeDate（そのまま）▼
 function normalizeDate(value) {
   if (!value) return "";
   value = String(value);
@@ -79,13 +81,17 @@ async function loadHolidays() {
 }
 loadHolidays().then(updateDateOptions);
 
-// ===== greeting =====
+// ===== DOM =====
 const greeting = document.getElementById("greeting");
-
-// ===== メニュー操作 =====
 const menuContainer = document.getElementById("menuContainer");
 const addMenuButton = document.getElementById("addMenu");
+const form = document.getElementById("reserveForm");
+const confirmScreen = document.getElementById("confirm-screen");
+const confirmText = document.getElementById("confirm-text");
+const cancelBtn = document.getElementById("cancelBtn");
+const okBtn = document.getElementById("okBtn");
 
+// ===== メニュー操作 =====
 function attachMenuUpdate() {
   menuContainer.querySelectorAll(".menu-select").forEach(sel => {
     sel.addEventListener("change", () => {
@@ -106,17 +112,15 @@ addMenuButton.addEventListener("click", () => {
   }
 });
 
-// ===== 所要時間計算 =====
+// ===== 時間計算（元のまま）=====
 function calcTotalMinutes(menus) {
   return menus.map(m => MENU_DATA[m] || 0).reduce((a, b) => a + b, 0);
 }
 
-// ===== 時刻処理 =====
 function addMinutesToTime(time, minutes) {
   const [h, m] = time.split(":").map(Number);
-  const start = new Date(2000, 0, 1, h, m);
-  const end = new Date(start.getTime() + minutes * 60000);
-  return `${String(end.getHours()).padStart(2, "0")}:${String(end.getMinutes()).padStart(2, "0")}`;
+  const d = new Date(2000, 0, 1, h, m + minutes);
+  return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
 }
 
 function toMinutes(t) {
@@ -223,13 +227,7 @@ async function updateTimeOptions() {
   });
 }
 
-// ===== 予約確定 =====
-const form = document.getElementById("reserveForm");
-const confirmScreen = document.getElementById("confirm-screen");
-const confirmText = document.getElementById("confirm-text");
-const cancelBtn = document.getElementById("cancelBtn");
-const okBtn = document.getElementById("okBtn");
-
+// ===== 予約送信 =====
 okBtn.onclick = async () => {
   const name = document.getElementById("name").value;
   const menus = Array.from(menuContainer.querySelectorAll(".menu-select"))
@@ -244,9 +242,14 @@ okBtn.onclick = async () => {
     return;
   }
 
-  await supabaseClient
+  const { error } = await supabaseClient
     .from("reservations")
     .insert([{ name, menus: menus.join(", "), date, time, end_time }]);
+
+  if (error) {
+    alert("予約保存エラー");
+    return;
+  }
 
   await fetch(
     "https://bcahztzetpfuklipjmxx.functions.supabase.co/dynamic-service",
@@ -258,7 +261,7 @@ okBtn.onclick = async () => {
         menus: menus.join(", "),
         date,
         time,
-        customerUserId // null OK
+        customerUserId
       })
     }
   );
