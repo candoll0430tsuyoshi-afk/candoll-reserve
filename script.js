@@ -16,17 +16,21 @@ if (window.liff) {
 let customerUserId = null;
 
 // ===== 追記：LINEミニアプリ用 userId 取得関数 =====
-async function getCustomerUserIdForLine() {
+if (window.liff) {
   try {
-    if (!window.liff) return null;
-    await liff.ready;
-    if (!liff.isLoggedIn()) return null;
+    await liff.init({ liffId: "2008611644-EZd5nkl0" });
+
+    if (!liff.isLoggedIn()) {
+      liff.login({ redirectUri: location.href });
+      return;
+    }
 
     const profile = await liff.getProfile();
-    return profile?.userId || null;
+    customerUserId = profile.userId;
+    console.log("LINE profile:", profile);
+
   } catch (e) {
-    console.warn("customerUserId取得失敗:", e);
-    return null;
+    console.error("LIFF init/login error:", e);
   }
 }
 
