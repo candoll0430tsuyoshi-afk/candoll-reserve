@@ -143,11 +143,7 @@ function resetTimeSelect() {
   const timeSelect = document.getElementById("time");
   if (!timeSelect) return;
   timeSelect.value = "";
-  Array.from(timeSelect.options).forEach(o => {
-    if (!o.value) return;
-    o.disabled = true;
-    o.style.color = "#aaa";
-  });
+
 }
 
 // ===== 重複チェック =====
