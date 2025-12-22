@@ -256,12 +256,15 @@ console.log("DB予約 整形後:", reserved);
 
     const start = o.value.trim();
     const end = addMinutesToTime(start, required);
+if (end > closeTime || reserved.some(r => isOverlap(start, end, r.start, r.end))) {
+   o.disabled = true;
+   o.style.color = "#aaa";
+ } else {
+   o.disabled = false;
+   o.style.color = "#000";
+ }
+});
 
-    if (end > closeTime) {
-      o.disabled = true;
-      o.style.color = "#aaa";
-      return;
-    }
 
     for (const r of reserved) {
       if (isOverlap(start, end, r.start, r.end)) {
