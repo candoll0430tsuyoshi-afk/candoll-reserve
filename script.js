@@ -15,24 +15,26 @@ if (window.liff) {
 // ===== 追記：customerUserId を保持 =====
 let customerUserId = null;
 
-// ===== 追記：LINEミニアプリ用 userId 取得関数 =====
 if (window.liff) {
-  try {
-    await liff.init({ liffId: "2008611644-EZd5nkl0" });
+  (async () => {
+    try {
+      await liff.init({ liffId: "2008611644-EZd5nkl0" });
 
-    if (!liff.isLoggedIn()) {
-      liff.login({ redirectUri: location.href });
-      return;
+      if (!liff.isLoggedIn()) {
+        liff.login({ redirectUri: location.href });
+        return;
+      }
+
+      const profile = await liff.getProfile();
+      customerUserId = profile.userId;
+      console.log("LINE profile:", profile);
+
+    } catch (e) {
+      console.error("LIFF init/login error:", e);
     }
-
-    const profile = await liff.getProfile();
-    customerUserId = profile.userId;
-    console.log("LINE profile:", profile);
-
-  } catch (e) {
-    console.error("LIFF init/login error:", e);
-  }
+  })();
 }
+
 
 // ===== 休日データ =====
 let HOLIDAYS = [];
