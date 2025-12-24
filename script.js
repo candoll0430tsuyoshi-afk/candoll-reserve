@@ -380,7 +380,26 @@ okBtn.onclick = async () => {
     alert("予約保存エラー");
     return;
   }
+if (!error && window.liff && liff.isInClient()) {
+  try {
+    await liff.sendMessages([
+      {
+        type: "text",
+        text:
+`ご予約ありがとうございます。
 
+【ご予約内容】
+日付：${date}
+時間：${time}
+メニュー：${menus.join(", ")}
+
+※キャンセル・変更はこのLINEからご連絡ください。`
+      }
+    ]);
+  } catch (e) {
+    console.warn("お客様メッセージ送信失敗:", e);
+  }
+}
 
 // ★ここは必ず通す（条件分岐しない）
 console.log("dynamic-service 呼び出し直前");
