@@ -5,6 +5,25 @@ let liffReadyPromise = null;
 
 let MENU_DATA = {};
 let HOLIDAYS = [];
+async function loadMenus() {
+  if (!supabaseClient) return;
+
+  const { data, error } = await supabaseClient
+    .from("menus")
+    .select("name, duration");
+
+  if (error) {
+    console.error("メニュー取得エラー:", error);
+    return;
+  }
+
+  MENU_DATA = {};
+  data.forEach(m => {
+    MENU_DATA[m.name] = m.duration;
+  });
+
+  updateTimeOptions();
+}
 
 // ===== 日付正規化 =====
 function normalizeDate(value) {
