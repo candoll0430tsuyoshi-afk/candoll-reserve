@@ -12,25 +12,25 @@ if (window.liff) {
   });
 }
 
-// ===== 追記：customerUserId を保持 =====
 let customerUserId = null;
+let liffReadyPromise = null;
 
 if (window.liff) {
-  (async () => {
+  liffReadyPromise = (async () => {
     try {
       await liff.init({ liffId: "2008611644-EZd5nkl0" });
 
       if (!liff.isLoggedIn()) {
-        liff.login({ redirectUri: location.href });
+        // ★ LINE未使用でも予約できるように止めない
         return;
       }
 
       const profile = await liff.getProfile();
       customerUserId = profile.userId;
-      console.log("LINE profile:", profile);
+      console.log("LINE userId:", customerUserId);
 
     } catch (e) {
-      console.error("LIFF init/login error:", e);
+      console.warn("LIFF 初期化失敗:", e);
     }
   })();
 }
