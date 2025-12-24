@@ -1,35 +1,37 @@
+// ===== 日付正規化（グローバル）=====
+function normalizeDate(value) {
+  if (!value) return "";
+  return String(value).replace(/\//g, "-").split("T")[0];
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   // ===== Supabase 初期化 =====
   const supabaseUrl = "https://bcahztzetpfuklipjmxx.supabase.co";
   const supabaseKey = "sb_publishable_rPyAIzNttEK3P8nsnBllYA_FTF-kxJQ";
   const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 
+  // ===== LIFF =====
   let customerUserId = null;
-  let liffReadyPromise = null;
 
   if (window.liff) {
-    liffReadyPromise = (async () => {
+    (async () => {
       try {
         await liff.init({ liffId: "2008611644-EZd5nkl0" });
         const context = liff.getContext();
-        if (context && context.userId) customerUserId = context.userId;
+        if (context && context.userId) {
+          customerUserId = context.userId;
+        }
       } catch (e) {
         console.warn("LIFF 初期化失敗:", e);
       }
     })();
   }
 
-  // ===== 休日データ =====
+  // ===== データ =====
   let HOLIDAYS = [];
-
-  function normalizeDate(value) {
-    if (!value) return "";
-    return String(value).replace(/\//g, "-").split("T")[0];
-  }
-
-  // ===== メニュー所要時間（Supabaseから取得） =====
   let MENU_DATA = {};
 
+  // ===== メニュー所要時間（Supabaseから取得） =====
   async function loadMenus() {
     const { data, error } = await supabaseClient
       .from("menus")
@@ -48,10 +50,11 @@ document.addEventListener("DOMContentLoaded", () => {
     updateTimeOptions();
   }
 
-  // ★ここで呼ぶ
+  // ★ 必ず実行
   loadMenus();
-  // loadHolidays(); も同様にここで呼ぶ
+  // loadHolidays(); ← あるなら同様にここで呼ぶ
 });
+
 
 // ===== 休日読み込み =====
 async function loadHolidays() {
