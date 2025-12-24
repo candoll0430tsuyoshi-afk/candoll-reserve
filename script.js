@@ -362,6 +362,9 @@ cancelBtn.onclick = () => {
 };
 
 okBtn.onclick = async () => {
+    if (liffReadyPromise) {
+    await liffReadyPromise;
+  }
   const name = document.getElementById("name").value;
   const menus = Array.from(menuContainer.querySelectorAll(".menu-select"))
     .map(s => s.value)
