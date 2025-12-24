@@ -11,20 +11,22 @@ if (window.liff) {
     try {
       await liff.init({ liffId: "2008611644-EZd5nkl0" });
 
-      if (!liff.isLoggedIn()) {
-        // ★ LINE未使用でも予約できるように止めない
-        return;
-      }
+      // ★ LINE未使用でも予約できるように止めない
+      const context = liff.getContext();
 
-      const profile = await liff.getProfile();
-      customerUserId = profile.userId;
-      console.log("LINE userId:", customerUserId);
+      if (context && context.userId) {
+        customerUserId = context.userId;
+        console.log("LINE userId (context):", customerUserId);
+      } else {
+        console.warn("context.userId が取得できません");
+      }
 
     } catch (e) {
       console.warn("LIFF 初期化失敗:", e);
     }
   })();
 }
+
 
 
 // ===== 休日データ =====
