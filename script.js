@@ -1,60 +1,57 @@
-// ===== Supabase 初期化 =====
-const supabaseUrl = "https://bcahztzetpfuklipjmxx.supabase.co";
-const supabaseKey = "sb_publishable_rPyAIzNttEK3P8nsnBllYA_FTF-kxJQ";
-const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
+document.addEventListener("DOMContentLoaded", () => {
+  // ===== Supabase 初期化 =====
+  const supabaseUrl = "https://bcahztzetpfuklipjmxx.supabase.co";
+  const supabaseKey = "sb_publishable_rPyAIzNttEK3P8nsnBllYA_FTF-kxJQ";
+  const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 
-let customerUserId = null;
-let liffReadyPromise = null;
+  let customerUserId = null;
+  let liffReadyPromise = null;
 
-if (window.liff) {
-  liffReadyPromise = (async () => {
-    try {
-      await liff.init({ liffId: "2008611644-EZd5nkl0" });
-
-      const context = liff.getContext();
-
-      // optional chaining を使わない（iOS対策）
-      if (context && context.userId) {
-        customerUserId = context.userId;
+  if (window.liff) {
+    liffReadyPromise = (async () => {
+      try {
+        await liff.init({ liffId: "2008611644-EZd5nkl0" });
+        const context = liff.getContext();
+        if (context && context.userId) customerUserId = context.userId;
+      } catch (e) {
+        console.warn("LIFF 初期化失敗:", e);
       }
-
-    } catch (e) {
-      // alert もしない（iOS対策）
-      console.warn("LIFF 初期化失敗:", e);
-    }
-  })();
-}
-// ===== 休日データ =====
-let HOLIDAYS = [];
-
-// ▼ 修正済 normalizeDate（"/" → "-" 変換）▼
-function normalizeDate(value) {
-  if (!value) return "";
-  value = String(value);
-  return value.replace(/\//g, "-").split("T")[0];
-}
-
-// ===== メニュー所要時間（Supabaseから取得） =====
-let MENU_DATA = {};
-
-async function loadMenus() {
-  const { data, error } = await supabaseClient
-    .from("menus")
-    .select("name, duration");
-
-  if (error) {
-    console.error("メニュー取得エラー:", error);
-    return;
+    })();
   }
 
-  MENU_DATA = {};
-  data.forEach(m => {
-    MENU_DATA[m.name] = m.duration;
-  });
+  // ===== 休日データ =====
+  let HOLIDAYS = [];
 
-  updateTimeOptions();
-}
-loadMenus();
+  function normalizeDate(value) {
+    if (!value) return "";
+    return String(value).replace(/\//g, "-").split("T")[0];
+  }
+
+  // ===== メニュー所要時間（Supabaseから取得） =====
+  let MENU_DATA = {};
+
+  async function loadMenus() {
+    const { data, error } = await supabaseClient
+      .from("menus")
+      .select("name, duration");
+
+    if (error) {
+      console.error("メニュー取得エラー:", error);
+      return;
+    }
+
+    MENU_DATA = {};
+    data.forEach(m => {
+      MENU_DATA[m.name] = m.duration;
+    });
+
+    updateTimeOptions();
+  }
+
+  // ★ここで呼ぶ
+  loadMenus();
+  // loadHolidays(); も同様にここで呼ぶ
+});
 
 // ===== 休日読み込み =====
 async function loadHolidays() {
