@@ -10,12 +10,17 @@ if (window.liff) {
   liffReadyPromise = (async () => {
     try {
       await liff.init({ liffId: "2008611644-EZd5nkl0" });
-alert(
-  "type: " + context?.type +
-  "\nuserId: " + context?.userId
-      // ★ LINE未使用でも予約できるように止めない
+
+      // ★ まず context を取得
       const context = liff.getContext();
 
+      // ★ 一時確認用（あとで必ず消す）
+      alert(
+        "type: " + context?.type +
+        "\nuserId: " + context?.userId
+      );
+
+      // ★ Push 通知用 userId をセット
       if (context && context.userId) {
         customerUserId = context.userId;
         console.log("LINE userId (context):", customerUserId);
@@ -28,8 +33,6 @@ alert(
     }
   })();
 }
-
-
 
 // ===== 休日データ =====
 let HOLIDAYS = [];
