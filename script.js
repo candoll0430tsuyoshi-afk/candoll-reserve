@@ -1,5 +1,8 @@
+// ===== グローバル（必須）=====
 let MENU_DATA = {};
-// ===== 日付正規化（グローバル）=====
+let HOLIDAYS = [];
+
+// ===== 日付正規化 =====
 function normalizeDate(value) {
   if (!value) return "";
   return String(value).replace(/\//g, "-").split("T")[0];
@@ -28,10 +31,6 @@ document.addEventListener("DOMContentLoaded", () => {
     })();
   }
 
-  // ===== データ =====
-  let HOLIDAYS = [];
-  
-
   // ===== メニュー所要時間（Supabaseから取得） =====
   async function loadMenus() {
     const { data, error } = await supabaseClient
@@ -43,6 +42,7 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
+    // ★ グローバルに代入
     MENU_DATA = {};
     data.forEach(m => {
       MENU_DATA[m.name] = m.duration;
@@ -53,7 +53,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // ★ 必ず実行
   loadMenus();
-  // loadHolidays(); ← あるなら同様にここで呼ぶ
 });
 
 
