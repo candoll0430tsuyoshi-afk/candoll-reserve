@@ -1,3 +1,4 @@
+let MENU_DATA = {};
 // ===== 日付正規化（グローバル）=====
 function normalizeDate(value) {
   if (!value) return "";
@@ -29,7 +30,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // ===== データ =====
   let HOLIDAYS = [];
-  let MENU_DATA = {};
+  
 
   // ===== メニュー所要時間（Supabaseから取得） =====
   async function loadMenus() {
