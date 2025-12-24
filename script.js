@@ -10,7 +10,8 @@ if (window.liff) {
   liffReadyPromise = (async () => {
     try {
       await liff.init({ liffId: "2008611644-EZd5nkl0" });
-
+      const context = liff.getContext();
+      console.log("LIFF context:", context);
       // ★ LINE未使用でも予約できるように止めない
       const context = liff.getContext();
 
