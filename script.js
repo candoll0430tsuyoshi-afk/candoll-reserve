@@ -389,14 +389,6 @@ okBtn.onclick = async () => {
   }
 
 
-// LINE ID 取得（取れたら使う、取れなくてもOK）
-try {
-  customerUserId = await getCustomerUserIdForLine();
-  console.log("LINE userId:", customerUserId);
-} catch (e) {
-  console.warn("LINE ID取得時エラー:", e);
-}
-
 // ★ここは必ず通す（条件分岐しない）
 console.log("dynamic-service 呼び出し直前");
 
