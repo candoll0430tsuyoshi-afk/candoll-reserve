@@ -3,15 +3,6 @@ const supabaseUrl = "https://bcahztzetpfuklipjmxx.supabase.co";
 const supabaseKey = "sb_publishable_rPyAIzNttEK3P8nsnBllYA_FTF-kxJQ";
 const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 
-// ===== LIFF 初期化 =====
-if (window.liff) {
-  liff.init({
-    liffId: "2008611644-EZd5nkl0"
-  }).catch(err => {
-    console.error("LIFF init error:", err);
-  });
-}
-
 let customerUserId = null;
 let liffReadyPromise = null;
 
