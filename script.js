@@ -11,29 +11,19 @@ if (window.liff) {
     try {
       await liff.init({ liffId: "2008611644-EZd5nkl0" });
 
-      // ★ まず context を取得
       const context = liff.getContext();
 
-      // ★ 一時確認用（あとで必ず消す）
-      alert(
-        "type: " + context?.type +
-        "\nuserId: " + context?.userId
-      );
-
-      // ★ Push 通知用 userId をセット
+      // optional chaining を使わない（iOS対策）
       if (context && context.userId) {
         customerUserId = context.userId;
-        console.log("LINE userId (context):", customerUserId);
-      } else {
-        console.warn("context.userId が取得できません");
       }
 
     } catch (e) {
+      // alert もしない（iOS対策）
       console.warn("LIFF 初期化失敗:", e);
     }
   })();
 }
-
 // ===== 休日データ =====
 let HOLIDAYS = [];
 
