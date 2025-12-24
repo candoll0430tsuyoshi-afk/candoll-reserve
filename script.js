@@ -1,4 +1,8 @@
 // ===== グローバル（必須）=====
+let supabaseClient = null;
+let customerUserId = null;
+let liffReadyPromise = null;
+
 let MENU_DATA = {};
 let HOLIDAYS = [];
 
@@ -12,13 +16,11 @@ document.addEventListener("DOMContentLoaded", () => {
   // ===== Supabase 初期化 =====
   const supabaseUrl = "https://bcahztzetpfuklipjmxx.supabase.co";
   const supabaseKey = "sb_publishable_rPyAIzNttEK3P8nsnBllYA_FTF-kxJQ";
-  const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
+  supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 
   // ===== LIFF =====
-  let customerUserId = null;
-
   if (window.liff) {
-    (async () => {
+    liffReadyPromise = (async () => {
       try {
         await liff.init({ liffId: "2008611644-EZd5nkl0" });
         const context = liff.getContext();
@@ -32,28 +34,9 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // ===== メニュー所要時間（Supabaseから取得） =====
-  async function loadMenus() {
-    const { data, error } = await supabaseClient
-      .from("menus")
-      .select("name, duration");
-
-    if (error) {
-      console.error("メニュー取得エラー:", error);
-      return;
-    }
-
-    // ★ グローバルに代入
-    MENU_DATA = {};
-    data.forEach(m => {
-      MENU_DATA[m.name] = m.duration;
-    });
-
-    updateTimeOptions();
-  }
-
-  // ★ 必ず実行
-  loadMenus();
+  loadMenus(); // ← ここで呼ぶ（下の関数を使う）
 });
+
 
 
 // ===== 休日読み込み =====
