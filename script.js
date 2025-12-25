@@ -380,7 +380,7 @@ okBtn.onclick = async () => {
     alert("予約保存エラー");
     return;
   }
-if (!error && window.liff && liff.isInClient()) {
+if (!error && window.liff) {
   try {
     await liff.sendMessages([
       {
