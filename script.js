@@ -42,6 +42,8 @@ document.addEventListener("DOMContentLoaded", () => {
     liffReadyPromise = (async () => {
       try {
         await liff.init({ liffId: "2008611644-EZd5nkl0" });
+              console.log("isInClient:", liff.isInClient());
+      console.log("context:", liff.getContext());
         const context = liff.getContext();
         if (context && context.userId) {
           customerUserId = context.userId;
