@@ -43,10 +43,7 @@ document.addEventListener("DOMContentLoaded", () => {
       try {
         await liff.init({ liffId: "2008611644-EZd5nkl0" });
         const context = liff.getContext();
-        alert(
-  "isInClient: " + liff.isInClient() + "\n" +
-  "context: " + JSON.stringify(context)
-);
+      
         if (context && context.userId) {
           customerUserId = context.userId;
         }
