@@ -16,21 +16,6 @@ async function loadMenus() {
     console.error("メニュー取得エラー:", error);
     return;
   }
-// ===== Mini App 判定 =====
-if (window.miniapp) {
-  runtime = "miniapp";
-
-  (async () => {
-    try {
-      await miniapp.init();
-      const ctx = miniapp.getContext();
-      customerUserId = ctx.customerUserId || null;
-      console.log("Mini App 起動:", customerUserId);
-    } catch (e) {
-      console.warn("Mini App 初期化失敗:", e);
-    }
-  })();
-}
 
   MENU_DATA = {};
   data.forEach(m => {
@@ -57,6 +42,21 @@ document.addEventListener("DOMContentLoaded", () => {
   // ===== メニュー所要時間（Supabaseから取得） =====
   loadMenus(); // ← ここで呼ぶ（下の関数を使う）
 });
+// ===== Mini App 判定 =====
+if (window.miniapp) {
+  runtime = "miniapp";
+
+  (async () => {
+    try {
+      await miniapp.init();
+      const ctx = miniapp.getContext();
+      customerUserId = ctx.customerUserId || null;
+      console.log("Mini App 起動:", customerUserId);
+    } catch (e) {
+      console.warn("Mini App 初期化失敗:", e);
+    }
+  })();
+}
 if (runtime === "miniapp" && window.miniapp) {
   try {
     miniapp.closeWindow();
