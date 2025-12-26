@@ -57,6 +57,12 @@ document.addEventListener("DOMContentLoaded", () => {
   // ===== メニュー所要時間（Supabaseから取得） =====
   loadMenus(); // ← ここで呼ぶ（下の関数を使う）
 });
+if (runtime === "miniapp" && window.miniapp) {
+  try {
+    miniapp.closeWindow();
+    return;
+  } catch (e) {}
+}
 
 
 
@@ -357,13 +363,7 @@ okBtn.onclick = async () => {
     if (liffReadyPromise) {
     await liffReadyPromise;
   }
-  if (runtime === "miniapp" && window.miniapp) {
-  try {
-    miniapp.closeWindow();
-    return;
-  } catch (e) {}
-}
-
+  
   const name = document.getElementById("name").value;
   const menus = Array.from(menuContainer.querySelectorAll(".menu-select"))
     .map(s => s.value)
