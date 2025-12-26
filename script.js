@@ -1,6 +1,5 @@
 // ===== グローバル（必須）=====
 let supabaseClient = null;
-let customerUserId = null;
 let runtime = "web"; // web | miniapp
 let customerUserId = null;
 
