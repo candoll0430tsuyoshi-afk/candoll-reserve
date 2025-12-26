@@ -1,7 +1,8 @@
 // ===== グローバル（必須）=====
 let supabaseClient = null;
 let customerUserId = null;
-let liffReadyPromise = null;
+let runtime = "web"; // web | miniapp
+let customerUserId = null;
 
 let MENU_DATA = {};
 let HOLIDAYS = [];
@@ -16,6 +17,21 @@ async function loadMenus() {
     console.error("メニュー取得エラー:", error);
     return;
   }
+// ===== Mini App 判定 =====
+if (window.miniapp) {
+  runtime = "miniapp";
+
+  (async () => {
+    try {
+      await miniapp.init();
+      const ctx = miniapp.getContext();
+      customerUserId = ctx.customerUserId || null;
+      console.log("Mini App 起動:", customerUserId);
+    } catch (e) {
+      console.warn("Mini App 初期化失敗:", e);
+    }
+  })();
+}
 
   MENU_DATA = {};
   data.forEach(m => {
@@ -37,21 +53,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const supabaseKey = "sb_publishable_rPyAIzNttEK3P8nsnBllYA_FTF-kxJQ";
   supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 
-  // ===== LIFF =====
-  if (window.liff) {
-    liffReadyPromise = (async () => {
-      try {
-        await liff.init({ liffId: "2008611644-EZd5nkl0" });
-        const context = liff.getContext();
-      
-        if (context && context.userId) {
-          customerUserId = context.userId;
-        }
-      } catch (e) {
-        console.warn("LIFF 初期化失敗:", e);
-      }
-    })();
-  }
+
 
   // ===== メニュー所要時間（Supabaseから取得） =====
   loadMenus(); // ← ここで呼ぶ（下の関数を使う）
@@ -356,6 +358,13 @@ okBtn.onclick = async () => {
     if (liffReadyPromise) {
     await liffReadyPromise;
   }
+  if (runtime === "miniapp" && window.miniapp) {
+  try {
+    miniapp.closeWindow();
+    return;
+  } catch (e) {}
+}
+
   const name = document.getElementById("name").value;
   const menus = Array.from(menuContainer.querySelectorAll(".menu-select"))
     .map(s => s.value)
@@ -377,30 +386,6 @@ okBtn.onclick = async () => {
     .from("reservations")
     .insert([{ name, menus: menus.join(", "), date, time, end_time }]);
 
-  if (error) {
-    alert("予約保存エラー");
-    return;
-  }
-if (!error && window.liff) {
-  try {
-    await liff.sendMessages([
-      {
-        type: "text",
-        text:
-`ご予約ありがとうございます。
-
-【ご予約内容】
-日付：${date}
-時間：${time}
-メニュー：${menus.join(", ")}
-
-※キャンセル・変更はこのLINEからご連絡ください。`
-      }
-    ]);
-  } catch (e) {
-    console.warn("お客様メッセージ送信失敗:", e);
-  }
-}
 
 // ★ここは必ず通す（条件分岐しない）
 console.log("dynamic-service 呼び出し直前");
@@ -448,9 +433,7 @@ function showCompleteScreen() {
   document.querySelector(".container").appendChild(div);
 
   document.getElementById("closeBtn").onclick = () => {
-    if (window.liff && typeof liff.closeWindow === "function") {
-      try { liff.closeWindow(); return; } catch (e) {}
-    }
+
     history.length > 1
       ? history.back()
       : window.location.href =
