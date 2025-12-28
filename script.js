@@ -2,12 +2,12 @@
 let supabaseClient = null;
 let runtime = "web"; // web | miniapp
 let customerUserId = null;
-
+let miniappReady = Promise.resolve();
 // ===== Mini App 判定 =====
 if (window.miniapp) {
   runtime = "miniapp";
 
-  (async () => {
+  miniappReady = (async () => {
     try {
       await miniapp.init();
       const ctx = miniapp.getContext();
@@ -354,7 +354,9 @@ cancelBtn.onclick = () => {
 };
 
 okBtn.onclick = async () => {
-  
+    if (runtime === "miniapp") {
+    await miniappReady;
+  }
   const name = document.getElementById("name").value;
   const menus = Array.from(menuContainer.querySelectorAll(".menu-select"))
     .map(s => s.value)
