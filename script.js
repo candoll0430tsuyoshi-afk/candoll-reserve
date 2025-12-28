@@ -436,12 +436,6 @@ function showCompleteScreen() {
     } catch (e) {}
   }
 
-  history.length > 1
-    ? history.back()
-    : window.location.href =
-        "https://candoll0430tsuyoshi-afk.github.io/candoll-reserve/";
-};
-
     history.length > 1
       ? history.back()
       : window.location.href =
