@@ -18,12 +18,6 @@ if (window.miniapp) {
     }
   })();
 }
-if (runtime === "miniapp" && window.miniapp) {
-  try {
-    miniapp.closeWindow();
-    return;
-  } catch (e) {}
-}
 
 let MENU_DATA = {};
 let HOLIDAYS = [];
