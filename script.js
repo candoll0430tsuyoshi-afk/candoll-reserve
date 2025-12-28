@@ -3,6 +3,28 @@ let supabaseClient = null;
 let runtime = "web"; // web | miniapp
 let customerUserId = null;
 
+// ===== Mini App 判定 =====
+if (window.miniapp) {
+  runtime = "miniapp";
+
+  (async () => {
+    try {
+      await miniapp.init();
+      const ctx = miniapp.getContext();
+      customerUserId = ctx.customerUserId || null;
+      console.log("Mini App 起動:", customerUserId);
+    } catch (e) {
+      console.warn("Mini App 初期化失敗:", e);
+    }
+  })();
+}
+if (runtime === "miniapp" && window.miniapp) {
+  try {
+    miniapp.closeWindow();
+    return;
+  } catch (e) {}
+}
+
 let MENU_DATA = {};
 let HOLIDAYS = [];
 async function loadMenus() {
@@ -380,30 +402,6 @@ await fetch(
     })
   }
 );
-// ===== Mini App 判定 =====
-if (window.miniapp) {
-  runtime = "miniapp";
-
-  (async () => {
-    try {
-      await miniapp.init();
-      const ctx = miniapp.getContext();
-      customerUserId = ctx.customerUserId || null;
-      console.log("Mini App 起動:", customerUserId);
-    } catch (e) {
-      console.warn("Mini App 初期化失敗:", e);
-    }
-  })();
-}
-if (runtime === "miniapp" && window.miniapp) {
-  try {
-    miniapp.closeWindow();
-    return;
-  } catch (e) {}
-}
-
-
-
 
   confirmScreen.style.display = "none";
   showCompleteScreen();
