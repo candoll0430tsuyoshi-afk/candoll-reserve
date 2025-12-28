@@ -42,28 +42,6 @@ document.addEventListener("DOMContentLoaded", () => {
   // ===== メニュー所要時間（Supabaseから取得） =====
   loadMenus(); // ← ここで呼ぶ（下の関数を使う）
 });
-// ===== Mini App 判定 =====
-if (window.miniapp) {
-  runtime = "miniapp";
-
-  (async () => {
-    try {
-      await miniapp.init();
-      const ctx = miniapp.getContext();
-      customerUserId = ctx.customerUserId || null;
-      console.log("Mini App 起動:", customerUserId);
-    } catch (e) {
-      console.warn("Mini App 初期化失敗:", e);
-    }
-  })();
-}
-if (runtime === "miniapp" && window.miniapp) {
-  try {
-    miniapp.closeWindow();
-    return;
-  } catch (e) {}
-}
-
 
 
 // ===== 休日読み込み =====
@@ -402,6 +380,28 @@ await fetch(
     })
   }
 );
+// ===== Mini App 判定 =====
+if (window.miniapp) {
+  runtime = "miniapp";
+
+  (async () => {
+    try {
+      await miniapp.init();
+      const ctx = miniapp.getContext();
+      customerUserId = ctx.customerUserId || null;
+      console.log("Mini App 起動:", customerUserId);
+    } catch (e) {
+      console.warn("Mini App 初期化失敗:", e);
+    }
+  })();
+}
+if (runtime === "miniapp" && window.miniapp) {
+  try {
+    miniapp.closeWindow();
+    return;
+  } catch (e) {}
+}
+
 
 
 
