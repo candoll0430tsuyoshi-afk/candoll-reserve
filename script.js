@@ -385,17 +385,6 @@ okBtn.onclick = async () => {
   console.log("runtime:", runtime);
   console.log("notificationToken:", notificationToken);
 
-okBtn.onclick = async () => {
-
-  const name = document.getElementById("name").value;
-  const menus = Array.from(menuContainer.querySelectorAll(".menu-select"))
-    .map(s => s.value)
-    .filter(v => v !== "");
-  const date = document.getElementById("date").value;
-  const time = document.getElementById("time").value;
-
-  const required = calcTotalMinutes(menus);
-  const end_time = addMinutesToTime(time, required);
 
   // 重複チェック
   if (await checkDuplicateFull(date, time, end_time)) {
@@ -509,4 +498,3 @@ if (timeSelectForClear) {
 document.querySelectorAll(".menu-select").forEach(sel => {
   sel.addEventListener("change", clearErrorOnInput);
 });
-}
