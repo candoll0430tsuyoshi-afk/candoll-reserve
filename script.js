@@ -1,20 +1,29 @@
 // ===== グローバル（必須）=====
 let supabaseClient = null;
-let runtime = "web"; // web | miniapp
+let runtime = "web"; 
 let customerUserId = null;
 let miniappReady = Promise.resolve();
-// ===== Mini App 判定 =====
-if (window.miniapp) {
+
+// ===== LINE LIFF 初期化とユーザーID取得 =====
+// window.miniapp ではなく window.liff をチェックします
+if (true) { // 常に初期化を試みる設定にします
   runtime = "miniapp";
 
   miniappReady = (async () => {
     try {
-      await miniapp.init();
-      const ctx = miniapp.getContext();
-      customerUserId = ctx.customerUserId || null;
-      console.log("Mini App 起動:", customerUserId);
+      // あなたのLIFF IDを入れてください（LINE Developersコンソールで確認）
+      await liff.init({ liffId: "YOUR_LIFF_ID_HERE" }); 
+
+      if (liff.isLoggedIn()) {
+        const profile = await liff.getProfile();
+        customerUserId = profile.userId;
+        console.log("LINEユーザーID取得成功:", customerUserId);
+      } else {
+        // ログインしていなければログイン画面へ
+        liff.login();
+      }
     } catch (e) {
-      console.warn("Mini App 初期化失敗:", e);
+      console.warn("LIFF初期化失敗:", e);
     }
   })();
 }
