@@ -385,7 +385,30 @@ okBtn.onclick = async () => {
   console.log("runtime:", runtime);
   console.log("notificationToken:", notificationToken);
 
-  // LINE通知（必ず呼ぶ）
+okBtn.onclick = async () => {
+
+  const name = document.getElementById("name").value;
+  const menus = Array.from(menuContainer.querySelectorAll(".menu-select"))
+    .map(s => s.value)
+    .filter(v => v !== "");
+  const date = document.getElementById("date").value;
+  const time = document.getElementById("time").value;
+
+  const required = calcTotalMinutes(menus);
+  const end_time = addMinutesToTime(time, required);
+
+  if (await checkDuplicateFull(date, time, end_time)) {
+    alert("この時間はすでに予約が入っています。");
+    confirmScreen.style.display = "none";
+    form.style.display = "block";
+    return;
+  }
+
+  await supabaseClient
+    .from("reservations")
+    .insert([{ name, menus: menus.join(", "), date, time, end_time }]);
+
+  // LINE通知（必ずここ）
   await fetch(
     "https://bcahztzetpfuklipjmxx.functions.supabase.co/dynamic-service",
     {
