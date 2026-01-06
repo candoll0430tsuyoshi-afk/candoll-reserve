@@ -2,29 +2,35 @@
 let supabaseClient = null;
 let runtime = "web"; 
 let customerUserId = null;
-let miniappReady = Promise.resolve();
+// 初期化完了を管理するためのフラグ
+let isLiffInitialized = false;
 
 // ===== LINE LIFF 初期化とユーザーID取得 =====
-miniappReady = (async () => {
+// Promiseを定義して、初期化が終わるまで予約ボタンを待たせるようにします
+const miniappReady = (async () => {
   try {
-    // 1. まず初期化
+    // 1. LIFFの初期化
     await liff.init({ liffId: "2008611644-EZd5nkl0" }); 
+    isLiffInitialized = true;
 
-    // 2. LINEアプリ内（ミニアプリ）かどうかを判定
+    // 2. LINEアプリ内かどうかの判定
     if (liff.isInClient()) {
       runtime = "miniapp";
-      // LINEの中なら、自動的にプロフィールを取得（ログイン不要）
+      // LINE内ならログインは必須なので、プロフィールを直接取得
+      if (!liff.isLoggedIn()) {
+        liff.login();
+        return;
+      }
       const profile = await liff.getProfile();
       customerUserId = profile.userId;
-      console.log("LINEユーザーID取得成功:", customerUserId);
+      console.log("LINE内実行: ID取得成功", customerUserId);
     } else {
-      // 3. 普通のブラウザ（PCなど）の場合は何もしない
+      // 3. PCブラウザなどの場合
       runtime = "web";
-      console.log("ブラウザ実行モード：通知なしで予約可能");
-      // ここで liff.login() を呼ばないのがポイントです！
+      console.log("ブラウザ実行: ID取得スキップ");
     }
   } catch (e) {
-    console.warn("LIFF初期化失敗（PCブラウザ等）:", e);
+    console.error("LIFF初期化エラー:", e);
     runtime = "web";
   }
 })();
