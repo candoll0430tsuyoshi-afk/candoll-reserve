@@ -446,22 +446,23 @@ function showCompleteScreen() {
       閉じる
     </button>
   `;
-  document.querySelector(".container").appendChild(div);
+
+  document.body.appendChild(div);
 
   document.getElementById("closeBtn").onclick = () => {
-  if (runtime === "miniapp" && window.miniapp) {
-    try {
-      miniapp.closeWindow();
-      return;
-    } catch (e) {}
-  }
-
-    history.length > 1
-      ? history.back()
-      : window.location.href =
-        "https://candoll0430tsuyoshi-afk.github.io/candoll-reserve/";
+    if (runtime === "miniapp" && window.miniapp) {
+      try {
+        miniapp.closeWindow();
+      } catch (e) {}
+    } else {
+      history.length > 1
+        ? history.back()
+        : (window.location.href =
+            "https://candoll0430tsuyoshi-afk.github.io/candoll-reserve/");
+    }
   };
 }
+
 // ===== 追加：入力し直したら errorBox を自動で消す =====
 function clearErrorOnInput() {
   const errorBox = document.getElementById("errorBox");
