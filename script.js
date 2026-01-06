@@ -346,6 +346,9 @@ cancelBtn.onclick = () => {
 };
 
 okBtn.onclick = async () => {
+  
+  console.log("runtime:", runtime);
+  console.log("window.miniapp:", window.miniapp);
   let notificationToken = null;
 if (runtime === "miniapp" && window.miniapp) {
     try {
@@ -392,7 +395,7 @@ await fetch(
       menus: menus.join(", "),
       date,
       time,
-      notificationToken
+      notificationToken,
     })
   }
 );
