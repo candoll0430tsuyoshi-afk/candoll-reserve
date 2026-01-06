@@ -5,27 +5,29 @@ let customerUserId = null;
 let miniappReady = Promise.resolve();
 
 // ===== LINE LIFF 初期化とユーザーID取得 =====
-// window.miniapp ではなく window.liff をチェックします
-if (true) { // 常に初期化を試みる設定にします
-  runtime = "miniapp";
+miniappReady = (async () => {
+  try {
+    // 1. まず初期化
+    await liff.init({ liffId: "2008611644-EZd5nkl0" }); 
 
-  miniappReady = (async () => {
-    try {
-      // あなたのLIFF IDを入れてください（LINE Developersコンソールで確認）
-      await liff.init({ liffId: "2008611644-EZd5nkl0" }); 
-
-      if (liff.isLoggedIn()) {
-        const profile = await liff.getProfile();
-        customerUserId = profile.userId;
-        console.log("LINEユーザーID取得成功:", customerUserId);
-      } else {
-        // ログインしていなければログイン画面へ
-        liff.login();
-      }
-    } catch (e) {
-      console.warn("LIFF初期化失敗:", e);
+    // 2. LINEアプリ内（ミニアプリ）かどうかを判定
+    if (liff.isInClient()) {
+      runtime = "miniapp";
+      // LINEの中なら、自動的にプロフィールを取得（ログイン不要）
+      const profile = await liff.getProfile();
+      customerUserId = profile.userId;
+      console.log("LINEユーザーID取得成功:", customerUserId);
+    } else {
+      // 3. 普通のブラウザ（PCなど）の場合は何もしない
+      runtime = "web";
+      console.log("ブラウザ実行モード：通知なしで予約可能");
+      // ここで liff.login() を呼ばないのがポイントです！
     }
-  })();
+  } catch (e) {
+    console.warn("LIFF初期化失敗（PCブラウザ等）:", e);
+    runtime = "web";
+  }
+})();
 }
 
 let MENU_DATA = {};
