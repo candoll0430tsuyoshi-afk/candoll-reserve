@@ -12,7 +12,7 @@ if (true) { // 常に初期化を試みる設定にします
   miniappReady = (async () => {
     try {
       // あなたのLIFF IDを入れてください（LINE Developersコンソールで確認）
-      await liff.init({ liffId: "YOUR_LIFF_ID_HERE" }); 
+      await liff.init({ liffId: "2008611644-EZd5nkl0" }); 
 
       if (liff.isLoggedIn()) {
         const profile = await liff.getProfile();
