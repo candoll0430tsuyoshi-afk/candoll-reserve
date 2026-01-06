@@ -3,6 +3,8 @@ let supabaseClient = null;
 let runtime = "web"; // web | miniapp
 let customerUserId = null;
 let miniappReady = Promise.resolve();
+let notificationToken = null;
+
 // ===== Mini App 判定 =====
 if (window.miniapp) {
   runtime = "miniapp";
