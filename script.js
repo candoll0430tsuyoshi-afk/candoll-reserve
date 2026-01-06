@@ -346,18 +346,27 @@ cancelBtn.onclick = () => {
 };
 
 okBtn.onclick = async () => {
-  
+
   console.log("runtime:", runtime);
-  console.log("window.miniapp:", window.miniapp);
-  let notificationToken = null;
-if (runtime === "miniapp" && window.miniapp) {
-    try {
-      notificationToken = await miniapp.issueNotificationToken();
-      console.log("クリック時 token:", notificationToken);
-    } catch (e) {
-      console.warn("token 取得失敗", e);
+  console.log("notificationToken:", notificationToken);
+
+  await fetch(
+    "https://xxxx.functions.supabase.co/dynamic-service",
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name,
+        menus: menus.join(", "),
+        date,
+        time,
+        notificationToken // ← そのまま送る
+      })
     }
-  }
+  );
+
+};
+
   const name = document.getElementById("name").value;
   const menus = Array.from(menuContainer.querySelectorAll(".menu-select"))
     .map(s => s.value)
