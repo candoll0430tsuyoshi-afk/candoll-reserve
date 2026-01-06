@@ -418,39 +418,32 @@ await fetch(
   showCompleteScreen();
 };
 
+// 予約完了画面を表示する関数
 function showCompleteScreen() {
-  const old = document.getElementById("complete-screen");
-  if (old) old.remove();
-  if (greeting) greeting.style.display = "none";
+  const container = document.querySelector(".container");
+  container.innerHTML = ""; // 画面をクリア
 
   const div = document.createElement("div");
-  div.id = "complete-screen";
-  div.style.padding = "20px";
+  div.style.padding = "40px 20px";
   div.innerHTML = `
-    <h2>予約を受付ました。</h2>
-    <p>ありがとうございます。</p>
+    <h2 style="font-size:24px; margin-bottom:20px;">予約を受付ました。</h2>
+    <p style="font-size:16px; margin-bottom:30px;">ありがとうございます。<br>当日のお越しをお待ちしております。</p>
     <button id="closeBtn"
-      style="padding:15px 25px; font-size:18px; border-radius:8px;
-             background:#000; color:#fff; border:none;">
+      style="padding:15px 40px; font-size:18px; border-radius:8px;
+             background:#000; color:#fff; border:none; cursor:pointer;">
       閉じる
     </button>
   `;
-  document.querySelector(".container").appendChild(div);
+  container.appendChild(div);
 
-document.getElementById("closeBtn").onclick = () => {
-    // LINEアプリ（ミニアプリ）内かどうかで処理を分ける
-    if (liff.isInClient()) {
-      liff.closeWindow(); // LINEの画面を閉じる
+  // 閉じるボタンの動作
+  document.getElementById("closeBtn").onclick = () => {
+    if (window.liff && liff.isInClient()) {
+      liff.closeWindow(); // LINEアプリ内なら閉じる
     } else {
-      // PCブラウザなどの場合は、予約サイトのトップへ戻す
+      // PCブラウザならトップページへ
       window.location.href = "https://candoll0430tsuyoshi-afk.github.io/candoll-reserve/";
     }
-  };
-
-    history.length > 1
-      ? history.back()
-      : window.location.href =
-        "https://candoll0430tsuyoshi-afk.github.io/candoll-reserve/";
   };
 }
 // ===== 追加：入力し直したら errorBox を自動で消す =====
