@@ -384,6 +384,7 @@ okBtn.onclick = async () => {
 
 
   // 重複チェック
+// 重複チェック
 if (await checkDuplicateFull(date, time, end_time)) {
   alert("この時間はすでに予約が入っています。");
   confirmScreen.style.display = "none";
