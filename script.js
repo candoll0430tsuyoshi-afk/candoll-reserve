@@ -9,15 +9,6 @@ let notificationToken = null;
 if (window.miniapp) {
   runtime = "miniapp";
 
-  miniappReady = (async () => {
-    try {
-      await miniapp.init();
-      notificationToken = await miniapp.issueNotificationToken();
-      console.log("Mini App 起動 / notificationToken:", notificationToken);
-    } catch (e) {
-      console.warn("Mini App 初期化失敗:", e);
-    }
-  })();
 }
 
 let MENU_DATA = {};
@@ -355,8 +346,14 @@ cancelBtn.onclick = () => {
 };
 
 okBtn.onclick = async () => {
-    if (runtime === "miniapp") {
-    await miniappReady;
+  let notificationToken = null;
+if (runtime === "miniapp" && window.miniapp) {
+    try {
+      notificationToken = await miniapp.issueNotificationToken();
+      console.log("クリック時 token:", notificationToken);
+    } catch (e) {
+      console.warn("token 取得失敗", e);
+    }
   }
   const name = document.getElementById("name").value;
   const menus = Array.from(menuContainer.querySelectorAll(".menu-select"))
