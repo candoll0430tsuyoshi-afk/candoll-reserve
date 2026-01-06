@@ -357,7 +357,7 @@ okBtn.onclick = async () => {
   const required = calcTotalMinutes(menus);
   const end_time = addMinutesToTime(time, required);
 
-  // 重複チェック
+  // 重複チェック（ここで1回だけ）
   if (await checkDuplicateFull(date, time, end_time)) {
     alert("この時間はすでに予約が入っています。");
     confirmScreen.style.display = "none";
@@ -365,15 +365,15 @@ okBtn.onclick = async () => {
     return;
   }
 
-  // 予約をDBに保存
+  // DB保存
   const { error } = await supabaseClient
     .from("reservations")
-    .insert([{ 
-      name, 
-      menus: menus.join(", "), 
-      date, 
-      time, 
-      end_time 
+    .insert([{
+      name,
+      menus: menus.join(", "),
+      date,
+      time,
+      end_time
     }]);
 
   if (error) {
@@ -382,26 +382,8 @@ okBtn.onclick = async () => {
     return;
   }
 
-
-  // 重複チェック
-// 重複チェック
-if (await checkDuplicateFull(date, time, end_time)) {
-  alert("この時間はすでに予約が入っています。");
-  confirmScreen.style.display = "none";
-  form.style.display = "block";
-  return;
-}
-
-  }]);
-
-if (error) {
-  console.error("予約保存エラー:", error);
-  alert("予約の保存に失敗しました");
-  return;
-}
-
-console.log("runtime:", runtime);
-console.log("notificationToken:", notificationToken);
+  console.log("runtime:", runtime);
+  console.log("notificationToken:", notificationToken);
 
   // LINE通知
   await fetch(
@@ -422,6 +404,7 @@ console.log("notificationToken:", notificationToken);
   confirmScreen.style.display = "none";
   showCompleteScreen();
 };
+
 
 
 function showCompleteScreen() {
