@@ -3,12 +3,20 @@ let supabaseClient = null;
 let runtime = "web"; // web | miniapp
 let customerUserId = null;
 let miniappReady = Promise.resolve();
-let notificationToken = null;
-
 // ===== Mini App 判定 =====
 if (window.miniapp) {
   runtime = "miniapp";
 
+  miniappReady = (async () => {
+    try {
+      await miniapp.init();
+      const ctx = miniapp.getContext();
+      customerUserId = ctx.customerUserId || null;
+      console.log("Mini App 起動:", customerUserId);
+    } catch (e) {
+      console.warn("Mini App 初期化失敗:", e);
+    }
+  })();
 }
 
 let MENU_DATA = {};
@@ -346,7 +354,9 @@ cancelBtn.onclick = () => {
 };
 
 okBtn.onclick = async () => {
-
+    if (runtime === "miniapp") {
+    await miniappReady;
+  }
   const name = document.getElementById("name").value;
   const menus = Array.from(menuContainer.querySelectorAll(".menu-select"))
     .map(s => s.value)
@@ -357,7 +367,6 @@ okBtn.onclick = async () => {
   const required = calcTotalMinutes(menus);
   const end_time = addMinutesToTime(time, required);
 
-  // 重複チェック（ここで1回だけ）
   if (await checkDuplicateFull(date, time, end_time)) {
     alert("この時間はすでに予約が入っています。");
     confirmScreen.style.display = "none";
@@ -365,47 +374,34 @@ okBtn.onclick = async () => {
     return;
   }
 
-  // DB保存
   const { error } = await supabaseClient
     .from("reservations")
-    .insert([{
+    .insert([{ name, menus: menus.join(", "), date, time, end_time }]);
+
+
+// ★ここは必ず通す（条件分岐しない）
+console.log("dynamic-service 呼び出し直前");
+
+await fetch(
+  "https://bcahztzetpfuklipjmxx.functions.supabase.co/dynamic-service",
+  {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
       name,
       menus: menus.join(", "),
       date,
       time,
-      end_time
-    }]);
-
-  if (error) {
-    console.error("予約保存エラー:", error);
-    alert("予約の保存に失敗しました");
-    return;
+      customerUserId // nullでもOK
+    })
   }
-
-  console.log("runtime:", runtime);
-  console.log("notificationToken:", notificationToken);
-
-  // LINE通知
-  await fetch(
-    "https://bcahztzetpfuklipjmxx.functions.supabase.co/dynamic-service",
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        name,
-        menus: menus.join(", "),
-        date,
-        time,
-        notificationToken
-      })
-    }
-  );
+);
 
   confirmScreen.style.display = "none";
   showCompleteScreen();
 };
-
-
 
 function showCompleteScreen() {
   const old = document.getElementById("complete-screen");
@@ -424,23 +420,22 @@ function showCompleteScreen() {
       閉じる
     </button>
   `;
-
-  document.body.appendChild(div);
+  document.querySelector(".container").appendChild(div);
 
   document.getElementById("closeBtn").onclick = () => {
-    if (runtime === "miniapp" && window.miniapp) {
-      try {
-        miniapp.closeWindow();
-      } catch (e) {}
-    } else {
-      history.length > 1
-        ? history.back()
-        : (window.location.href =
-            "https://candoll0430tsuyoshi-afk.github.io/candoll-reserve/");
-    }
+  if (runtime === "miniapp" && window.miniapp) {
+    try {
+      miniapp.closeWindow();
+      return;
+    } catch (e) {}
+  }
+
+    history.length > 1
+      ? history.back()
+      : window.location.href =
+        "https://candoll0430tsuyoshi-afk.github.io/candoll-reserve/";
   };
 }
-
 // ===== 追加：入力し直したら errorBox を自動で消す =====
 function clearErrorOnInput() {
   const errorBox = document.getElementById("errorBox");
