@@ -28,7 +28,6 @@ miniappReady = (async () => {
     runtime = "web";
   }
 })();
-}
 
 let MENU_DATA = {};
 let HOLIDAYS = [];
