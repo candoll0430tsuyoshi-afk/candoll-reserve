@@ -392,15 +392,6 @@ if (await checkDuplicateFull(date, time, end_time)) {
   return;
 }
 
-// DB保存
-const { error } = await supabaseClient
-  .from("reservations")
-  .insert([{ 
-    name, 
-    menus: menus.join(", "), 
-    date, 
-    time, 
-    end_time 
   }]);
 
 if (error) {
