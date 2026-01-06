@@ -10,9 +10,8 @@ if (window.miniapp) {
   miniappReady = (async () => {
     try {
       await miniapp.init();
-      const ctx = miniapp.getContext();
-      customerUserId = ctx.customerUserId || null;
-      console.log("Mini App 起動:", customerUserId);
+      notificationToken = await miniapp.issueNotificationToken();
+      console.log("Mini App 起動 / notificationToken:", notificationToken);
     } catch (e) {
       console.warn("Mini App 初期化失敗:", e);
     }
@@ -394,7 +393,7 @@ await fetch(
       menus: menus.join(", "),
       date,
       time,
-      customerUserId // nullでもOK
+      notificationToken
     })
   }
 );
