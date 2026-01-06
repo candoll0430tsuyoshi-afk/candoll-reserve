@@ -432,13 +432,15 @@ function showCompleteScreen() {
   `;
   document.querySelector(".container").appendChild(div);
 
-  document.getElementById("closeBtn").onclick = () => {
-  if (runtime === "miniapp" && window.miniapp) {
-    try {
-      miniapp.closeWindow();
-      return;
-    } catch (e) {}
-  }
+document.getElementById("closeBtn").onclick = () => {
+    // LINEアプリ（ミニアプリ）内かどうかで処理を分ける
+    if (liff.isInClient()) {
+      liff.closeWindow(); // LINEの画面を閉じる
+    } else {
+      // PCブラウザなどの場合は、予約サイトのトップへ戻す
+      window.location.href = "https://candoll0430tsuyoshi-afk.github.io/candoll-reserve/";
+    }
+  };
 
     history.length > 1
       ? history.back()
