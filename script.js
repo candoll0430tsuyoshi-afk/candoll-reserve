@@ -347,26 +347,6 @@ cancelBtn.onclick = () => {
 
 okBtn.onclick = async () => {
 
-  console.log("runtime:", runtime);
-  console.log("notificationToken:", notificationToken);
-
-  await fetch(
-    "https://xxxx.functions.supabase.co/dynamic-service",
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        name,
-        menus: menus.join(", "),
-        date,
-        time,
-        notificationToken // ← そのまま送る
-      })
-    }
-  );
-
-};
-
   const name = document.getElementById("name").value;
   const menus = Array.from(menuContainer.querySelectorAll(".menu-select"))
     .map(s => s.value)
@@ -383,6 +363,27 @@ okBtn.onclick = async () => {
     form.style.display = "block";
     return;
   }
+
+  console.log("runtime:", runtime);
+  console.log("notificationToken:", notificationToken);
+
+  await fetch(
+    "https://xxxx.functions.supabase.co/dynamic-service",
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name,
+        menus: menus.join(", "),
+        date,
+        time,
+        notificationToken // ← Mini App の token
+      })
+    }
+  );
+
+};
+
 
   const { error } = await supabaseClient
     .from("reservations")
