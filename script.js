@@ -509,3 +509,4 @@ if (timeSelectForClear) {
 document.querySelectorAll(".menu-select").forEach(sel => {
   sel.addEventListener("change", clearErrorOnInput);
 });
+}
