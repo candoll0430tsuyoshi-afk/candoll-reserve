@@ -398,21 +398,20 @@ okBtn.onclick = async () => {
 // ★ここは必ず通す（条件分岐しない）
 console.log("dynamic-service 呼び出し直前");
 
+// script.js の送信部分
 await fetch(
-  "https://bcahztzetpfuklipjmxx.functions.supabase.co/dynamic-service",
-  {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      name,
-      menus: menus.join(", "),
-      date,
-      time,
-      customerUserId // nullでもOK
-    })
-  }
+    "https://bcahztzetpfuklipjmxx.functions.supabase.co/dynamic-service",
+    {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            name,
+            menus: menus.join(", "),
+            date,
+            time,
+            customerUserId: customerUserId || null // IDがなければnullを送る
+        })
+    }
 );
 
   confirmScreen.style.display = "none";
