@@ -222,16 +222,13 @@
     <input type="text" id="name" placeholder="お名前を入力してください" autocomplete="off">
 </div>
 
-<label>メニュー（複数選択可）</label>
-<div id="menuChips" class="menu-chips">
-    </div>
-
-<div id="menuContainer" style="display:none;">
-    <select class="menu-select">
-        <option value="">選択してください</option>
-    </select>
+<label for="menu">メニュー</label>
+<div class="select-wrapper">
+    <select id="menuSelect" class="apple-select">
+        <option value="">メニューを選択してください</option>
+        </select>
 </div>
-<div id="addMenu" style="display:none;"></div>
+<div id="menuContainer" style="display:none;"></div>
 
 <label for="date">日付</label>
 <div id="dateChips" class="date-chips"></div> 
