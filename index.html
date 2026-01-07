@@ -210,6 +210,46 @@ optgroup {
 option {
     color: #000;
 }
+        /* メニュー間の余白を狭く */
+.menu-stack .select-wrapper {
+    margin-bottom: 10px; /* 25pxから10pxに短縮 */
+}
+
+/* 追加ボタンのデザイン */
+.add-menu-btn {
+    color: #007aff;
+    font-size: 14px;
+    cursor: pointer;
+    text-align: right;
+    margin-bottom: 20px;
+    font-weight: 500;
+}
+
+/* プレースホルダーの色（グレー） */
+.placeholder-color {
+    color: #8e8e93;
+}
+/* 選択済みの色（黒） */
+.selected-color {
+    color: #000000;
+}
+
+/* 土日祝の色分け */
+.date-chip.sat { color: #007aff; } /* 青 */
+.date-chip.sun { color: #ff3b30; } /* 赤 */
+
+/* 定休日のデザイン（薄いグレー＋斜線など） */
+.date-chip.holiday {
+    background: #f5f5f7;
+    color: #d2d2d7 !important;
+    border-color: #f5f5f7;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+.date-chip.holiday .status-text {
+    font-size: 9px;
+    margin-top: 2px;
+}
     </style>
 </head>
 
