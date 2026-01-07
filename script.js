@@ -150,7 +150,6 @@ function updateDateOptions() {
     const chip = document.createElement("div");
     chip.className = `date-chip ${dayClass}`;
     
-    // ★月を小さく、数字を主役にした新しい表示形式
     const statusText = isHoliday ? `<span style="font-size:9px; display:block; margin-top:2px;">定休日</span>` : '';
     chip.innerHTML = `
       <span class="month-label">${parseInt(m)}月</span>
@@ -223,7 +222,7 @@ async function updateTimeOptions() {
   });
 }
 
-// ===== 予約送信（確認画面の曜日追加・挨拶非表示対応） =====
+// ===== 予約送信（確認画面表示） =====
 document.getElementById("reserveForm").onsubmit = async e => {
   e.preventDefault();
   const name = document.getElementById("name").value;
@@ -236,7 +235,7 @@ document.getElementById("reserveForm").onsubmit = async e => {
     return;
   }
   
-  // 曜日の計算
+  // 曜日の計算 (Safari対策でハイフンをスラッシュに置換)
   const week = ["日", "月", "火", "水", "木", "金", "土"];
   const d = new Date(dateValue.replace(/-/g, "/"));
   const dow = week[d.getDay()];
