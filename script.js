@@ -247,20 +247,39 @@ document.getElementById("reserveForm").onsubmit = async e => {
   document.getElementById("reserveForm").style.display = "none";
   document.getElementById("confirm-screen").style.display = "block";
 
-  document.getElementById("okBtn").onclick = async () => {
+document.getElementById("okBtn").onclick = async () => {
     const required = menus.map(m => MENU_DATA[m] || 0).reduce((a, b) => a + b, 0);
     const [sh, sm] = time.split(":").map(Number);
     const endD = new Date(2000,0,1,sh,sm + required);
     const end_time = `${String(endD.getHours()).padStart(2,"0")}:${String(endD.getMinutes()).padStart(2,"0")}`;
 
+    // 曜日の再計算（メッセージ用）
+    const week = ["日", "月", "火", "水", "木", "金", "土"];
+    const d = new Date(dateValue.replace(/-/g, "/"));
+    const dow = week[d.getDay()];
+
+    // 1. Supabaseへ保存
     await supabaseClient.from("reservations").insert([{ name, menus: menus.join(", "), date: dateValue, time, end_time }]);
+    
+    // 2. LINE通知の文言を設定
+    const messageText = `【ご予約内容】\n名前：${name} 様\n日時：${dateValue.replace(/-/g, "/")} (${dow}) ${time}\nメニュー：${menus.join(", ")}\n\nご予約の変更、キャンセルはこちらから\nhttps://liff.line.me/2008611644-EZd5nkl0?action=cancel`;
+
+    // 3. LINE通知を送信（dynamic-serviceへ）
     await fetch("https://bcahztzetpfuklipjmxx.functions.supabase.co/dynamic-service", {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, menus: menus.join(", "), date: dateValue, time, customerUserId })
+      method: "POST", 
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ 
+        name, 
+        menus: menus.join(", "), 
+        date: dateValue, 
+        time, 
+        customerUserId,
+        customMessage: messageText // カスタム文言を送信
+      })
     });
+    
     showCompleteScreen();
   };
-};
 
 document.getElementById("cancelBtn").onclick = () => {
   document.querySelector(".greeting").style.display = "block";
