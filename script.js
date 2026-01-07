@@ -27,7 +27,7 @@ document.addEventListener("DOMContentLoaded", () => {
   loadMenus();
   loadHolidays().then(updateDateOptions);
 
-  // メニュー追加ボタンの動作
+  // メニュー追加ボタンの動作（「＋」なし、余白調整対応）
   document.getElementById("addMenu").onclick = () => {
     const container = document.getElementById("menuContainer");
     const firstWrapper = container.querySelector(".select-wrapper");
@@ -35,7 +35,11 @@ document.addEventListener("DOMContentLoaded", () => {
       const newWrapper = firstWrapper.cloneNode(true);
       const newSelect = newWrapper.querySelector("select");
       newSelect.value = ""; 
-      newSelect.onchange = updateTimeOptions;
+      // 2個目以降もプレースホルダー色で初期化
+      newSelect.classList.remove("selected-color");
+      newSelect.classList.add("placeholder-color");
+      
+      setupSelectColorChange(newSelect);
       container.appendChild(newWrapper);
     }
   };
@@ -62,6 +66,21 @@ async function loadMenus() {
 
   const firstSelect = document.querySelector(".menu-select");
   renderMenuOptions(firstSelect, data, categories);
+  setupSelectColorChange(firstSelect);
+}
+
+// セレクトボックスの色を動的に切り替える設定
+function setupSelectColorChange(selectElement) {
+  selectElement.addEventListener("change", () => {
+    if (selectElement.value === "") {
+      selectElement.classList.add("placeholder-color");
+      selectElement.classList.remove("selected-color");
+    } else {
+      selectElement.classList.remove("placeholder-color");
+      selectElement.classList.add("selected-color");
+    }
+    updateTimeOptions();
+  });
 }
 
 function renderMenuOptions(selectElement, data, categories) {
@@ -80,7 +99,6 @@ function renderMenuOptions(selectElement, data, categories) {
       selectElement.appendChild(group);
     }
   });
-  selectElement.onchange = updateTimeOptions;
 }
 
 // ===== 休日・日付・時刻ロジック =====
@@ -99,10 +117,12 @@ function updateDateOptions() {
   const dateSelect = document.getElementById("date");
   const chipContainer = document.getElementById("dateChips");
   if (!dateSelect || !chipContainer) return;
+
   dateSelect.innerHTML = '<option value="">日付を選択</option>';
   chipContainer.innerHTML = ""; 
   const today = new Date();
   today.setHours(0,0,0,0);
+
   for (let i = 1; i < 90; i++) {
     const d = new Date(today);
     d.setDate(today.getDate() + i);
@@ -110,23 +130,48 @@ function updateDateOptions() {
     const m = ("0" + (d.getMonth() + 1)).slice(-2);
     const day = ("0" + d.getDate()).slice(-2);
     const value = `${y}-${m}-${day}`;
-    if (HOLIDAYS.includes(value) || d.getDay() === 1) continue;
-    if (d.getDay() === 2 && (d.getDate() <= 7 || (d.getDate() >= 15 && d.getDate() <= 21))) continue;
+    
     const week = ["日","月","火","水","木","金","土"];
-    const dow = week[d.getDay()];
-    const op = document.createElement("option");
-    op.value = value;
-    op.textContent = `${y}/${m}/${day}(${dow})`;
-    dateSelect.appendChild(op);
+    const dowNum = d.getDay();
+    const dow = week[dowNum];
+
+    // 定休日判定（月曜定休、第1・3火曜定休、祝日設定など）
+    let isHoliday = false;
+    if (HOLIDAYS.includes(value) || dowNum === 1) isHoliday = true;
+    if (dowNum === 2 && (d.getDate() <= 7 || (d.getDate() >= 15 && d.getDate() <= 21))) isHoliday = true;
+
+    // クラス名設定（土曜=青、日曜祝日=赤、定休日=グレー）
+    let dayClass = "";
+    if (dowNum === 6) dayClass = "sat";
+    if (dowNum === 0 || HOLIDAYS.includes(value)) dayClass = "sun";
+    if (isHoliday) dayClass += " holiday";
+
+    // 裏側のセレクトボックスには有効な日だけ追加
+    if (!isHoliday) {
+      const op = document.createElement("option");
+      op.value = value;
+      op.textContent = `${y}/${m}/${day}(${dow})`;
+      dateSelect.appendChild(op);
+    }
+
+    // チップ生成
     const chip = document.createElement("div");
-    chip.className = "date-chip";
-    chip.innerHTML = `<span style="font-size:10px;">${m}月</span><span style="font-size:18px;font-weight:bold;">${day}</span><span style="font-size:10px;">(${dow})</span>`;
-    chip.onclick = () => {
-      dateSelect.value = value;
-      document.querySelectorAll(".date-chip").forEach(c => c.classList.remove("selected"));
-      chip.classList.add("selected");
-      updateTimeOptions();
-    };
+    chip.className = `date-chip ${dayClass}`;
+    chip.innerHTML = `
+      <span style="font-size:10px;">${m}月</span>
+      <span style="font-size:18px;font-weight:bold;">${day}</span>
+      <span style="font-size:10px;">(${dow})${isHoliday ? '<br><span style="font-size:9px;">定休日</span>' : ''}</span>
+    `;
+
+    // 定休日以外ならクリック可能
+    if (!isHoliday) {
+      chip.onclick = () => {
+        dateSelect.value = value;
+        document.querySelectorAll(".date-chip").forEach(c => c.classList.remove("selected"));
+        chip.classList.add("selected");
+        updateTimeOptions();
+      };
+    }
     chipContainer.appendChild(chip);
   }
 }
