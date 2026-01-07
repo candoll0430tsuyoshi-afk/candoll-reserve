@@ -200,9 +200,14 @@ async function updateTimeOptions() {
     slot.textContent = start;
     if (!isDisabled) {
       slot.onclick = () => {
-        timeSelect.value = start;
+        // 修正ポイント：裏側のセレクトボックスにも値をセットする
+        timeSelect.value = start; 
+        
         document.querySelectorAll(".time-slot").forEach(s => s.classList.remove("selected"));
         slot.classList.add("selected");
+        
+        // デバッグ用（任意）：正しく入ったかコンソールで確認
+        console.log("選択された時間:", timeSelect.value);
       };
     }
     gridContainer.appendChild(slot);
