@@ -150,6 +150,56 @@
     border-color: #f5f5f7;
     cursor: not-allowed;
 }
+        /* --- 追加：名前入力とメニューチップのデザイン --- */
+.input-wrapper {
+    margin-bottom: 25px;
+}
+#name {
+    border: 1px solid #e0e0e0;
+    background-color: #f5f5f7;
+    border-radius: 12px;
+    padding: 15px;
+    font-size: 16px;
+    transition: all 0.3s ease;
+}
+#name:focus {
+    outline: none;
+    border-color: #000;
+    background-color: #fff;
+    box-shadow: 0 0 0 4px rgba(0,0,0,0.05);
+}
+
+.menu-chips {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr); /* 2列で並べる */
+    gap: 10px;
+    margin-bottom: 25px;
+}
+.menu-chip {
+    padding: 15px 10px;
+    border: 1px solid #e0e0e0;
+    border-radius: 12px;
+    background: #fff;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 60px;
+}
+.menu-chip.selected {
+    background: #000;
+    color: #fff;
+    border-color: #000;
+}
+.menu-chip .duration {
+    font-size: 11px;
+    margin-top: 4px;
+    opacity: 0.6;
+}
     </style>
 </head>
 
