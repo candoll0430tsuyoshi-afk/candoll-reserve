@@ -65,45 +65,38 @@ async function loadMenus() {
   if (error) return;
 
   MENU_DATA = {};
-  const chipContainer = document.getElementById("menuChips");
-  chipContainer.innerHTML = ""; // リセット
+  const menuSelect = document.getElementById("menuSelect");
+  menuSelect.innerHTML = '<option value="">メニューを選択してください</option>';
 
   data.forEach(m => {
-    MENU_DATA[m.name] = m.duration;
+    MENU_DATA[m.name] = m.duration; // 所要時間はデータとして保持
 
-    // メニューチップの作成
-    const chip = document.createElement("div");
-    chip.className = "menu-chip";
-    chip.innerHTML = `
-      <span>${m.name}</span>
-      <span class="duration">${m.duration}分</span>
-    `;
-
-    chip.onclick = () => {
-      chip.classList.toggle("selected"); // ON/OFF切り替え
-      updateMenuSelects(); // 隠しセレクトボックスと同期
-      updateTimeOptions(); // 時間の空き状況を再計算
-    };
-    chipContainer.appendChild(chip);
+    const op = document.createElement("option");
+    op.value = m.name;
+    op.textContent = m.name; // 「分」は表示しない
+    menuSelect.appendChild(op);
   });
+
+  // プルダウンが変更された時の動き
+  menuSelect.onchange = () => {
+    updateMenuSelectsFromDropdown(menuSelect.value);
+    updateTimeOptions(); // 空き時間の再計算
+  };
 }
 
-// チップの選択状態を裏側のプログラムに伝える補助関数
-function updateMenuSelects() {
-  const selectedChips = Array.from(document.querySelectorAll(".menu-chip.selected"));
+// 補助関数：プルダウンの値を裏側のシステムに同期
+function updateMenuSelectsFromDropdown(selectedName) {
   const menuContainer = document.getElementById("menuContainer");
-  menuContainer.innerHTML = ""; // 一旦クリア
+  menuContainer.innerHTML = ""; 
+  if (!selectedName) return;
 
-  selectedChips.forEach(chip => {
-    const name = chip.querySelector("span").textContent;
-    const sel = document.createElement("select");
-    sel.className = "menu-select";
-    const opt = document.createElement("option");
-    opt.value = name;
-    opt.selected = true;
-    sel.appendChild(opt);
-    menuContainer.appendChild(sel);
-  });
+  const sel = document.createElement("select");
+  sel.className = "menu-select";
+  const opt = document.createElement("option");
+  opt.value = selectedName;
+  opt.selected = true;
+  sel.appendChild(opt);
+  menuContainer.appendChild(sel);
 }
 
 // ===== 休日読み込み =====
