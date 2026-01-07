@@ -27,6 +27,7 @@ document.addEventListener("DOMContentLoaded", () => {
   loadMenus();
   loadHolidays().then(updateDateOptions);
 
+  // メニュー追加ボタン
   document.getElementById("addMenu").onclick = () => {
     const container = document.getElementById("menuContainer");
     const firstWrapper = container.querySelector(".select-wrapper");
@@ -148,10 +149,14 @@ function updateDateOptions() {
 
     const chip = document.createElement("div");
     chip.className = `date-chip ${dayClass}`;
+    
+    // ★月を小さく、数字を主役にした新しい表示形式
+    const statusText = isHoliday ? `<span style="font-size:9px; display:block; margin-top:2px;">定休日</span>` : '';
     chip.innerHTML = `
-      <span style="font-size:10px;">${m}月</span>
-      <span style="font-size:18px;font-weight:bold;">${day}</span>
-      <span style="font-size:10px;">(${dow})${isHoliday ? '<br><span style="font-size:9px;">定休日</span>' : ''}</span>
+      <span class="month-label">${parseInt(m)}月</span>
+      <span style="font-size:22px; font-weight:800; line-height:1;">${parseInt(day)}</span>
+      <span class="dow-label">(${dow})</span>
+      ${statusText}
     `;
 
     if (!isHoliday) {
@@ -166,7 +171,7 @@ function updateDateOptions() {
   }
 }
 
-// ===== 時間表示ロジック（重要：バグ修正済み） =====
+// ===== 時間表示ロジック =====
 async function updateTimeOptions() {
   const date = document.getElementById("date").value;
   const timeSelect = document.getElementById("time");
@@ -174,7 +179,7 @@ async function updateTimeOptions() {
   if (!timeSelect || !gridContainer) return;
   
   gridContainer.innerHTML = ""; 
-  timeSelect.innerHTML = '<option value="">選択</option>'; // selectを初期化
+  timeSelect.innerHTML = '<option value="">選択</option>';
   
   if (!date) return;
 
@@ -197,23 +202,19 @@ async function updateTimeOptions() {
       if (toMin(start) < toMin(r.end) && toMin(r.start) < toMin(end)) { isDisabled = true; break; }
     }
 
-    // 裏側のセレクトボックスに選択肢を追加しておく
     const op = document.createElement("option");
     op.value = start;
     op.textContent = start;
     op.disabled = isDisabled;
     timeSelect.appendChild(op);
 
-    // 画面上のボタン生成
     const slot = document.createElement("div");
     slot.className = "time-slot" + (isDisabled ? " disabled" : "");
     slot.textContent = start;
     
     if (!isDisabled) {
       slot.onclick = () => {
-        // ここが重要！裏側のselectの値を確実に更新する
         timeSelect.value = start;
-        
         document.querySelectorAll(".time-slot").forEach(s => s.classList.remove("selected"));
         slot.classList.add("selected");
       };
@@ -222,28 +223,28 @@ async function updateTimeOptions() {
   });
 }
 
-// ===== 予約送信 =====
+// ===== 予約送信（確認画面の曜日追加・挨拶非表示対応） =====
 document.getElementById("reserveForm").onsubmit = async e => {
   e.preventDefault();
   const name = document.getElementById("name").value;
-  const date = document.getElementById("date").value;
+  const dateValue = document.getElementById("date").value;
   const time = document.getElementById("time").value;
   const menus = Array.from(document.querySelectorAll(".menu-select")).map(s => s.value).filter(v => v !== "");
 
-  // チェック！ここを通過できるはず
-  if (!name || !date || !time || menus.length === 0) {
+  if (!name || !dateValue || !time || menus.length === 0) {
     alert("お名前、メニュー、日時をすべて選択してください。");
     return;
   }
-  // 曜日を計算
-  const week = ["日", "月", "火", "水", "木", "金", "土"];
-  const d = new Date(dateValue);
-  const dow = week[d.getDay()];
   
-  // 日付の表示形式を整える (2024-04-30 -> 2024/04/30)
+  // 曜日の計算
+  const week = ["日", "月", "火", "水", "木", "金", "土"];
+  const d = new Date(dateValue.replace(/-/g, "/"));
+  const dow = week[d.getDay()];
   const formattedDate = dateValue.replace(/-/g, "/");
+
+  // 確認画面の表示
   document.querySelector(".greeting").style.display = "none";
-  document.getElementById("confirm-text").innerHTML = `<b>お名前</b>：${name}<br><b>メニュー</b>：${menus.join(", ")}<br><b>日時</b>：${date} ${time}`;
+  document.getElementById("confirm-text").innerHTML = `<b>お名前</b>：${name}<br><b>メニュー</b>：${menus.join(", ")}<br><b>日時</b>：${formattedDate} (${dow}) ${time}`;
   document.getElementById("reserveForm").style.display = "none";
   document.getElementById("confirm-screen").style.display = "block";
 
@@ -253,21 +254,22 @@ document.getElementById("reserveForm").onsubmit = async e => {
     const endD = new Date(2000,0,1,sh,sm + required);
     const end_time = `${String(endD.getHours()).padStart(2,"0")}:${String(endD.getMinutes()).padStart(2,"0")}`;
 
-    await supabaseClient.from("reservations").insert([{ name, menus: menus.join(", "), date, time, end_time }]);
+    await supabaseClient.from("reservations").insert([{ name, menus: menus.join(", "), date: dateValue, time, end_time }]);
     await fetch("https://bcahztzetpfuklipjmxx.functions.supabase.co/dynamic-service", {
       method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, menus: menus.join(", "), date, time, customerUserId })
+      body: JSON.stringify({ name, menus: menus.join(", "), date: dateValue, time, customerUserId })
     });
     showCompleteScreen();
   };
 };
 
 document.getElementById("cancelBtn").onclick = () => {
+  document.querySelector(".greeting").style.display = "block";
   document.getElementById("confirm-screen").style.display = "none";
   document.getElementById("reserveForm").style.display = "block";
 };
 
-// 完了アニメーション（変更なし）
+// 完了アニメーション演出
 function showCompleteScreen() {
   const container = document.querySelector(".container");
   container.innerHTML = `
