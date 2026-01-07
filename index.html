@@ -233,8 +233,6 @@
 </div>
 <div id="addMenu" style="display:none;"></div>
 
-        <div id="addMenu">＋ メニューを追加する</div>
-
 <label for="date">日付</label>
 <div id="dateChips" class="date-chips"></div> 
 <select id="date" style="display:none;"></select>
@@ -276,28 +274,6 @@
     </div>
 </div>
 
-<script>
-    const dateSelect = document.getElementById("date");
-    const days = ['日','月','火','水','木','金','土'];
-    dateSelect.innerHTML = '<option value="">日付を選択</option>';
-    for (let i = 1; i <= 30; i++) {
-        const d = new Date();
-        d.setDate(d.getDate() + i);
-        const y = d.getFullYear();
-        const m = String(d.getMonth() + 1).padStart(2, "0");
-        const day = String(d.getDate()).padStart(2, "0");
-        const dow = d.getDay();
-        if (dow === 1) continue;
-        if (dow === 2) {
-            const week = Math.ceil(d.getDate() / 7);
-            if (week === 1 || week === 3) continue;
-        }
-        const op = document.createElement("option");
-        op.value = `${y}-${m}-${day}`;
-        op.textContent = `${y}/${m}/${day} (${days[dow]})`;
-        dateSelect.appendChild(op);
-    }
-</script>
 
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
