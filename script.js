@@ -235,6 +235,13 @@ document.getElementById("reserveForm").onsubmit = async e => {
     alert("お名前、メニュー、日時をすべて選択してください。");
     return;
   }
+  // 曜日を計算
+  const week = ["日", "月", "火", "水", "木", "金", "土"];
+  const d = new Date(dateValue);
+  const dow = week[d.getDay()];
+  
+  // 日付の表示形式を整える (2024-04-30 -> 2024/04/30)
+  const formattedDate = dateValue.replace(/-/g, "/");
   document.querySelector(".greeting").style.display = "none";
   document.getElementById("confirm-text").innerHTML = `<b>お名前</b>：${name}<br><b>メニュー</b>：${menus.join(", ")}<br><b>日時</b>：${date} ${time}`;
   document.getElementById("reserveForm").style.display = "none";
