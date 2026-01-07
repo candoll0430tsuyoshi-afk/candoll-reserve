@@ -235,7 +235,7 @@ document.getElementById("reserveForm").onsubmit = async e => {
     alert("お名前、メニュー、日時をすべて選択してください。");
     return;
   }
-  
+  document.querySelector(".greeting").style.display = "none";
   document.getElementById("confirm-text").innerHTML = `<b>お名前</b>：${name}<br><b>メニュー</b>：${menus.join(", ")}<br><b>日時</b>：${date} ${time}`;
   document.getElementById("reserveForm").style.display = "none";
   document.getElementById("confirm-screen").style.display = "block";
