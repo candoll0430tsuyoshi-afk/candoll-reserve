@@ -34,21 +34,26 @@ const miniappReady = (async () => {
     runtime = "web";
   }
 })();
-// ===== メニュー追加ボタンの動作を追加 =====
+// ===== メニュー追加ボタンの動作（二重登録防止版） =====
 document.addEventListener("DOMContentLoaded", () => {
   const addMenuBtn = document.getElementById("addMenu");
   const menuContainer = document.getElementById("menuContainer");
 
   if (addMenuBtn && menuContainer) {
+    // 一旦既存のクリックイベントをクリア（nullにする）してから新しく登録
+    addMenuBtn.onclick = null; 
+
     addMenuBtn.onclick = () => {
-      // 最初のセレクトボックスをコピーして新しいメニュー枠を作る
+      // 現在のセレクトボックスの数を確認（念のため）
+      console.log("メニュー追加ボタンが押されました");
+
       const firstSelect = menuContainer.querySelector(".menu-select");
       if (firstSelect) {
         const newSelect = firstSelect.cloneNode(true);
         newSelect.value = ""; // 選択状態をリセット
         menuContainer.appendChild(newSelect);
         
-        // 新しく増えたセレクトボックスにも、変更があったら時間を再計算する命令を付ける
+        // 新しく増えたセレクトボックスにも時間を再計算する命令を付ける
         newSelect.addEventListener("change", updateTimeOptions);
       }
     };
