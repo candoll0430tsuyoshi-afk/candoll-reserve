@@ -279,7 +279,36 @@ document.getElementById("okBtn").onclick = async () => {
 
 function showCompleteScreen() {
   const container = document.querySelector(".container");
-  container.innerHTML = `<div style="padding:40px 20px;"><h2>予約を受付ました。</h2><p>ありがとうございます。<br>当日のお越しをお待ちしております。</p><button id="closeBtn" style="padding:15px 40px; font-size:18px; border-radius:8px; background:#000; color:#fff; border:none; cursor:pointer;">閉じる</button></div>`;
+  container.innerHTML = `
+    <div class="complete-animation" style="padding: 60px 20px;">
+      <div class="success-checkmark">
+        <div class="check-icon">
+          <span class="icon-line line-tip"></span>
+          <span class="icon-line line-long"></span>
+          <div class="icon-circle"></div>
+          <div class="icon-fix"></div>
+        </div>
+      </div>
+      <h2 style="font-size:22px; margin-top:30px;">ご予約を承りました</h2>
+      <p style="color:#86868b; margin-bottom:40px;">当日のお越しを心よりお待ちしております。</p>
+      <button id="closeBtn" style="padding:15px 40px; font-size:16px; border-radius:12px; background:#000; color:#fff; border:none; cursor:pointer; width:100%;">
+        閉じる
+      </button>
+    </div>
+  `;
+  
+  // アニメーション用のCSS（本来はstyleに追加ですが、ここでも動くようscriptから挿入）
+  const style = document.createElement('style');
+  style.innerHTML = `
+    .success-checkmark { width: 80px; height: 115px; margin: 0 auto; }
+    .check-icon { width: 80px; height: 80px; position: relative; border-radius: 50%; box-sizing: content-box; border: 4px solid #4CAF50; }
+    .icon-line { height: 5px; background-color: #4CAF50; display: block; border-radius: 2px; position: absolute; z-index: 10; }
+    .line-tip { width: 25px; left: 14px; top: 46px; transform: rotate(45deg); }
+    .line-long { width: 47px; right: 8px; top: 38px; transform: rotate(-45deg); }
+    .icon-circle { width: 80px; height: 80px; border-radius: 50%; position: absolute; left: -4px; top: -4px; z-index: 10; border: 4px solid rgba(76, 175, 80, 0.2); }
+  `;
+  document.head.appendChild(style);
+
   document.getElementById("closeBtn").onclick = () => {
     if (window.liff && liff.isInClient()) liff.closeWindow();
     else window.location.href = "https://candoll0430tsuyoshi-afk.github.io/candoll-reserve/";
