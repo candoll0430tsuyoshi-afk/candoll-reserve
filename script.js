@@ -27,7 +27,6 @@ document.addEventListener("DOMContentLoaded", () => {
   loadMenus();
   loadHolidays().then(updateDateOptions);
 
-  // メニュー追加ボタン
   document.getElementById("addMenu").onclick = () => {
     const container = document.getElementById("menuContainer");
     const firstWrapper = container.querySelector(".select-wrapper");
@@ -167,13 +166,16 @@ function updateDateOptions() {
   }
 }
 
-// ===== 時間表示ロジック =====
+// ===== 時間表示ロジック（重要：バグ修正済み） =====
 async function updateTimeOptions() {
   const date = document.getElementById("date").value;
   const timeSelect = document.getElementById("time");
   const gridContainer = document.getElementById("timeGrid");
   if (!timeSelect || !gridContainer) return;
+  
   gridContainer.innerHTML = ""; 
+  timeSelect.innerHTML = '<option value="">選択</option>'; // selectを初期化
+  
   if (!date) return;
 
   const menus = Array.from(document.querySelectorAll(".menu-select")).map(s => s.value).filter(v => v !== "");
@@ -195,26 +197,32 @@ async function updateTimeOptions() {
       if (toMin(start) < toMin(r.end) && toMin(r.start) < toMin(end)) { isDisabled = true; break; }
     }
 
+    // 裏側のセレクトボックスに選択肢を追加しておく
+    const op = document.createElement("option");
+    op.value = start;
+    op.textContent = start;
+    op.disabled = isDisabled;
+    timeSelect.appendChild(op);
+
+    // 画面上のボタン生成
     const slot = document.createElement("div");
     slot.className = "time-slot" + (isDisabled ? " disabled" : "");
     slot.textContent = start;
+    
     if (!isDisabled) {
       slot.onclick = () => {
-        // 修正ポイント：裏側のセレクトボックスにも値をセットする
-        timeSelect.value = start; 
+        // ここが重要！裏側のselectの値を確実に更新する
+        timeSelect.value = start;
         
         document.querySelectorAll(".time-slot").forEach(s => s.classList.remove("selected"));
         slot.classList.add("selected");
-        
-        // デバッグ用（任意）：正しく入ったかコンソールで確認
-        console.log("選択された時間:", timeSelect.value);
       };
     }
     gridContainer.appendChild(slot);
   });
 }
 
-// ===== 予約送信 & アニメーション =====
+// ===== 予約送信 =====
 document.getElementById("reserveForm").onsubmit = async e => {
   e.preventDefault();
   const name = document.getElementById("name").value;
@@ -222,6 +230,7 @@ document.getElementById("reserveForm").onsubmit = async e => {
   const time = document.getElementById("time").value;
   const menus = Array.from(document.querySelectorAll(".menu-select")).map(s => s.value).filter(v => v !== "");
 
+  // チェック！ここを通過できるはず
   if (!name || !date || !time || menus.length === 0) {
     alert("お名前、メニュー、日時をすべて選択してください。");
     return;
@@ -251,6 +260,7 @@ document.getElementById("cancelBtn").onclick = () => {
   document.getElementById("reserveForm").style.display = "block";
 };
 
+// 完了アニメーション（変更なし）
 function showCompleteScreen() {
   const container = document.querySelector(".container");
   container.innerHTML = `
