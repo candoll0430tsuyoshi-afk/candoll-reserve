@@ -34,7 +34,26 @@ const miniappReady = (async () => {
     runtime = "web";
   }
 })();
+// ===== メニュー追加ボタンの動作を追加 =====
+document.addEventListener("DOMContentLoaded", () => {
+  const addMenuBtn = document.getElementById("addMenu");
+  const menuContainer = document.getElementById("menuContainer");
 
+  if (addMenuBtn && menuContainer) {
+    addMenuBtn.onclick = () => {
+      // 最初のセレクトボックスをコピーして新しいメニュー枠を作る
+      const firstSelect = menuContainer.querySelector(".menu-select");
+      if (firstSelect) {
+        const newSelect = firstSelect.cloneNode(true);
+        newSelect.value = ""; // 選択状態をリセット
+        menuContainer.appendChild(newSelect);
+        
+        // 新しく増えたセレクトボックスにも、変更があったら時間を再計算する命令を付ける
+        newSelect.addEventListener("change", updateTimeOptions);
+      }
+    };
+  }
+});
 let MENU_DATA = {};
 let HOLIDAYS = [];
 async function loadMenus() {
