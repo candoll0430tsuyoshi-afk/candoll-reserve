@@ -84,14 +84,35 @@
         }
 
         /* --- 日付チップ --- */
-        .date-chips {
-            display: flex;
-            overflow-x: auto;
-            gap: 12px;
-            padding: 10px 0;
-            margin-bottom: 25px;
-            -webkit-overflow-scrolling: touch;
-        }
+.date-chip {
+    flex: 0 0 auto;
+    width: 65px;
+    height: 80px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    border: 1px solid #e0e0e0;
+    border-radius: 14px;
+    background: #fff;
+    position: relative; /* 月を配置する基準 */
+    cursor: pointer;
+    transition: all 0.2s ease;
+    padding-top: 10px; /* 上に少し隙間を作る */
+}
+        .month-label {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    font-size: 10px;
+    font-weight: bold;
+    opacity: 0.5;
+}
+        .dow-label {
+    font-size: 11px;
+    font-weight: 600;
+    margin-top: 2px;
+}
         .date-chips::-webkit-scrollbar { display: none; }
 
         .date-chip {
