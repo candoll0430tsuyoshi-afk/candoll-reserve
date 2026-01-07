@@ -27,7 +27,6 @@ document.addEventListener("DOMContentLoaded", () => {
   loadMenus();
   loadHolidays().then(updateDateOptions);
 
-  // メニュー追加ボタン
   document.getElementById("addMenu").onclick = () => {
     const container = document.getElementById("menuContainer");
     const firstWrapper = container.querySelector(".select-wrapper");
@@ -222,7 +221,7 @@ async function updateTimeOptions() {
   });
 }
 
-// ===== 予約送信（確認画面表示） =====
+// ===== 予約送信 =====
 document.getElementById("reserveForm").onsubmit = async e => {
   e.preventDefault();
   const name = document.getElementById("name").value;
@@ -235,7 +234,6 @@ document.getElementById("reserveForm").onsubmit = async e => {
     return;
   }
   
-  // 曜日の計算 (Safari対策でハイフンをスラッシュに置換)
   const week = ["日", "月", "火", "水", "木", "金", "土"];
   const d = new Date(dateValue.replace(/-/g, "/"));
   const dow = week[d.getDay()];
@@ -247,24 +245,26 @@ document.getElementById("reserveForm").onsubmit = async e => {
   document.getElementById("reserveForm").style.display = "none";
   document.getElementById("confirm-screen").style.display = "block";
 
-document.getElementById("okBtn").onclick = async () => {
+  document.getElementById("okBtn").onclick = async () => {
     const required = menus.map(m => MENU_DATA[m] || 0).reduce((a, b) => a + b, 0);
     const [sh, sm] = time.split(":").map(Number);
     const endD = new Date(2000,0,1,sh,sm + required);
     const end_time = `${String(endD.getHours()).padStart(2,"0")}:${String(endD.getMinutes()).padStart(2,"0")}`;
 
-    // 曜日の再計算（メッセージ用）
-    const week = ["日", "月", "火", "水", "木", "金", "土"];
-    const d = new Date(dateValue.replace(/-/g, "/"));
-    const dow = week[d.getDay()];
+    // LINE通知の文言を設定
+    const messageText = `【ご予約内容】\n名前：${name} 様\n日時：${formattedDate} (${dow}) ${time}\nメニュー：${menus.join(", ")}\n\nご予約の変更、キャンセルはこちらから\nhttps://liff.line.me/2008611644-EZd5nkl0?action=cancel`;
 
     // 1. Supabaseへ保存
-    await supabaseClient.from("reservations").insert([{ name, menus: menus.join(", "), date: dateValue, time, end_time }]);
+    await supabaseClient.from("reservations").insert([{ 
+      name, 
+      menus: menus.join(", "), 
+      date: dateValue, 
+      time, 
+      end_time,
+      customer_user_id: customerUserId // 顧客管理用
+    }]);
     
-    // 2. LINE通知の文言を設定
-    const messageText = `【ご予約内容】\n名前：${name} 様\n日時：${dateValue.replace(/-/g, "/")} (${dow}) ${time}\nメニュー：${menus.join(", ")}\n\nご予約の変更、キャンセルはこちらから\nhttps://liff.line.me/2008611644-EZd5nkl0?action=cancel`;
-
-    // 3. LINE通知を送信（dynamic-serviceへ）
+    // 2. LINE通知を送信
     await fetch("https://bcahztzetpfuklipjmxx.functions.supabase.co/dynamic-service", {
       method: "POST", 
       headers: { "Content-Type": "application/json" },
@@ -274,12 +274,13 @@ document.getElementById("okBtn").onclick = async () => {
         date: dateValue, 
         time, 
         customerUserId,
-        customMessage: messageText // カスタム文言を送信
+        customMessage: messageText 
       })
     });
     
     showCompleteScreen();
   };
+};
 
 document.getElementById("cancelBtn").onclick = () => {
   document.querySelector(".greeting").style.display = "block";
@@ -287,7 +288,7 @@ document.getElementById("cancelBtn").onclick = () => {
   document.getElementById("reserveForm").style.display = "block";
 };
 
-// 完了アニメーション演出
+// 完了アニメーション
 function showCompleteScreen() {
   const container = document.querySelector(".container");
   container.innerHTML = `
@@ -304,9 +305,9 @@ function showCompleteScreen() {
     </div>
     <style>
       .checkmark-wrapper { display: flex; justify-content: center; }
-      .checkmark { width: 80px; height: 80px; border-radius: 50%; stroke-width: 2; stroke: #fff; stroke-miterlimit: 10; box-shadow: inset 0px 0px 0px #4caf50; animation: fill .4s ease-in-out .4s forwards, scale .3s ease-in-out .9s both; }
-      .checkmark__circle { stroke-dasharray: 166; stroke-dashoffset: 166; stroke-width: 2; stroke-miterlimit: 10; stroke: #4caf50; fill: none; animation: stroke 0.6s cubic-bezier(0.65, 0, 0.45, 1) forwards; }
-      .checkmark__check { transform-origin: 50% 50%; stroke-dasharray: 48; stroke-dashoffset: 48; animation: stroke 0.3s cubic-bezier(0.65, 0, 0.45, 1) 0.8s forwards; }
+      .checkmark { width: 80px; height: 80px; border-radius: 50%; stroke-width: 2; stroke: #fff; animation: fill .4s ease-in-out .4s forwards, scale .3s ease-in-out .9s both; }
+      .checkmark__circle { stroke-dasharray: 166; stroke-dashoffset: 166; stroke-width: 2; stroke: #4caf50; fill: none; animation: stroke 0.6s forwards; }
+      .checkmark__check { transform-origin: 50% 50%; stroke-dasharray: 48; stroke-dashoffset: 48; animation: stroke 0.3s forwards 0.8s; }
       @keyframes stroke { 100% { stroke-dashoffset: 0; } }
       @keyframes scale { 0%, 100% { transform: none; } 50% { transform: scale3d(1.1, 1.1, 1); } }
       @keyframes fill { 100% { box-shadow: inset 0px 0px 0px 40px #4caf50; } }
@@ -317,3 +318,46 @@ function showCompleteScreen() {
     else window.location.href = "https://candoll0430tsuyoshi-afk.github.io/candoll-reserve/";
   };
 }
+
+// ===== キャンセルモード判定 =====
+window.addEventListener("load", async () => {
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get('action') === 'cancel') {
+    document.getElementById("reserveForm").style.display = "none";
+    document.querySelector(".greeting").style.display = "none";
+    document.getElementById("cancel-screen").style.display = "block";
+
+    await miniappReady; 
+    
+    if (!customerUserId) {
+      document.getElementById("cancel-info").innerText = "LINEから開き直してください。";
+      document.getElementById("executeCancelBtn").style.display = "none";
+      return;
+    }
+
+    const { data } = await supabaseClient.from("reservations")
+      .select("*")
+      .eq("customer_user_id", customerUserId)
+      .order("created_at", { ascending: false })
+      .limit(1);
+
+    if (data && data.length > 0) {
+      const res = data[0];
+      document.getElementById("cancel-info").innerHTML = `<b>お名前</b>：${res.name}<br><b>日時</b>：${res.date.replace(/-/g, "/")} ${res.time}<br><b>メニュー</b>：${res.menus}`;
+      document.getElementById("executeCancelBtn").onclick = async () => {
+        if (!confirm("本当にキャンセルしてよろしいですか？")) return;
+        await supabaseClient.from("reservations").delete().eq("id", res.id);
+        await fetch("https://bcahztzetpfuklipjmxx.functions.supabase.co/dynamic-service", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ mode: "cancel", name: res.name, date: res.date, time: res.time, customerUserId })
+        });
+        alert("予約をキャンセルしました。");
+        liff.closeWindow();
+      };
+    } else {
+      document.getElementById("cancel-info").innerText = "該当する予約が見つかりませんでした。";
+      document.getElementById("executeCancelBtn").style.display = "none";
+    }
+  }
+});
