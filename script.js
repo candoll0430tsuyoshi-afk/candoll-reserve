@@ -195,16 +195,19 @@ if (dateInput) {
   });
 }
 
-// ===== 日付一覧生成 =====
+// ===== 日付一覧生成 ＋ Apple風チップ表示 =====
 function updateDateOptions() {
   const dateSelect = document.getElementById("date");
-  if (!dateSelect) return;
+  const chipContainer = document.getElementById("dateChips"); // 追加した箱
+  if (!dateSelect || !chipContainer) return;
 
   dateSelect.innerHTML = '<option value="">日付を選択</option>';
+  chipContainer.innerHTML = ""; // チップの箱を一度空にする
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
+  // 90日分の日付をループ
   for (let i = 1; i < 90; i++) {
     const d = new Date(today);
     d.setDate(today.getDate() + i);
@@ -214,70 +217,44 @@ function updateDateOptions() {
     const day = ("0" + d.getDate()).slice(-2);
     const value = `${y}-${m}-${day}`;
 
+    // 定休日などの除外ロジック（今の設定を維持）
     if (HOLIDAYS.includes(value)) continue;
     if (d.getDay() === 1) continue;
     if (d.getDay() === 2 && d.getDate() <= 7) continue;
     if (d.getDay() === 2 && d.getDate() >= 15 && d.getDate() <= 21) continue;
 
     const week = ["日", "月", "火", "水", "木", "金", "土"];
+    const dow = week[d.getDay()];
+
+    // 1. 裏側のセレクトボックスにoptionを追加
     const op = document.createElement("option");
     op.value = value;
-    op.textContent = `${y}/${m}/${day}(${week[d.getDay()]})`;
+    op.textContent = `${y}/${m}/${day}(${dow})`;
     dateSelect.appendChild(op);
+
+    // 2. 表側のApple風チップを作成
+    const chip = document.createElement("div");
+    chip.className = "date-chip";
+    chip.innerHTML = `
+      <span style="font-size: 10px; margin-bottom: 4px;">${m}月</span>
+      <span style="font-size: 18px; font-weight: bold;">${day}</span>
+      <span style="font-size: 10px; margin-top: 4px;">(${dow})</span>
+    `;
+
+    // チップをクリックした時の動作
+    chip.onclick = () => {
+      dateSelect.value = value; // 隠れたセレクトボックスに値をセット
+      
+      // 全チップから selected を外して、クリックしたものだけに付ける
+      document.querySelectorAll(".date-chip").forEach(c => c.classList.remove("selected"));
+      chip.classList.add("selected");
+
+      // 日付が変わったことをプログラムに知らせる（時間の再計算を動かす）
+      dateSelect.dispatchEvent(new Event("change"));
+    };
+
+    chipContainer.appendChild(chip);
   }
-}
-
-// ===== 時刻オプション生成 =====
-async function updateTimeOptions() {
-  const date = document.getElementById("date").value;
-  if (!date) return;
-
-  const normalizedDate = normalizeDate(date);
-  if (Object.keys(MENU_DATA).length === 0) return;
-
-  const timeSelect = document.getElementById("time");
-  Array.from(timeSelect.options).forEach(o => {
-    o.disabled = false;
-    o.style.color = "#000";
-  });
-
-  const menus = Array.from(document.querySelectorAll(".menu-select"))
-    .map(s => s.value)
-    .filter(v => v !== "");
-
-  const required = calcTotalMinutes(menus);
-  const closeTime = "19:00";
-
-  const { data } = await supabaseClient
-    .from("reservations")
-    .select("time,end_time")
-    .eq("date", normalizedDate);
-
-  const reserved = (data || []).map(r => ({
-    start: r.time.trim(),
-    end: r.end_time.trim()
-  }));
-  
-  Array.from(timeSelect.options).forEach(o => {
-    if (!o.value) return;
-
-    const start = o.value.trim();
-    const end = addMinutesToTime(start, required);
-
-    if (end > closeTime) {
-      o.disabled = true;
-      o.style.color = "#aaa";
-      return;
-    }
-
-    for (const r of reserved) {
-      if (isOverlap(start, end, r.start, r.end)) {
-        o.disabled = true;
-        o.style.color = "#aaa";
-        return;
-      }
-    }
-  });
 }
 
 // ===== 予約登録処理 =====
