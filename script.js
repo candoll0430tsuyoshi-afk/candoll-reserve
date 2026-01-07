@@ -54,29 +54,73 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 });
 
-// ===== メニュー読み込み =====
+// ===== メニュー読み込み（カテゴリー分け対応 ＋ 所要時間非表示） =====
 async function loadMenus() {
   if (!supabaseClient) return;
 
-  const { data, error } = await supabaseClient
-    .from("menus")
-    .select("name, duration");
-
+  const { data, error } = await supabaseClient.from("menus").select("name, duration");
   if (error) return;
 
   MENU_DATA = {};
-  const menuSelect = document.getElementById("menuSelect");
-  menuSelect.innerHTML = '<option value="">メニューを選択してください</option>';
+  data.forEach(m => { MENU_DATA[m.name] = m.duration; });
 
-  data.forEach(m => {
-    MENU_DATA[m.name] = m.duration; // 所要時間はデータとして保持
+  // カテゴリーの定義
+  const categories = {
+    "組み合わせ": ["＋"],
+    "カット": ["カット"],
+    "カラー": ["カラー", "ヘナ"],
+    "パーマ": ["パーマ"],
+    "ストレート": ["ストレート"],
+    "トリートメント": ["トリートメント"],
+    "メニュー未定": ["相談"]
+  };
 
-    const op = document.createElement("option");
-    op.value = m.name;
-    op.textContent = m.name; // 「分」は表示しない
-    menuSelect.appendChild(op);
+  const firstSelect = document.querySelector(".menu-select");
+  renderMenuOptions(firstSelect, data, categories);
+}
+
+// セレクトボックスの中にカテゴリー付きでメニューを並べる関数
+function renderMenuOptions(selectElement, data, categories) {
+  selectElement.innerHTML = '<option value="">メニューを選択してください</option>';
+  
+  // カテゴリーごとにグループを作成
+  Object.keys(categories).forEach(catName => {
+    const group = document.createElement("optgroup");
+    group.label = catName;
+
+    // メニュー名がカテゴリーのキーワードを含むかチェック
+    const filtered = data.filter(m => {
+      return categories[catName].some(keyword => m.name.includes(keyword));
+    });
+
+    if (filtered.length > 0) {
+      filtered.forEach(m => {
+        const op = document.createElement("option");
+        op.value = m.name;
+        op.textContent = m.name; // 「分」は表示しない
+        group.appendChild(op);
+      });
+      selectElement.appendChild(group);
+    }
   });
 
+  // 選択が変わったら時間を更新
+  selectElement.onchange = updateTimeOptions;
+}
+
+// ===== メニュー追加ボタンの動作（Apple風デザイン対応） =====
+document.getElementById("addMenu").onclick = () => {
+  const container = document.getElementById("menuContainer");
+  const firstWrapper = container.querySelector(".select-wrapper");
+  
+  if (firstWrapper) {
+    const newWrapper = firstWrapper.cloneNode(true);
+    const newSelect = newWrapper.querySelector("select");
+    newSelect.value = ""; // 選択をリセット
+    newSelect.onchange = updateTimeOptions; // イベント再設定
+    container.appendChild(newWrapper);
+  }
+};
   // プルダウンが変更された時の動き
   menuSelect.onchange = () => {
     updateMenuSelectsFromDropdown(menuSelect.value);
