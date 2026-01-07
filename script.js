@@ -57,11 +57,53 @@ document.addEventListener("DOMContentLoaded", () => {
 // ===== メニュー読み込み =====
 async function loadMenus() {
   if (!supabaseClient) return;
-  const { data, error } = await supabaseClient.from("menus").select("name, duration");
+
+  const { data, error } = await supabaseClient
+    .from("menus")
+    .select("name, duration");
+
   if (error) return;
+
   MENU_DATA = {};
-  data.forEach(m => { MENU_DATA[m.name] = m.duration; });
-  updateTimeOptions();
+  const chipContainer = document.getElementById("menuChips");
+  chipContainer.innerHTML = ""; // リセット
+
+  data.forEach(m => {
+    MENU_DATA[m.name] = m.duration;
+
+    // メニューチップの作成
+    const chip = document.createElement("div");
+    chip.className = "menu-chip";
+    chip.innerHTML = `
+      <span>${m.name}</span>
+      <span class="duration">${m.duration}分</span>
+    `;
+
+    chip.onclick = () => {
+      chip.classList.toggle("selected"); // ON/OFF切り替え
+      updateMenuSelects(); // 隠しセレクトボックスと同期
+      updateTimeOptions(); // 時間の空き状況を再計算
+    };
+    chipContainer.appendChild(chip);
+  });
+}
+
+// チップの選択状態を裏側のプログラムに伝える補助関数
+function updateMenuSelects() {
+  const selectedChips = Array.from(document.querySelectorAll(".menu-chip.selected"));
+  const menuContainer = document.getElementById("menuContainer");
+  menuContainer.innerHTML = ""; // 一旦クリア
+
+  selectedChips.forEach(chip => {
+    const name = chip.querySelector("span").textContent;
+    const sel = document.createElement("select");
+    sel.className = "menu-select";
+    const opt = document.createElement("option");
+    opt.value = name;
+    opt.selected = true;
+    sel.appendChild(opt);
+    menuContainer.appendChild(sel);
+  });
 }
 
 // ===== 休日読み込み =====
