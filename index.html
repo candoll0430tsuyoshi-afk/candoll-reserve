@@ -202,12 +202,12 @@
         <button class="submit-btn" type="submit">予約を確定する</button>
     </form>
 
-    <div id="confirm-screen">
+    <div id="confirm-screen" style="display: none; padding: 20px;">
         <h2 style="font-size: 20px;">予約内容をご確認ください</h2>
         <p id="confirm-text" style="line-height: 1.8; text-align: left; background: #f5f5f7; padding: 20px; border-radius: 12px;"></p>
         <div style="display: flex; justify-content: space-between;">
-            <button class="confirm-btn cancel" id="cancelBtn">戻る</button>
-            <button class="confirm-btn ok" id="okBtn">OK</button>
+            <button class="confirm-btn cancel" id="cancelBtn" style="width: 45%;">戻る</button>
+            <button class="confirm-btn ok" id="okBtn" style="width: 45%;">OK</button>
         </div>
     </div>
 
@@ -216,11 +216,10 @@
         <p id="cancel-info" style="line-height: 1.8; text-align: left; background: #fff1f0; padding: 20px; border-radius: 12px; border: 1px solid #ffa39e;"></p>
         <p style="font-size: 14px; color: #86868b; margin-bottom: 20px;">この予約をキャンセルしてもよろしいですか？</p>
         <div style="display: flex; justify-content: space-between;">
-            <button class="confirm-btn cancel" onclick="liff.closeWindow()">戻らない</button>
-            <button class="confirm-btn ok" id="executeCancelBtn" style="background: #ff4d4f;">予約をキャンセルする</button>
+            <button class="confirm-btn cancel" onclick="liff.closeWindow()" style="width: 45%;">戻る</button>
+            <button class="confirm-btn ok" id="executeCancelBtn" style="background: #ff4d4f; width: 45%;">予約をキャンセルする</button>
         </div>
     </div>
-
 </div> <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="script.js"></script>
