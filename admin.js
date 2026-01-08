@@ -1,12 +1,11 @@
-// 変数の重複宣言を防ぐため、存在しない場合のみ作成する
-if (typeof supabase === 'undefined') {
-    const SUPABASE_URL = "https://bcahztzetpfuklipjmxx.supabase.co";
-    const SUPABASE_KEY = "sb_publishable_rPyAIzNttEK3P8nsnBllYA_FTF-kxJQ";
-    // windowオブジェクトに持たせることで重複エラーを回避
-    window.supabaseClientAdmin = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-}
+// 1. 設定
+const SUPABASE_URL = "https://bcahztzetpfuklipjmxx.supabase.co";
+const SUPABASE_KEY = "sb_publishable_rPyAIzNttEK3P8nsnBllYA_FTF-kxJQ";
+const ADMIN_PASSWORD = "candoll2026";
 
-const ADMIN_PASSWORD = "candoll2026"; // ログインパスワード
+// グローバルで一度だけクライアントを作る
+// 変数名がぶつからないように「adminClient」という名前に固定します
+const adminClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 let baseDate = new Date();
 let reservations = [];
@@ -14,7 +13,7 @@ let offTimes = [];
 let holidays = [];
 let specialOpens = [];
 
-// 1. ログイン処理
+// 2. ログイン・初期化処理
 document.addEventListener("DOMContentLoaded", () => {
     const loginBtn = document.getElementById('login-btn');
     const passInput = document.getElementById('admin-pass');
@@ -22,8 +21,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (loginBtn) {
         loginBtn.onclick = () => {
             if (passInput.value === ADMIN_PASSWORD) {
-                localStorage.setItem('admin_auth_status', 'true'); // キー名を変更して競合回避
-                document.getElementById('login-screen').style.display = 'none';
+                localStorage.setItem('admin_auth_status', 'true');
                 initAdmin();
             } else {
                 alert("パスワードが違います");
@@ -31,27 +29,26 @@ document.addEventListener("DOMContentLoaded", () => {
         };
     }
 
-    // 自動ログインチェック
     if (localStorage.getItem('admin_auth_status') === 'true') {
         initAdmin();
     }
 });
 
 async function initAdmin() {
-    const loginScreen = document.getElementById('login-screen');
-    if (loginScreen) loginScreen.style.display = 'none';
+    const screen = document.getElementById('login-screen');
+    if (screen) screen.style.display = 'none';
     await fetchData();
     render();
 }
 
-// 2. データ取得
+// 3. データ取得 (エラー箇所を修正)
 async function fetchData() {
-    const client = window.supabaseClientAdmin;
+    // すべて adminClient を使うように統一
     const [res, off, hol, spec] = await Promise.all([
-        client.from('reservations').select('*'),
-        client.from('off_times').select('*'),
-        client.from('holidays').select('*'),
-        client.from('special_open').select('*')
+        adminClient.from('reservations').select('*'),
+        adminClient.from('off_times').select('*'),
+        adminClient.from('holidays').select('*'),
+        adminClient.from('special_open').select('*')
     ]);
     reservations = res.data || [];
     offTimes = off.data || [];
@@ -59,7 +56,7 @@ async function fetchData() {
     specialOpens = spec.data || [];
 }
 
-// 3. 描画ロジック
+// 4. カレンダー描画
 function render() {
     const wrap = document.getElementById('days-wrapper');
     if (!wrap) return;
@@ -78,7 +75,7 @@ function render() {
         col.className = 'day-column';
         
         const w = d.getDay();
-        const isDefaultHoliday = (w === 1 || w === 2); // 月火
+        const isDefaultHoliday = (w === 1 || w === 2);
         const isCustomHoliday = holidays.some(h => h.date === dateStr);
         const isSpecialOpen = specialOpens.some(s => s.date === dateStr);
         const isClosed = (isDefaultHoliday || isCustomHoliday) && !isSpecialOpen;
@@ -123,10 +120,9 @@ function renderSlot(col, date, time, isClosed) {
 async function openSlotModal(date, time, res, isOff) {
     const body = document.getElementById('modal-body');
     let html = `<h3>${date} ${time}</h3>`;
-    const client = window.supabaseClientAdmin;
 
     if (res) {
-        const { data: history } = await client.from('reservations')
+        const { data: history } = await adminClient.from('reservations')
             .select('*').eq('name', res.name).lt('created_at', res.created_at)
             .order('created_at', { ascending: false }).limit(1);
         
@@ -135,47 +131,46 @@ async function openSlotModal(date, time, res, isOff) {
         html += `
             <p><b>お名前:</b> ${res.name} 様</p>
             <p><b>メニュー:</b> ${res.menus}</p>
-            <div class="history-box" style="background:#f5f5f7; padding:10px; border-radius:8px; margin:10px 0; color:#333;">前回: ${lastVisit}</div>
-            <button onclick="deleteRes('${res.id}')" style="background:#ff3b30; color:white; border:none; padding:12px; width:100%; border-radius:8px; font-weight:bold;">この予約を削除</button>
+            <div style="background:#f5f5f7; padding:10px; border-radius:8px; margin:10px 0; color:#333;">前回: ${lastVisit}</div>
+            <button onclick="deleteRes('${res.id}')" style="background:#ff3b30; color:white; border:none; padding:12px; width:100%; border-radius:8px;">予約削除</button>
         `;
     } else {
         html += `
-            <button onclick="toggleOffTime('${date}', '${time}', ${isOff})" style="background:#007aff; color:white; border:none; padding:15px; width:100%; border-radius:8px; font-weight:bold;">
+            <button onclick="toggleOffTime('${date}', '${time}', ${isOff})" style="background:#007aff; color:white; border:none; padding:15px; width:100%; border-radius:8px;">
                 ${isOff ? '予約可能に戻す' : 'ここを休憩にする'}
             </button>
         `;
     }
-    html += `<button onclick="closeModal()" style="margin-top:15px; width:100%; padding:10px; border-radius:8px; border:1px solid #ccc; background:none;">閉じる</button>`;
+    html += `<button onclick="closeModal()" style="margin-top:15px; width:100%; padding:10px; border:1px solid #ccc; background:none; border-radius:8px;">閉じる</button>`;
     body.innerHTML = html;
     document.getElementById('slot-modal').style.display = 'flex';
 }
 
+// 5. アクション関数 (すべて adminClient を使用)
 async function toggleOffTime(date, time, isOff) {
-    const client = window.supabaseClientAdmin;
     if (isOff) {
-        await client.from('off_times').delete().match({ date, time });
+        await adminClient.from('off_times').delete().match({ date, time });
     } else {
-        await client.from('off_times').insert([{ date, time }]);
+        await adminClient.from('off_times').insert([{ date, time }]);
     }
     closeModal();
     initAdmin();
 }
 
 async function toggleDay(date, isClosed) {
-    const client = window.supabaseClientAdmin;
     if (isClosed) {
-        await client.from('holidays').delete().eq('date', date);
-        await client.from('special_open').insert([{ date }]);
+        await adminClient.from('holidays').delete().eq('date', date);
+        await adminClient.from('special_open').insert([{ date }]);
     } else {
-        await client.from('holidays').insert([{ date }]);
-        await client.from('special_open').delete().eq('date', date);
+        await adminClient.from('holidays').insert([{ date }]);
+        await adminClient.from('special_open').delete().eq('date', date);
     }
     initAdmin();
 }
 
 async function deleteRes(id) {
     if (!confirm("本当に削除しますか？")) return;
-    await window.supabaseClientAdmin.from('reservations').delete().eq('id', id);
+    await adminClient.from('reservations').delete().eq('id', id);
     closeModal();
     initAdmin();
 }
