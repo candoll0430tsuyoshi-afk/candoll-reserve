@@ -203,6 +203,11 @@ async function updateTimeOptions() {
     const end = `${String(endD.getHours()).padStart(2,"0")}:${String(endD.getMinutes()).padStart(2,"0")}`;
     
     let isDisabled = (end > "19:00");
+// 1. 管理画面で設定した「休憩時間」に入っているかチェック
+    const isOffTime = OFF_TIMES.some(o => o.date === date && o.time === start);
+    if (isOffTime) isDisabled = true;
+
+    // 2. 他の人の予約と重なっていないかチェック
     for (const r of reserved) {
       const toMin = t => { const [h,m] = t.split(":").map(Number); return h*60+m; };
       if (toMin(start) < toMin(r.end) && toMin(r.start) < toMin(end)) { isDisabled = true; break; }
