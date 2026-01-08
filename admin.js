@@ -1,365 +1,166 @@
-/* ==============================
-   Candoll 管理画面 admin.js
-   ★ 基準コード + カレンダー移動対応（最小修正・完全版）
-   ★ 既存仕様・命名・構造すべて維持
-   ============================== */
+const SUPABASE_URL = "YOUR_SUPABASE_URL";
+const SUPABASE_KEY = "YOUR_SUPABASE_KEY";
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const API_URL = "https://bcahztzetpfuklipjmxx.functions.supabase.co/admin-service";
+let baseDate = new Date();
+let reservations = [];
+let offTimes = [];
+let holidays = [];
+let specialOpens = [];
 
-/* ---------- DOM ---------- */
-const loginBox   = document.getElementById("login-box");
-const loginBtn   = document.getElementById("login-btn");
-const loginError = document.getElementById("login-error");
-const passInput  = document.getElementById("admin-pass");
-
-const dayNavi    = document.getElementById("day-navi");
-const navPrev    = document.getElementById("nav-prev");
-const navNext    = document.getElementById("nav-next");
-const navCurrent = document.getElementById("nav-current");
-
-const daysWrap   = document.getElementById("days-wrapper");
-
-const menuBtn    = document.getElementById("menu-btn");
-const menuBox    = document.getElementById("menu-box");
-const mLogout    = document.getElementById("m-logout");
-const mAddHoliday = document.getElementById("m-add");
-const mDelHoliday = document.getElementById("m-del");
-
-const popupBg    = document.getElementById("popup-bg");
-const popupBox   = document.getElementById("popup-box");
-
-/* ---------- STATE ---------- */
-let ADMIN_PASS = localStorage.getItem("candoll_admin_pass") || "";
-let BASE_DATE = new Date();
-let CURRENT_YMD = new Date().toISOString().slice(0, 10);
-
-let RESERVATIONS = [];
-let HOLIDAYS = [];
-let MENUS = [];
-
-/* ---------- 初期表示 ---------- */
-dayNavi.style.display = "none";
-menuBtn.style.display = "none";
-
-/* ---------- 時間枠 ---------- */
-const TIMES = [];
-for (let h = 10; h <= 18; h++) {
-  TIMES.push(`${String(h).padStart(2, "0")}:00`);
-  TIMES.push(`${String(h).padStart(2, "0")}:30`);
-}
-TIMES.push("19:00");
-
-/* ---------- util ---------- */
-const WEEK = ["日","月","火","水","木","金","土"];
-const fmtDate = d =>
-  `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
-const fmtLabel = d => `${fmtDate(d)}（${WEEK[d.getDay()]}）`;
-const toMin = t => { const [h,m]=t.split(":").map(Number); return h*60+m; };
-const addMin = (t,m) => {
-  const d=new Date(2000,0,1,...t.split(":"));
-  d.setMinutes(d.getMinutes()+m);
-  return `${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`;
-};
-const menuDuration = menu => (MENUS.find(m=>m.name===menu)?.duration || 0);
-
-function hasConflict({date,start,end,ignoreId}){
-  return RESERVATIONS.some(r=>{
-    if(r.date!==date) return false;
-    if(ignoreId && r.id===ignoreId) return false;
-    if(!r.end_time) return false;
-    return toMin(start)<toMin(r.end_time) && toMin(r.time)<toMin(end);
-  });
-}
-
-/* ---------- API ---------- */
-async function callAPI(body){
-  const r = await fetch(API_URL,{
-    method:"POST",
-    headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({...body,password:ADMIN_PASS})
-  });
-  if(!r.ok) throw new Error(await r.text());
-  return r.json();
-}
-
-/* ---------- LOGIN ---------- */
-loginBtn.onclick = async ()=>{
-  ADMIN_PASS = passInput.value.trim();
-  loginError.style.display="none";
-  try{
-    const res = await callAPI({mode:"list"});
-    localStorage.setItem("candoll_admin_pass",ADMIN_PASS);
-    RESERVATIONS=res.reservations||[];
-    HOLIDAYS=res.holidays||[];
-    MENUS=res.menus||[];
-    loginBox.style.display="none";
-    dayNavi.style.display="flex";
-    menuBtn.style.display="block";
-    render();
-  }catch{
-    loginError.style.display="block";
-  }
-};
-
-window.addEventListener("DOMContentLoaded", async ()=>{
-  if(!ADMIN_PASS) return;
-  try{
-    const res = await callAPI({mode:"list"});
-    RESERVATIONS=res.reservations||[];
-    HOLIDAYS=res.holidays||[];
-    MENUS=res.menus||[];
-    loginBox.style.display="none";
-    dayNavi.style.display="flex";
-    menuBtn.style.display="block";
-    render();
-  }catch{
-    localStorage.removeItem("candoll_admin_pass");
-  }
-});
-
-/* ---------- MENU ---------- */
-menuBtn.onclick = e => {
-  e.stopPropagation();
-  menuBox.style.display = menuBox.style.display==="block"?"none":"block";
-};
-menuBox.onclick = e => e.stopPropagation();
-document.addEventListener("click",()=>menuBox.style.display="none");
-
-/* ---------- Logout ---------- */
-mLogout.onclick = ()=>{
-  localStorage.removeItem("candoll_admin_pass");
-  location.reload();
-};
-
-/* ---------- DATE NAV ---------- */
-navPrev.onclick=()=>{BASE_DATE.setDate(BASE_DATE.getDate()-1);render();};
-navNext.onclick=()=>{BASE_DATE.setDate(BASE_DATE.getDate()+1);render();};
-
-/* ===== カレンダー日付ジャンプ（追加部分） ===== */
-let calendarPicker = document.getElementById("calendarPicker");
-if(!calendarPicker){
-  calendarPicker=document.createElement("input");
-  calendarPicker.type="date";
-  calendarPicker.id="calendarPicker";
-  calendarPicker.style.cssText=`
-    display:none;
-    position:fixed;
-    top:50%;
-    left:50%;
-    transform:translate(-50%,-50%);
-    padding:25px;
-    font-size:26px;
-    width:300px;
-    height:55px;
-    z-index:5000;
-    background:#fff;
-    border:2px solid #000;
-    border-radius:12px;
-  `;
-  document.body.appendChild(calendarPicker);
-}
-
-navCurrent.addEventListener("click",()=>{
-  calendarPicker.value=fmtDate(BASE_DATE);
-  calendarPicker.style.display="block";
-});
-
-calendarPicker.addEventListener("change",()=>{
-  if(!calendarPicker.value) return;
-  BASE_DATE=new Date(calendarPicker.value);
-  CURRENT_YMD=calendarPicker.value;
-  calendarPicker.style.display="none";
-  render();
-});
-
-/* ---------- RENDER ---------- */
-async function render(){
-  navCurrent.textContent = fmtLabel(BASE_DATE);
-  daysWrap.innerHTML="";
-  const res = await callAPI({mode:"list"});
-  RESERVATIONS=res.reservations||[];
-  HOLIDAYS=res.holidays||[];
-  MENUS=res.menus||[];
-  for(let i=0;i<3;i++){
-    const d=new Date(BASE_DATE); d.setDate(d.getDate()+i);
-    renderDay(d);
-  }
-}
-
-function renderDay(d){
-  const date=fmtDate(d);
-  const col=document.createElement("div");
-  col.className="day-column";
-  col.innerHTML=`<div class="date-title">${fmtLabel(d)}</div>`;
-
-  TIMES.slice(0,-1).forEach(t=>{
-    const r=RESERVATIONS.find(x=>
-      x.date===date &&
-      x.end_time &&
-      toMin(t)>=toMin(x.time)&&toMin(t)<toMin(x.end_time)
-    );
-
-    const w=d.getDay();
-    const weekIndex=Math.floor((d.getDate()-1)/7)+1;
-    const isFixedHoliday=w===1||(w===2&&(weekIndex===1||weekIndex===3));
-    const isCustomHoliday=HOLIDAYS.some(h=>h.date===date);
-    const isHoliday=isFixedHoliday||isCustomHoliday;
-
-    const div=document.createElement("div");
-    div.style.padding="12px";
-    div.style.minHeight="60px";
-    div.style.borderBottom="1px solid #ddd";
-    div.style.cursor="pointer";
-
-    if(r){
-      div.style.background="#fdd";
-      div.innerHTML=t===r.time
-        ? `<strong>${t}</strong><br>${r.name}<br>${r.menus||""}`
-        : t;
-      div.onclick=()=>openEdit(r);
-    }else{
-      div.style.background=isHoliday?"#ffdddd":"#ddffdd";
-      div.textContent=t;
-      div.onclick=()=>openAdd({date,time:t});
+// 1. ログイン処理
+document.getElementById('login-btn').onclick = async () => {
+    const pass = document.getElementById('admin-pass').value;
+    if (pass === "YOUR_ADMIN_PASSWORD") { // パスワードは任意
+        localStorage.setItem('admin_auth', 'true');
+        document.getElementById('login-screen').style.display = 'none';
+        init();
+    } else {
+        alert("パスワードが違います");
     }
+};
+
+async function init() {
+    if (localStorage.getItem('admin_auth') !== 'true') return;
+    document.getElementById('login-screen').style.display = 'none';
+    await fetchData();
+    render();
+}
+
+// 2. データ取得（全テーブル）
+async function fetchData() {
+    const res = await supabase.from('reservations').select('*');
+    reservations = res.data || [];
+    const off = await supabase.from('off_times').select('*');
+    offTimes = off.data || [];
+    const hol = await supabase.from('holidays').select('*');
+    holidays = hol.data || [];
+    const spec = await supabase.from('special_open').select('*');
+    specialOpens = spec.data || [];
+}
+
+// 3. 描画処理
+function render() {
+    const wrap = document.getElementById('days-wrapper');
+    wrap.innerHTML = '';
+    document.getElementById('nav-current').innerText = baseDate.toLocaleDateString('ja-JP', { year: 'numeric', month: '2-digit', day: '2-digit', weekday: 'short' });
+
+    for (let i = 0; i < 3; i++) {
+        const d = new Date(baseDate);
+        d.setDate(d.getDate() + i);
+        const dateStr = d.toISOString().split('T')[0];
+        
+        const col = document.createElement('div');
+        col.className = 'day-column';
+        
+        // 休日判定
+        const w = d.getDay();
+        const isDefaultHoliday = (w === 1 || w === 2); // 月火
+        const isCustomHoliday = holidays.some(h => h.date === dateStr);
+        const isSpecialOpen = specialOpens.some(s => s.date === dateStr);
+        const isClosed = (isDefaultHoliday || isCustomHoliday) && !isSpecialOpen;
+
+        col.innerHTML = `
+            <div class="day-header" style="background:${isClosed ? '#999' : '#000'}">
+                ${dateStr} (${['日','月','火','水','木','金','土'][w]})
+                <div class="day-toggle-btn" onclick="toggleDay('${dateStr}', ${isClosed})">
+                    ${isClosed ? '営業にする' : '休みにする'}
+                </div>
+            </div>
+        `;
+
+        // 10:00 - 19:00 の枠生成
+        for (let h = 10; h <= 18; h++) {
+            ['00', '30'].forEach(m => {
+                const time = `${String(h).padStart(2, '0')}:${m}`;
+                renderSlot(col, dateStr, time, isClosed);
+            });
+        }
+        wrap.appendChild(col);
+    }
+}
+
+function renderSlot(col, date, time, isClosed) {
+    const res = reservations.find(r => r.date === date && r.time === time);
+    const isOff = offTimes.some(o => o.date === date && o.time === time);
+    
+    const div = document.createElement('div');
+    div.className = `slot ${res ? 'reserved' : (isOff || isClosed ? 'off' : 'free')}`;
+    
+    let content = `<div class="time-label">${time}</div><div class="slot-info">`;
+    if (res) content += `<b>${res.name} 様</b><br>${res.menus}`;
+    else if (isOff || isClosed) content += `不可`;
+    else content += `空き`;
+    content += `</div>`;
+    
+    div.innerHTML = content;
+    div.onclick = () => openSlotModal(date, time, res, isOff);
     col.appendChild(div);
-  });
-  daysWrap.appendChild(col);
 }
 
-/* ---------- ADD ---------- */
-function openAdd({date,time}){
-  popupBox.innerHTML=`
-    <h3>予約追加</h3>
-    <p>${date}</p>
-    <input id="a-name">
-    <select id="a-time">${TIMES.map(t=>`<option ${t===time?"selected":""}>${t}</option>`).join("")}</select>
-    <select id="a-menu">${MENUS.map(m=>`<option>${m.name}</option>`).join("")}</select>
-    <button id="a-save">追加</button>
-    <button id="a-cancel">キャンセル</button>
-  `;
-  popupBg.style.display="flex";
+// 4. モーダル（履歴表示 & ポチポチ切替）
+async function openSlotModal(date, time, res, isOff) {
+    const body = document.getElementById('modal-body');
+    let html = `<h3>${date} ${time}</h3>`;
 
-  const aName=document.getElementById("a-name");
-  const aTime=document.getElementById("a-time");
-  const aMenu=document.getElementById("a-menu");
+    if (res) {
+        // 【履歴取得】
+        const { data: history } = await supabase.from('reservations')
+            .select('*').eq('name', res.name).lt('created_at', res.created_at)
+            .order('created_at', { ascending: false }).limit(1);
+        
+        const lastVisit = history && history[0] ? `${history[0].date} (${history[0].menus})` : "なし";
 
-  document.getElementById("a-cancel").onclick=()=>popupBg.style.display="none";
-  document.getElementById("a-save").onclick=async()=>{
-    const name=aName.value.trim();
-    const t=aTime.value;
-    const m=aMenu.value;
-    const end=addMin(t,menuDuration(m));
-    if(!name||!m) return alert("未入力");
-    if(hasConflict({date,start:t,end})) return alert("重複");
-    await callAPI({mode:"add",name,menus:m,date,time:t,end_time:end});
-    popupBg.style.display="none"; render();
-  };
-}
-
-/* ---------- EDIT ---------- */
-function openEdit(r){
-  popupBox.innerHTML=`
-    <h3>予約変更</h3>
-    <input id="e-name" value="${r.name}">
-    <select id="e-time">${TIMES.map(t=>`<option ${t===r.time?"selected":""}>${t}</option>`).join("")}</select>
-    <select id="e-menu">${MENUS.map(m=>`<option ${m.name===r.menus?"selected":""}>${m.name}</option>`).join("")}</select>
-    <button id="e-save">変更</button>
-    <button id="e-del">削除</button>
-    <button id="e-close">閉じる</button>
-  `;
-  popupBg.style.display="flex";
-
-  document.getElementById("e-close").onclick=()=>popupBg.style.display="none";
-  document.getElementById("e-save").onclick=async()=>{
-    const name=document.getElementById("e-name").value;
-    const t=document.getElementById("e-time").value;
-    const m=document.getElementById("e-menu").value;
-    const end=addMin(t,menuDuration(m));
-    if(hasConflict({date:r.date,start:t,end,ignoreId:r.id})) return alert("重複");
-    await callAPI({mode:"edit",id:r.id,name,menus:m,date:r.date,time:t,end_time:end});
-    popupBg.style.display="none"; render();
-  };
-  document.getElementById("e-del").onclick=async()=>{
-    if(!confirm("削除しますか？")) return;
-    await callAPI({mode:"delete",id:r.id});
-    popupBg.style.display="none"; render();
-  };
-}
-// ▼ 休日追加ポップアップ
-function openHolidayAdd() {
-  popupBox.innerHTML = `
-    <h3>休日追加</h3>
-    <input type="date" id="h-date">
-    <button id="h-save">登録</button>
-    <button id="h-cancel" style="background:#aaa;margin-top:10px;">キャンセル</button>
-  `;
-
-  popupBg.style.display = "flex";
-
-  document.getElementById("h-cancel").onclick = () => {
-    popupBg.style.display = "none";
-  };
-
-  document.getElementById("h-save").onclick = async () => {
-    const d = document.getElementById("h-date").value;
-    if (!d) {
-      alert("日付を選択してください");
-      return;
+        html += `
+            <p><b>お名前:</b> ${res.name} 様</p>
+            <p><b>メニュー:</b> ${res.menus}</p>
+            <div class="history-box">前回ご来店: ${lastVisit}</div>
+            <div class="btn-group">
+                <button class="btn-danger" onclick="deleteRes('${res.id}')">予約削除</button>
+            </div>
+        `;
+    } else {
+        html += `
+            <div class="btn-group">
+                <button class="btn-main" onclick="toggleOffTime('${date}', '${time}', ${isOff})">
+                    ${isOff ? '予約可能に戻す' : 'ここを休憩にする'}
+                </button>
+                <button class="btn-sub" onclick="openAddManual('${date}', '${time}')">手動で予約を入れる</button>
+            </div>
+        `;
     }
-
-    await callAPI({
-      mode: "addHoliday",
-      date: d
-    });
-
-    popupBg.style.display = "none";
-
-    // 最新の状態を再読み込み
-    const res = await callAPI({ mode: "list" });
-    RESERVATIONS = res.reservations || [];
-    HOLIDAYS = res.holidays || [];
-    MENUS = res.menus || [];
-    render();
-  };
+    html += `<button class="btn-sub" onclick="closeModal()" style="margin-top:10px; width:100%;">閉じる</button>`;
+    body.innerHTML = html;
+    document.getElementById('slot-modal').style.display = 'flex';
 }
-// ▼ 休日解除ポップアップ
-function openHolidayDel() {
-  popupBox.innerHTML = `
-    <h3>休日解除</h3>
-    <input type="date" id="hd-date">
-    <button id="hd-save">解除</button>
-    <button id="hd-cancel" style="background:#aaa;margin-top:10px;">キャンセル</button>
-  `;
 
-  popupBg.style.display = "flex";
-
-  // キャンセル → 閉じるだけ
-  document.getElementById("hd-cancel").onclick = () => {
-    popupBg.style.display = "none";
-  };
-
-  // 解除実行
-  document.getElementById("hd-save").onclick = async () => {
-    const d = document.getElementById("hd-date").value;
-    if (!d) {
-      alert("日付を選択してください");
-      return;
+// 5. 操作アクション
+async function toggleOffTime(date, time, isOff) {
+    if (isOff) {
+        await supabase.from('off_times').delete().match({ date, time });
+    } else {
+        await supabase.from('off_times').insert([{ date, time }]);
     }
-
-    // holidays から削除
-    await callAPI({
-      mode: "delHoliday",
-      date: d
-    });
-
-    popupBg.style.display = "none";
-
-    // 最新データを再取得して画面更新
-    const res = await callAPI({ mode: "list" });
-    RESERVATIONS = res.reservations || [];
-    HOLIDAYS     = res.holidays     || [];
-    MENUS        = res.menus        || [];
-    render();
-  };
+    closeModal();
+    init();
 }
+
+async function toggleDay(date, isClosed) {
+    if (isClosed) {
+        // 営業にする -> holidaysにあれば消す、デフォルト休日ならspecial_openに入れる
+        await supabase.from('holidays').delete().eq('date', date);
+        await supabase.from('special_open').insert([{ date }]);
+    } else {
+        // 休みにする
+        await supabase.from('holidays').insert([{ date }]);
+        await supabase.from('special_open').delete().eq('date', date);
+    }
+    init();
+}
+
+function moveDate(n) { baseDate.setDate(baseDate.getDate() + n); render(); }
+function closeModal() { document.getElementById('slot-modal').style.display = 'none'; }
+function openCalendar() { document.getElementById('calendar-input').showPicker(); }
+document.getElementById('calendar-input').onchange = (e) => { baseDate = new Date(e.target.value); render(); };
+
+window.onload = init;
