@@ -1,9 +1,12 @@
-// 1. Supabaseの接続設定（あなたの環境に合わせています）
-const SUPABASE_URL = "https://bcahztzetpfuklipjmxx.supabase.co";
-const SUPABASE_KEY = "sb_publishable_rPyAIzNttEK3P8nsnBllYA_FTF-kxJQ";
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+// 変数の重複宣言を防ぐため、存在しない場合のみ作成する
+if (typeof supabase === 'undefined') {
+    const SUPABASE_URL = "https://bcahztzetpfuklipjmxx.supabase.co";
+    const SUPABASE_KEY = "sb_publishable_rPyAIzNttEK3P8nsnBllYA_FTF-kxJQ";
+    // windowオブジェクトに持たせることで重複エラーを回避
+    window.supabaseClientAdmin = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+}
 
-const ADMIN_PASSWORD = "candoll2026"; // ★ログインパスワード
+const ADMIN_PASSWORD = "candoll2026"; // ログインパスワード
 
 let baseDate = new Date();
 let reservations = [];
@@ -11,7 +14,7 @@ let offTimes = [];
 let holidays = [];
 let specialOpens = [];
 
-// 2. ログイン処理
+// 1. ログイン処理
 document.addEventListener("DOMContentLoaded", () => {
     const loginBtn = document.getElementById('login-btn');
     const passInput = document.getElementById('admin-pass');
@@ -19,34 +22,36 @@ document.addEventListener("DOMContentLoaded", () => {
     if (loginBtn) {
         loginBtn.onclick = () => {
             if (passInput.value === ADMIN_PASSWORD) {
-                localStorage.setItem('admin_auth', 'true');
+                localStorage.setItem('admin_auth_status', 'true'); // キー名を変更して競合回避
                 document.getElementById('login-screen').style.display = 'none';
-                init();
+                initAdmin();
             } else {
                 alert("パスワードが違います");
             }
         };
     }
 
-    // ログイン済みなら自動で画面を表示
-    if (localStorage.getItem('admin_auth') === 'true') {
-        init();
+    // 自動ログインチェック
+    if (localStorage.getItem('admin_auth_status') === 'true') {
+        initAdmin();
     }
 });
 
-async function init() {
-    document.getElementById('login-screen').style.display = 'none';
+async function initAdmin() {
+    const loginScreen = document.getElementById('login-screen');
+    if (loginScreen) loginScreen.style.display = 'none';
     await fetchData();
     render();
 }
 
-// 3. データ取得
+// 2. データ取得
 async function fetchData() {
+    const client = window.supabaseClientAdmin;
     const [res, off, hol, spec] = await Promise.all([
-        supabase.from('reservations').select('*'),
-        supabase.from('off_times').select('*'),
-        supabase.from('holidays').select('*'),
-        supabase.from('special_open').select('*')
+        client.from('reservations').select('*'),
+        client.from('off_times').select('*'),
+        client.from('holidays').select('*'),
+        client.from('special_open').select('*')
     ]);
     reservations = res.data || [];
     offTimes = off.data || [];
@@ -54,7 +59,7 @@ async function fetchData() {
     specialOpens = spec.data || [];
 }
 
-// 4. カレンダー描画ロジック
+// 3. 描画ロジック
 function render() {
     const wrap = document.getElementById('days-wrapper');
     if (!wrap) return;
@@ -118,9 +123,10 @@ function renderSlot(col, date, time, isClosed) {
 async function openSlotModal(date, time, res, isOff) {
     const body = document.getElementById('modal-body');
     let html = `<h3>${date} ${time}</h3>`;
+    const client = window.supabaseClientAdmin;
 
     if (res) {
-        const { data: history } = await supabase.from('reservations')
+        const { data: history } = await client.from('reservations')
             .select('*').eq('name', res.name).lt('created_at', res.created_at)
             .order('created_at', { ascending: false }).limit(1);
         
@@ -129,51 +135,49 @@ async function openSlotModal(date, time, res, isOff) {
         html += `
             <p><b>お名前:</b> ${res.name} 様</p>
             <p><b>メニュー:</b> ${res.menus}</p>
-            <div class="history-box" style="background:#f5f5f7; padding:10px; border-radius:8px; margin:10px 0;">前回ご来店: ${lastVisit}</div>
-            <div class="btn-group">
-                <button onclick="deleteRes('${res.id}')" style="background:#ff3b30; color:white; border:none; padding:10px; width:100%; border-radius:8px;">予約削除</button>
-            </div>
+            <div class="history-box" style="background:#f5f5f7; padding:10px; border-radius:8px; margin:10px 0; color:#333;">前回: ${lastVisit}</div>
+            <button onclick="deleteRes('${res.id}')" style="background:#ff3b30; color:white; border:none; padding:12px; width:100%; border-radius:8px; font-weight:bold;">この予約を削除</button>
         `;
     } else {
         html += `
-            <div class="btn-group" style="display:flex; flex-direction:column; gap:10px;">
-                <button onclick="toggleOffTime('${date}', '${time}', ${isOff})" style="background:#007aff; color:white; border:none; padding:12px; border-radius:8px;">
-                    ${isOff ? '予約可能に戻す' : 'ここを休憩にする'}
-                </button>
-            </div>
+            <button onclick="toggleOffTime('${date}', '${time}', ${isOff})" style="background:#007aff; color:white; border:none; padding:15px; width:100%; border-radius:8px; font-weight:bold;">
+                ${isOff ? '予約可能に戻す' : 'ここを休憩にする'}
+            </button>
         `;
     }
-    html += `<button onclick="closeModal()" style="margin-top:15px; width:100%; padding:10px; border-radius:8px; border:1px solid #ccc;">閉じる</button>`;
+    html += `<button onclick="closeModal()" style="margin-top:15px; width:100%; padding:10px; border-radius:8px; border:1px solid #ccc; background:none;">閉じる</button>`;
     body.innerHTML = html;
     document.getElementById('slot-modal').style.display = 'flex';
 }
 
 async function toggleOffTime(date, time, isOff) {
+    const client = window.supabaseClientAdmin;
     if (isOff) {
-        await supabase.from('off_times').delete().match({ date, time });
+        await client.from('off_times').delete().match({ date, time });
     } else {
-        await supabase.from('off_times').insert([{ date, time }]);
+        await client.from('off_times').insert([{ date, time }]);
     }
     closeModal();
-    init();
+    initAdmin();
 }
 
 async function toggleDay(date, isClosed) {
+    const client = window.supabaseClientAdmin;
     if (isClosed) {
-        await supabase.from('holidays').delete().eq('date', date);
-        await supabase.from('special_open').insert([{ date }]);
+        await client.from('holidays').delete().eq('date', date);
+        await client.from('special_open').insert([{ date }]);
     } else {
-        await supabase.from('holidays').insert([{ date }]);
-        await supabase.from('special_open').delete().eq('date', date);
+        await client.from('holidays').insert([{ date }]);
+        await client.from('special_open').delete().eq('date', date);
     }
-    init();
+    initAdmin();
 }
 
 async function deleteRes(id) {
-    if (!confirm("本当にこの予約を削除しますか？")) return;
-    await supabase.from('reservations').delete().eq('id', id);
+    if (!confirm("本当に削除しますか？")) return;
+    await window.supabaseClientAdmin.from('reservations').delete().eq('id', id);
     closeModal();
-    init();
+    initAdmin();
 }
 
 function moveDate(n) { baseDate.setDate(baseDate.getDate() + n); render(); }
