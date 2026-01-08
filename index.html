@@ -212,21 +212,14 @@
     </div>
 
 <div id="cancel-screen" style="display: none; padding: 20px;">
-        <h2 style="font-size: 20px;">予約のキャンセル</h2>
-        
-        <div id="cancel-status" style="display: none; font-size: 22px; font-weight: bold; color: #ff4d4f; margin-bottom: 20px;">
-            予約をキャンセルしました。
-        </div>
-
-        <p id="cancel-info" style="line-height: 1.8; text-align: left; background: #fff1f0; padding: 20px; border-radius: 12px; border: 1px solid #ffa39e;"></p>
-        
-        <p id="cancel-confirm-msg" style="font-size: 20px; font-weight: bold; color: #000; margin-bottom: 20px;">本当にキャンセルして<br>よろしいですか？</p>
-        
-        <div id="cancel-buttons" style="display: flex; justify-content: space-between; gap: 10px;">
-            <button class="confirm-btn cancel" onclick="liff.closeWindow()" style="flex: 1; margin: 0;">戻る</button>
-            <button class="confirm-btn ok" id="executeCancelBtn" style="flex: 1; margin: 0; background: #ff4d4f;">キャンセルする</button>
-        </div>
+    <h2 style="font-size: 20px;">予約のキャンセル</h2>
+    <p id="cancel-info" style="line-height: 1.8; text-align: left; background: #fff1f0; padding: 20px; border-radius: 12px; border: 1px solid #ffa39e;"></p>
+    <p style="font-size: 14px; color: #86868b; margin-bottom: 20px;">この予約をキャンセルしてもよろしいですか？</p>
+    <div style="display: flex; justify-content: space-between; gap: 10px;">
+        <button class="confirm-btn cancel" onclick="liff.closeWindow()" style="flex: 1; margin: 0;">戻る</button>
+        <button class="confirm-btn ok" id="executeCancelBtn" style="flex: 1; margin: 0; background: #ff4d4f;">キャンセルする</button>
     </div>
+</div>
 </div> <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="script.js"></script>
