@@ -9,22 +9,16 @@ let offTimes = [];
 let holidays = [];
 let specialOpens = [];
 
-// メニューごとの所要時間（分）の設定
+// メニューごとの所要時間（分）
 const MENU_DURATION = {
-    "カット": 60,
-    "カラー": 90,
-    "パーマ": 120,
-    "縮毛矯正": 180,
-    "トリートメント": 30,
-    "ヘッドスパ": 30
+    "カット": 60, "カラー": 90, "パーマ": 120, "縮毛矯正": 180, "トリートメント": 30, "ヘッドスパ": 30
 };
 
 document.addEventListener("DOMContentLoaded", () => {
     const loginBtn = document.getElementById('login-btn');
-    const passInput = document.getElementById('admin-pass');
     if (loginBtn) {
         loginBtn.onclick = () => {
-            if (passInput.value === ADMIN_PASSWORD) {
+            if (document.getElementById('admin-pass').value === ADMIN_PASSWORD) {
                 localStorage.setItem('admin_auth_status', 'true');
                 initAdmin();
             } else { alert("パスワードが違います"); }
@@ -53,7 +47,6 @@ async function fetchData() {
     specialOpens = spec.data || [];
 }
 
-// 時間を分に変換するヘルパー
 const toMin = t => { const [h, m] = t.split(':').map(Number); return h * 60 + m; };
 
 function render() {
@@ -61,7 +54,7 @@ function render() {
     if (!wrap) return;
     wrap.innerHTML = '';
     
-    // スマホで見やすくするためのスタイル調整
+    // スマホ対応：幅が狭いときは縦並び
     wrap.style.display = "flex";
     wrap.style.flexDirection = window.innerWidth < 600 ? "column" : "row";
     wrap.style.gap = "15px";
@@ -76,19 +69,15 @@ function render() {
         const dateStr = d.toISOString().split('T')[0];
         const col = document.createElement('div');
         col.className = 'day-column';
-        col.style.flex = "1"; // 横並び時の幅を均等に
+        col.style.flex = "1";
 
         const w = d.getDay();
         const isClosed = (w === 1 || w === 2 || holidays.some(h => h.date === dateStr)) && !specialOpens.some(s => s.date === dateStr);
 
-        col.innerHTML = `
-            <div class="day-header" style="background:${isClosed ? '#999' : '#000'}; padding:10px; color:white; border-radius:8px 8px 0 0;">
-                ${dateStr} (${['日','月','火','水','木','金','土'][w]})
-                <div class="day-toggle-btn" onclick="toggleDay('${dateStr}', ${isClosed})" style="font-size:12px; text-decoration:underline; cursor:pointer;">
-                    ${isClosed ? '営業にする' : '休みにする'}
-                </div>
-            </div>
-        `;
+        col.innerHTML = `<div class="day-header" style="background:${isClosed ? '#999' : '#000'}; padding:10px; color:white; border-radius:8px 8px 0 0; text-align:center;">
+            ${dateStr} (${['日','月','火','水','木','金','土'][w]})
+            <div onclick="toggleDay('${dateStr}', ${isClosed})" style="font-size:11px; text-decoration:underline; cursor:pointer;">${isClosed ? '営業にする' : '休みにする'}</div>
+        </div>`;
 
         for (let h = 10; h <= 18; h++) {
             ['00', '30'].forEach(m => {
@@ -102,35 +91,28 @@ function render() {
 
 function renderSlot(col, date, time, isClosed) {
     const timeMins = toMin(time);
-    
-    // 1. その時間に「開始」する予約があるか
     const exactRes = reservations.find(r => r.date === date && r.time === time);
-    
-    // 2. 他の予約の「所要時間内」に含まれているかチェック（枠を繋げる処理）
     const overlappingRes = reservations.find(r => {
         if (r.date !== date) return false;
         const start = toMin(r.time);
-        // メニュー名から時間を取得（不明なら60分とする）
-        const duration = MENU_DURATION[r.menus] || 60;
+        const duration = MENU_DURATION[r.menus.split(',')[0]] || 60;
         return timeMins >= start && timeMins < start + duration;
     });
 
     const isOff = offTimes.some(o => o.date === date && o.time === time);
     const div = document.createElement('div');
-    
-    // 予約がある、または所要時間内なら「reserved (赤)」
     const status = overlappingRes ? 'reserved' : (isOff || isClosed ? 'off' : 'free');
     div.className = `slot ${status}`;
-    
-    // デザイン調整（枠が繋がっているように見せる）
-    if (overlappingRes && !exactRes) {
-        div.style.borderTop = "none"; // 続きの枠は上の線を取る
-        div.style.opacity = "0.9";
-    }
 
     let content = `<div class="time-label">${time}</div><div class="slot-info">`;
+    
     if (overlappingRes) {
-        content += `<b>${overlappingRes.name} 様</b><br>${overlappingRes.menus}`;
+        if (exactRes) {
+            content += `<b style="font-size:14px;">${exactRes.name} 様</b><br><span style="font-size:11px;">${exactRes.menus}</span>`;
+        } else {
+            content += `<span style="font-size:18px; color:rgba(255,255,255,0.7);">↓</span>`;
+            div.style.borderTop = "none";
+        }
     } else if (isOff || isClosed) {
         content += `不可`;
     } else {
@@ -139,50 +121,66 @@ function renderSlot(col, date, time, isClosed) {
     content += `</div>`;
     
     div.innerHTML = content;
-    div.onclick = () => openSlotModal(date, time, overlappingRes, isOff);
+    div.onclick = () => openSlotModal(date, time, exactRes || overlappingRes, isOff);
     col.appendChild(div);
 }
 
-// ... (残りの openSlotModal, toggleOffTime, toggleDay, deleteRes, moveDate, closeModal は前回と同じ) ...
-
+// モダルの中身（予約変更・手動追加）
 async function openSlotModal(date, time, res, isOff) {
     const body = document.getElementById('modal-body');
-    let html = `<h3>${date} ${time}</h3>`;
+    let html = `<h3 style="margin-top:0;">${date} ${time}</h3>`;
 
     if (res) {
-        const { data: history } = await adminClient.from('reservations')
-            .select('*').eq('name', res.name).lt('created_at', res.created_at)
-            .order('created_at', { ascending: false }).limit(1);
-        
-        const lastVisit = history && history[0] ? `${history[0].date} (${history[0].menus})` : "なし";
-
+        // 予約がある場合：変更と削除
         html += `
             <p><b>お名前:</b> ${res.name} 様</p>
             <p><b>メニュー:</b> ${res.menus}</p>
-            <div style="background:#f5f5f7; padding:10px; border-radius:8px; margin:10px 0; color:#333;">前回: ${lastVisit}</div>
-            <button onclick="deleteRes('${res.id}')" style="background:#ff3b30; color:white; border:none; padding:12px; width:100%; border-radius:8px;">予約削除</button>
+            <hr>
+            <label style="font-size:12px;">時間の変更:</label>
+            <input type="time" id="new-time" value="${res.time}" style="width:100%; padding:8px; margin-bottom:10px;">
+            <button onclick="updateTime('${res.id}', '${date}')" style="background:#34c759; color:white; border:none; padding:10px; width:100%; border-radius:8px; margin-bottom:10px;">時間を変更する</button>
+            <button onclick="deleteRes('${res.id}')" style="background:#ff3b30; color:white; border:none; padding:10px; width:100%; border-radius:8px;">予約を削除</button>
         `;
     } else {
+        // 空き枠の場合：手動追加
         html += `
-            <button onclick="toggleOffTime('${date}', '${time}', ${isOff})" style="background:#007aff; color:white; border:none; padding:15px; width:100%; border-radius:8px;">
+            <input type="text" id="manual-name" placeholder="お客様名" style="width:100%; padding:10px; margin-bottom:10px; border:1px solid #ccc; border-radius:5px;">
+            <select id="manual-menu" style="width:100%; padding:10px; margin-bottom:10px; border:1px solid #ccc; border-radius:5px;">
+                ${Object.keys(MENU_DURATION).map(m => `<option value="${m}">${m}</option>`).join('')}
+            </select>
+            <button onclick="addManual('${date}', '${time}')" style="background:#007aff; color:white; border:none; padding:12px; width:100%; border-radius:8px; margin-bottom:10px;">手動で予約を追加</button>
+            <button onclick="toggleOffTime('${date}', '${time}', ${isOff})" style="background:#8e8e93; color:white; border:none; padding:10px; width:100%; border-radius:8px;">
                 ${isOff ? '予約可能に戻す' : 'ここを休憩にする'}
             </button>
         `;
     }
-    html += `<button onclick="closeModal()" style="margin-top:15px; width:100%; padding:10px; border:1px solid #ccc; background:none; border-radius:8px;">閉じる</button>`;
+    html += `<button onclick="closeModal()" style="margin-top:15px; width:100%; padding:10px; border:none; background:none; color:#007aff;">閉じる</button>`;
     body.innerHTML = html;
     document.getElementById('slot-modal').style.display = 'flex';
 }
 
-// 5. アクション関数 (すべて adminClient を使用)
+// 手動予約追加
+async function addManual(date, time) {
+    const name = document.getElementById('manual-name').value;
+    const menus = document.getElementById('manual-menu').value;
+    if (!name) return alert("お名前を入力してください");
+    await adminClient.from('reservations').insert([{ name, date, time, menus, customer_user_id: 'manual' }]);
+    closeModal(); initAdmin();
+}
+
+// 時間変更
+async function updateTime(id, date) {
+    const newTime = document.getElementById('new-time').value;
+    if (!newTime) return;
+    await adminClient.from('reservations').update({ time: newTime }).eq('id', id);
+    closeModal(); initAdmin();
+}
+
+// (toggleOffTime, toggleDay, deleteRes, moveDate, closeModal は前回と同じですが一応保持)
 async function toggleOffTime(date, time, isOff) {
-    if (isOff) {
-        await adminClient.from('off_times').delete().match({ date, time });
-    } else {
-        await adminClient.from('off_times').insert([{ date, time }]);
-    }
-    closeModal();
-    initAdmin();
+    if (isOff) { await adminClient.from('off_times').delete().match({ date, time }); }
+    else { await adminClient.from('off_times').insert([{ date, time }]); }
+    closeModal(); initAdmin();
 }
 
 async function toggleDay(date, isClosed) {
@@ -199,8 +197,7 @@ async function toggleDay(date, isClosed) {
 async function deleteRes(id) {
     if (!confirm("本当に削除しますか？")) return;
     await adminClient.from('reservations').delete().eq('id', id);
-    closeModal();
-    initAdmin();
+    closeModal(); initAdmin();
 }
 
 function moveDate(n) { baseDate.setDate(baseDate.getDate() + n); render(); }
