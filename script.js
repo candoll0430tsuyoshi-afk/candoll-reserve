@@ -320,6 +320,7 @@ function showCompleteScreen() {
 }
 
 // ===== キャンセルモード判定 =====
+// script.js の一番下をこれに差し替え
 window.addEventListener("load", async () => {
   const urlParams = new URLSearchParams(window.location.search);
   if (urlParams.get('action') === 'cancel') {
@@ -328,7 +329,6 @@ window.addEventListener("load", async () => {
     document.getElementById("cancel-screen").style.display = "block";
 
     await miniappReady; 
-    
     if (!customerUserId) {
       document.getElementById("cancel-info").innerText = "LINEから開き直してください。";
       document.getElementById("executeCancelBtn").style.display = "none";
@@ -344,13 +344,23 @@ window.addEventListener("load", async () => {
     if (data && data.length > 0) {
       const res = data[0];
       document.getElementById("cancel-info").innerHTML = `<b>お名前</b>：${res.name}<br><b>日時</b>：${res.date.replace(/-/g, "/")} ${res.time}<br><b>メニュー</b>：${res.menus}`;
+      
       document.getElementById("executeCancelBtn").onclick = async () => {
         if (!confirm("本当にキャンセルしてよろしいですか？")) return;
         await supabaseClient.from("reservations").delete().eq("id", res.id);
+        
+        // fetchに menus: res.menus を追加
         await fetch("https://bcahztzetpfuklipjmxx.functions.supabase.co/dynamic-service", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ mode: "cancel", name: res.name, date: res.date, time: res.time, customerUserId })
+          body: JSON.stringify({ 
+            mode: "cancel", 
+            name: res.name, 
+            date: res.date, 
+            time: res.time, 
+            menus: res.menus, // これで管理者通知の undefined が直ります
+            customerUserId: customerUserId 
+          })
         });
         alert("予約をキャンセルしました。");
         liff.closeWindow();
