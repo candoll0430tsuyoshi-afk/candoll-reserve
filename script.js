@@ -4,6 +4,8 @@ let runtime = "web";
 let customerUserId = null;
 let MENU_DATA = {};
 let HOLIDAYS = [];
+let OFF_TIMES = [];    // 追加
+let SPECIAL_OPENS = []; // 追加
 
 // LINE LIFF 初期化
 const miniappReady = (async () => {
@@ -99,14 +101,15 @@ function renderMenuOptions(selectElement, data, categories) {
 
 // ===== 休日・日付ロジック =====
 async function loadHolidays() {
-  try {
-    const res = await fetch("https://bcahztzetpfuklipjmxx.functions.supabase.co/admin-service", {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ mode: "publicList" })
-    });
-    const json = await res.json();
-    HOLIDAYS = (json.holidays || []).map(h => h.date);
-  } catch (e) { console.error(e); }
+  const [resHolidays, resOff, resSpec] = await Promise.all([
+    supabaseClient.from("holidays").select("date"),
+    supabaseClient.from("off_times").select("date, time"),
+    supabaseClient.from("special_open").select("date")
+  ]);
+
+  HOLIDAYS = resHolidays.data.map(h => h.date) || [];
+  OFF_TIMES = resOff.data || [];
+  SPECIAL_OPENS = resSpec.data || [];
 }
 
 function updateDateOptions() {
@@ -131,12 +134,17 @@ function updateDateOptions() {
     const dowNum = d.getDay();
     const dow = week[dowNum];
 
-    let isHoliday = (HOLIDAYS.includes(value) || dowNum === 1);
-    if (dowNum === 2 && (d.getDate() <= 7 || (d.getDate() >= 15 && d.getDate() <= 21))) isHoliday = true;
+// 定休日と臨時休日の判定
+    const isFixedHoliday = (dowNum === 1 || (dowNum === 2 && (d.getDate() <= 7 || (d.getDate() >= 15 && d.getDate() <= 21))));
+    const isCustomHoliday = HOLIDAYS.includes(value);
+    const isSpecialOpen = SPECIAL_OPENS.some(s => s.date === value); // ★追加
+
+    // 特別営業日なら、定休日であっても休みを解除する
+    let isHoliday = (isFixedHoliday || isCustomHoliday) && !isSpecialOpen;
 
     let dayClass = "";
     if (dowNum === 6) dayClass = "sat";
-    if (dowNum === 0 || HOLIDAYS.includes(value)) dayClass = "sun";
+    if (dowNum === 0 || isCustomHoliday) dayClass = "sun";
     if (isHoliday) dayClass += " holiday";
 
     if (!isHoliday) {
