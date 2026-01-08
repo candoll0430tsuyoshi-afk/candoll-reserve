@@ -300,7 +300,7 @@ function showCompleteScreen() {
         </svg>
       </div>
       <h2 style="font-size:22px; margin-top:25px; font-weight:600;">予約を承りました</h2>
-      <p style="color:#86868b; font-size:15px; line-height:1.6;">当日のお越しをお待ちしております。</p>
+      <p style="color:#86868b; font-size:15px; line-height:1.6;">ご来店お待ちしております。</p>
       <button id="closeBtn" style="margin-top:40px; padding:16px; width:100%; border-radius:14px; background:#000; color:#fff; border:none; font-size:17px; font-weight:600; cursor:pointer;">閉じる</button>
     </div>
     <style>
