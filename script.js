@@ -345,11 +345,17 @@ window.addEventListener("load", async () => {
       const res = data[0];
       document.getElementById("cancel-info").innerHTML = `<b>お名前</b>：${res.name}<br><b>日時</b>：${res.date.replace(/-/g, "/")} ${res.time}<br><b>メニュー</b>：${res.menus}`;
       
-      document.getElementById("executeCancelBtn").onclick = async () => {
+document.getElementById("executeCancelBtn").onclick = async () => {
         if (!confirm("本当にキャンセルしてよろしいですか？")) return;
+
+        // ボタンを無効化して連打を防ぐ
+        const btn = document.getElementById("executeCancelBtn");
+        btn.disabled = true;
+        btn.innerText = "キャンセル処理中...";
+        btn.style.background = "#ccc";
+
         await supabaseClient.from("reservations").delete().eq("id", res.id);
         
-        // fetchに menus: res.menus を追加
         await fetch("https://bcahztzetpfuklipjmxx.functions.supabase.co/dynamic-service", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -358,12 +364,15 @@ window.addEventListener("load", async () => {
             name: res.name, 
             date: res.date, 
             time: res.time, 
-            menus: res.menus, // これで管理者通知の undefined が直ります
+            menus: res.menus,
             customerUserId: customerUserId 
           })
         });
+
+        // 完了後の表示
         alert("予約をキャンセルしました。");
-        liff.closeWindow();
+        btn.innerText = "キャンセル済み";
+        liff.closeWindow(); // 自動で閉じる
       };
     } else {
       document.getElementById("cancel-info").innerText = "該当する予約が見つかりませんでした。";
