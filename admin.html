@@ -1,362 +1,70 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Candoll 管理画面</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Candoll 管理画面</title>
+    <style>
+        :root { --primary: #000; --bg: #f8f8f8; --card: #fff; --accent: #ff4d4f; --ok: #52c41a; }
+        body { font-family: "Helvetica Neue", Arial, sans-serif; background: var(--bg); margin: 0; padding-bottom: 50px; }
+        .header { background: var(--card); padding: 15px; text-align: center; border-bottom: 1px solid #eee; position: sticky; top: 0; z-index: 100; }
+        .logo { width: 180px; }
+        .nav-bar { display: flex; justify-content: space-between; align-items: center; padding: 10px 20px; background: var(--card); margin-bottom: 10px; }
+        .nav-btn { background: var(--primary); color: white; border: none; padding: 8px 15px; border-radius: 8px; cursor: pointer; font-size: 14px; }
+        #nav-current { font-weight: bold; font-size: 16px; cursor: pointer; text-decoration: underline; }
 
-<style>
-    body {
-        font-family: "Hiragino Sans", "Hiragino Kaku Gothic ProN", sans-serif;
-        background: #ffffff;
-        margin: 0;
-        padding: 0;
-    }
+        .time-grid { display: flex; gap: 10px; padding: 10px; overflow-x: auto; align-items: flex-start; }
+        .day-column { min-width: 280px; flex: 1; background: var(--card); border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); overflow: hidden; }
+        .day-header { padding: 15px; background: var(--primary); color: white; text-align: center; position: relative; }
+        .day-toggle-btn { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); font-size: 12px; border: 1px solid #fff; padding: 2px 6px; border-radius: 4px; cursor: pointer; }
+        
+        .slot { padding: 15px; border-bottom: 1px solid #f0f0f0; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: 0.2s; }
+        .slot:hover { background: #fafafa; }
+        .slot.reserved { background: #fff1f0; border-left: 4px solid var(--accent); }
+        .slot.off { background: #f5f5f5; color: #999; }
+        .slot.free { background: #f6ffed; border-left: 4px solid var(--ok); }
+        .time-label { font-weight: bold; font-size: 14px; width: 50px; }
+        .slot-info { flex: 1; font-size: 13px; padding-left: 10px; }
 
-    .container {
-        max-width: 600px;
-        margin: 30px auto;
-        padding: 20px;
-        text-align: center;
-    }
-
-    .logo {
-        width: 260px;
-        margin: 0 auto 25px;
-        display: block;
-    }
-
-    /* ▼ ログイン画面 */
-    #login-box {
-        background: #f5f5f5;
-        padding: 25px;
-        border-radius: 10px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        text-align: left;
-    }
-
-    input, button {
-        width: 100%;
-        padding: 15px;
-        font-size: 18px;
-        border-radius: 6px;
-        box-sizing: border-box;
-    }
-
-    input {
-        margin-top: 10px;
-        border: 1px solid #ccc;
-    }
-
-    button {
-        margin-top: 20px;
-        background: #000;
-        color: #fff;
-        border: none;
-        cursor: pointer;
-    }
-
-    /* ▼ パスワード鍵アイコン */
-    .lock-icon {
-        position: absolute;
-        right: 12px;
-        top: 50%;
-        transform: translateY(-50%);
-        width: 24px;
-        height: 24px;
-        cursor: pointer;
-    }
-    .lock-icon::before,
-    .lock-icon::after {
-        content: "";
-        position: absolute;
-        left: 50%;
-        transform: translateX(-50%);
-        box-sizing: border-box;
-    }
-    .lock-icon::before {
-        top: 1px;
-        width: 14px;
-        height: 10px;
-        border: 2px solid #555;
-        border-bottom: none;
-        border-radius: 10px 10px 0 0;
-        transition: transform 0.2s ease, left 0.2s ease;
-    }
-    .lock-icon::after {
-        top: 9px;
-        width: 16px;
-        height: 11px;
-        border-radius: 3px;
-        background: #555;
-    }
-    .lock-icon.unlocked::before {
-        transform: translateX(-50%) rotate(-25deg);
-        left: 55%;
-    }
-
-    /* ▼ 右上メニュー */
-    #menu-btn {
-        position: fixed;
-        top: 12px;
-        right: 12px;
-        padding: 6px 10px;
-        background: #000;
-        color: #fff;
-        border-radius: 6px;
-        cursor: pointer;
-        font-size: 14px;
-        z-index: 999;
-        width: 34px;
-        text-align: center;
-    }
-
-    #menu-box {
-        display: none;
-        position: fixed;
-        top: 50px;
-        right: 12px;
-        background: #fff;
-        border: 1px solid #ccc;
-        border-radius: 6px;
-        width: 140px;
-        text-align: left;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-        z-index: 1000;
-    }
-
-    #menu-box div {
-        padding: 10px;
-        cursor: pointer;
-        border-bottom: 1px solid #eee;
-        font-size: 14px;
-    }
-    #menu-box div:last-child { border-bottom: none; }
-    #menu-box div:hover { background: #f0f0f0; }
-
-    /* ▼ 日付ナビ（ログイン後に admin.js から display:flex にする） */
-    #day-navi {
-        display: none; /* ← ログイン前は非表示 */
-        margin: 10px 0 25px 0;
-        font-size: 18px;
-        font-weight: bold;
-        justify-content: center;
-        align-items: center;
-        gap: 20px;
-    }
-
-    #nav-current {
-        font-size: 20px;
-        font-weight: bold;
-        color: #000;
-        position: relative;
-        top: 4px;  /* 高さ調整 */
-        white-space: nowrap;
-    }
-
-    #day-navi button {
-        padding: 8px 16px;
-        font-size: 15px;
-        background: #000;
-        color: #fff;
-        border-radius: 8px;
-        cursor: pointer;
-        border: none;
-        white-space: nowrap;
-    }
-
-    /* ▼ 3カラム */
-    #days-wrapper {
-        max-width: 1000px;
-        margin: 0 auto;
-        margin-top: 10px;
-        display: flex;
-        gap: 12px;
-        justify-content: center;
-        align-items: stretch;
-        padding: 0 10px;
-    }
-
-    .day-column {
-        background: #fafafa;
-        padding: 10px;
-        border-radius: 6px;
-        flex: 1;
-        min-width: 250px;
-        display: flex;
-        flex-direction: column;
-    }
-
-    /* ▼ 日付タイトル（＋ボタン横に置く想定の枠） */
-    .date-title {
-        background: #000;
-        color: #fff;
-        padding: 10px;
-        margin-bottom: 10px;
-        border-radius: 5px;
-        font-size: 20px;
-
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
-
-    .plus-btn {
-        background: #fff;
-        color: #000;
-        border-radius: 6px;
-        padding: 4px 10px;
-        font-size: 22px;
-        border: 1px solid #000;
-        cursor: pointer;
-        width: 36px;
-        height: 36px;
-
-        display: flex;
-        justify-content: center;
-        align-items: center;
-    }
-
-    /* ▼ スマホ切替 */
-    @media (max-width: 768px) {
-        #days-wrapper {
-            flex-direction: column;
-            max-width: 95%;
-        }
-        .day-column {
-            min-width: 100%;
-        }
-    }
-
-    /* ▼ popup（編集・追加・休日管理にも使用） */
-    #popup-bg {
-        position: fixed;
-        top:0;
-        left:0;
-        width:100%;
-        height:100%;
-        background: rgba(0,0,0,0.4);
-        display:none;
-        justify-content:center;
-        align-items:center;
-        z-index:2000;
-    }
-
-    #popup-box {
-        background:#fff;
-        padding:20px;
-        width: 90%;
-        max-width:340px;
-        border-radius:10px;
-    }
-
-    #popup-box input,
-    #popup-box select {
-        width:100%;
-        padding:10px;
-        margin-top:10px;
-        font-size:16px;
-        border-radius:6px;
-        border:1px solid #ccc;
-    }
-
-    #popup-box button {
-        width:100%;
-        padding:12px;
-        margin-top:15px;
-        background:#000;
-        color:#fff;
-        border:none;
-        border-radius:6px;
-        cursor:pointer;
-    }
-</style>
+        /* ポップアップ */
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 1000; }
+        .modal-content { background: white; width: 90%; max-width: 400px; padding: 25px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+        .history-box { background: #f9f9f9; padding: 10px; border-radius: 8px; font-size: 12px; margin-top: 10px; border-left: 3px solid #ccc; }
+        .btn-group { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; }
+        .btn-main { background: var(--primary); color: white; border: none; padding: 12px; border-radius: 10px; cursor: pointer; font-weight: bold; }
+        .btn-sub { background: #eee; color: #333; border: none; padding: 10px; border-radius: 10px; cursor: pointer; }
+        .btn-danger { background: var(--accent); color: white; border: none; padding: 10px; border-radius: 10px; cursor: pointer; }
+    </style>
 </head>
 <body>
 
-<!-- ▼ メニュー -->
-<button id="menu-btn">▼</button>
-<div id="menu-box">
-    <div id="m-logout">ログアウト</div>
-    <div id="m-add">休日追加</div>
-    <div id="m-del">休日解除</div>
-</div>
-
-<div class="container">
-    <img src="https://candoll0430tsuyoshi-afk.github.io/candoll-reserve/logo.png"
-         alt="Candoll ロゴ"
-         class="logo">
-
-    <!-- ▼ ログイン画面 -->
-    <div id="login-box">
-        <p>Pass</p>
-
-        <div style="position: relative; width: 100%;">
-            <input type="password" id="admin-pass" placeholder="パスワード" style="padding-right: 45px;">
-            <span id="toggle-pass" class="lock-icon locked"></span>
-        </div>
-
-        <button id="login-btn">ログイン</button>
-        <p id="login-error" style="color:red; display:none; margin-top:10px;">
-            パスワードが違います
-        </p>
-    </div>
-
-    <!-- ▼ 日付ナビ（ログイン後表示） -->
-    <div id="day-navi">
-        <button id="nav-prev">前の日</button>
-        <span id="nav-current">-</span>
-        <button id="nav-next">次の日</button>
+<div id="login-screen" class="modal" style="display: flex;">
+    <div class="modal-content">
+        <img src="logo.png" class="logo" style="margin-bottom: 20px; display: block; margin-left: auto; margin-right: auto;">
+        <input type="password" id="admin-pass" placeholder="パスワードを入力" style="width:100%; padding:15px; border-radius:10px; border:1px solid #ddd; box-sizing:border-box;">
+        <button class="btn-main" id="login-btn" style="width:100%; margin-top:15px;">ログイン</button>
     </div>
 </div>
 
-<!-- ▼ 3カラム表示 -->
-<div id="days-wrapper"></div>
-
-<!-- ▼ Popup共通 -->
-<div id="popup-bg">
-    <div id="popup-box"></div>
+<div class="header">
+    <img src="logo.png" class="logo">
 </div>
-<!-- ▼ カレンダー（nav-current をクリックしたときに表示） -->
-<input type="date" id="calendarPicker"
-       style="
-          display:none;
-          position:fixed;
-          top:50%;
-          left:50%;
-          transform:translate(-50%, -50%);
-          padding:35px;              
-          font-size:32px;            
-          width:360px;               
-          height:70px;               
-          z-index:5000;
-          background:#fff;
-          border:2px solid #000;
-          border-radius:14px;
-          box-shadow:0 4px 14px rgba(0,0,0,0.25);
-       ">
 
-<!-- ▼ 管理ロジック本体 -->
+<div class="nav-bar">
+    <button class="nav-btn" onclick="moveDate(-1)">前日</button>
+    <div id="nav-current" onclick="openCalendar()">2024-01-08 (月)</div>
+    <button class="nav-btn" onclick="moveDate(1)">翌日</button>
+</div>
+
+<div class="time-grid" id="days-wrapper"></div>
+
+<div id="slot-modal" class="modal">
+    <div class="modal-content" id="modal-body"></div>
+</div>
+
+<input type="date" id="calendar-input" style="display:none;">
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="admin.js"></script>
-
-<!-- ▼ パスワード可視化・右上メニュー操作 -->
-<script>
-document.addEventListener("DOMContentLoaded", () => {
-
-  /* ▼ パスワード可視化 */
-  const passInput = document.getElementById("admin-pass");
-  const toggleBtn = document.getElementById("toggle-pass");
-
-  if (passInput && toggleBtn) {
-    toggleBtn.addEventListener("click", () => {
-      const isHidden = passInput.type === "password";
-      passInput.type = isHidden ? "text" : "password";
-      toggleBtn.classList.toggle("unlocked", isHidden);
-    });
-  }
-
-});
-</script>
-
 </body>
 </html>
