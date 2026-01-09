@@ -258,57 +258,64 @@ document.getElementById("reserveForm").onsubmit = async e => {
   document.getElementById("reserveForm").style.display = "none";
   document.getElementById("confirm-screen").style.display = "block";
 
-// 「OK」ボタン（確定ボタン）を押した時の処理
-document.getElementById("okBtn").onclick = async () => {
-  const btn = document.getElementById("okBtn");
-  
-  // --- ① 二重送信防止ガード ---
-  if (btn.disabled) return; // すでに押されていたら何もしない
-  btn.disabled = true;      // ボタンを無効化
-  btn.innerText = "送信中..."; // 状態を表示
+  // 「OK」ボタン（確定ボタン）を押した時の処理
+  document.getElementById("okBtn").onclick = async () => {
+    const btn = document.getElementById("okBtn");
+    
+    // 二重送信防止ガード
+    if (btn.disabled) return;
+    btn.disabled = true;
+    btn.innerText = "送信中...";
 
-  try {
-    const name = document.getElementById("name").value;
-    const date = document.getElementById("date").value;
-    const time = document.getElementById("time").value;
-    const menuSelects = document.querySelectorAll(".menu-select");
-    const menus = Array.from(menuSelects).map(s => s.value).filter(v => v !== "").join(", ");
+    try {
+      // 終了時間を計算
+      const required = menus.map(m => MENU_DATA[m] || 0).reduce((a, b) => a + b, 0);
+      const [sh, sm] = time.split(":").map(Number);
+      const endD = new Date(2000, 0, 1, sh, sm + required);
+      const end_time = `${String(endD.getHours()).padStart(2, "0")}:${String(endD.getMinutes()).padStart(2, "0")}`;
 
-    // 1. データベースに保存
-    const { error } = await supabaseClient.from("reservations").insert([
-      { name, date, time, menus, customer_user_id: customerUserId }
-    ]);
+      // LINE通知の文言を設定
+      const messageText = `【ご予約内容】\n名前：${name} 様\n日時：${formattedDate} (${dow}) ${time}\nメニュー：${menus.join(", ")}\n\nご予約のキャンセルはこちらから\nhttps://liff.line.me/2008611644-EZd5nkl0?action=cancel`;
 
-    if (error) throw error;
+      // 1. Supabaseへ保存
+      const { error } = await supabaseClient.from("reservations").insert([{ 
+        name, 
+        menus: menus.join(", "), 
+        date: dateValue, 
+        time, 
+        end_time,
+        customer_user_id: customerUserId 
+      }]);
 
-    // 2. LINE通知を送る (Edge Functions)
-    // ※ ここが2回走っていないか確認
-    await fetch("https://bcahztzetpfuklipjmxx.functions.supabase.co/dynamic-service", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        mode: "reserve",
-        name,
-        date,
-        time,
-        menus,
-        customerUserId: customerUserId
-      })
-    });
+      if (error) throw error;
 
-    alert("予約が完了しました！");
-    if (liff.isInClient()) {
-      liff.closeWindow();
+      // 2. LINE通知を送信
+      await fetch("https://bcahztzetpfuklipjmxx.functions.supabase.co/dynamic-service", {
+        method: "POST", 
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          mode: "reserve",
+          name, 
+          menus: menus.join(", "), 
+          date: dateValue, 
+          time, 
+          customerUserId,
+          customMessage: messageText 
+        })
+      });
+      
+      showCompleteScreen();
+
+    } catch (e) {
+      console.error("予約エラー:", e);
+      alert("予約に失敗しました。もう一度お試しください。");
+      btn.disabled = false;
+      btn.innerText = "OK";
     }
-  } catch (e) {
-    console.error("予約エラー:", e);
-    alert("予約に失敗しました。もう一度お試しください。");
-    // エラーの時だけボタンを再度押せるようにする
-    btn.disabled = false;
-    btn.innerText = "OK";
-  }
-};
+  };
+}; // ここで reserveForm.onsubmit が終了
 
+// キャンセル（戻る）ボタン
 document.getElementById("cancelBtn").onclick = () => {
   document.querySelector(".greeting").style.display = "block";
   document.getElementById("confirm-screen").style.display = "none";
