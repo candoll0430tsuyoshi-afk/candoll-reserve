@@ -93,6 +93,8 @@ function render() {
 
 // (上部の設定やfetchDataはそのまま使用してください)
 
+// (上部の fetchData や initAdmin はそのままでOKです)
+
 function renderSlot(col, date, time, isClosed) {
     const timeMins = toMin(time);
     const exactRes = reservations.find(r => r.date === date && r.time === time);
@@ -108,16 +110,16 @@ function renderSlot(col, date, time, isClosed) {
     const div = document.createElement('div');
     div.className = 'slot';
 
-    // 色味の設定（枠線は細く、背景で区別）
+    // 色味と枠線の設定
     if (overlappingRes) {
         div.style.background = "#e5e5ea"; // 薄いグレー
-        div.style.border = "1px solid #ddd"; 
+        div.style.border = "1px solid #d1d1d6"; 
         if (!exactRes) {
             div.style.marginTop = "-4px";
-            div.style.borderRadius = "0 0 6px 6px";
+            div.style.borderRadius = "0 0 8px 8px";
             div.style.borderTop = "none";
         } else {
-            div.style.borderRadius = "6px 6px 0 0";
+            div.style.borderRadius = "8px 8px 0 0";
         }
     } else if (isOff || isClosed) {
         div.style.background = "#f2f2f7";
@@ -127,19 +129,18 @@ function renderSlot(col, date, time, isClosed) {
         div.style.border = "1px solid #eee";
     }
 
-    let content = `<div class="time-label">${time}</div><div class="slot-info">`;
+    // --- レイアウト：時間は左、情報は中央 ---
+    let content = `<div class="time-label">${time}</div>`;
+    content += `<div class="slot-info">`;
+    
     if (overlappingRes) {
         if (exactRes) {
-            // 名前とメニューを表示（矢印は削除）
-            content += `${exactRes.name} 様<br><span class="menu-label">${exactRes.menus}</span>`;
-        } else {
-            // 続きの枠は空欄にする（矢印を消す）
-            content += ``;
+            content += `${exactRes.name} 様<span class="menu-label">${exactRes.menus}</span>`;
         }
     } else if (isOff || isClosed) {
-        content += `<span style="color:#aaa; font-size:12px;">不可</span>`;
+        content += `<span style="color:#aaa; font-size:13px; font-weight:normal;">不可</span>`;
     } else {
-        content += `<span style="color:#ddd; font-size:12px;">空き</span>`;
+        content += `<span style="color:#ddd; font-size:13px; font-weight:normal;">空き</span>`;
     }
     content += `</div>`;
     
