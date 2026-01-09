@@ -258,41 +258,55 @@ document.getElementById("reserveForm").onsubmit = async e => {
   document.getElementById("reserveForm").style.display = "none";
   document.getElementById("confirm-screen").style.display = "block";
 
-  document.getElementById("okBtn").onclick = async () => {
-    const required = menus.map(m => MENU_DATA[m] || 0).reduce((a, b) => a + b, 0);
-    const [sh, sm] = time.split(":").map(Number);
-    const endD = new Date(2000,0,1,sh,sm + required);
-    const end_time = `${String(endD.getHours()).padStart(2,"0")}:${String(endD.getMinutes()).padStart(2,"0")}`;
+// 「OK」ボタン（確定ボタン）を押した時の処理
+document.getElementById("okBtn").onclick = async () => {
+  const btn = document.getElementById("okBtn");
+  
+  // --- ① 二重送信防止ガード ---
+  if (btn.disabled) return; // すでに押されていたら何もしない
+  btn.disabled = true;      // ボタンを無効化
+  btn.innerText = "送信中..."; // 状態を表示
 
-    // LINE通知の文言を設定
-    const messageText = `【ご予約内容】\n名前：${name} 様\n日時：${formattedDate} (${dow}) ${time}\nメニュー：${menus.join(", ")}\n\nご予約のキャンセルはこちらから\nhttps://liff.line.me/2008611644-EZd5nkl0?action=cancel`;
+  try {
+    const name = document.getElementById("name").value;
+    const date = document.getElementById("date").value;
+    const time = document.getElementById("time").value;
+    const menuSelects = document.querySelectorAll(".menu-select");
+    const menus = Array.from(menuSelects).map(s => s.value).filter(v => v !== "").join(", ");
 
-    // 1. Supabaseへ保存
-    await supabaseClient.from("reservations").insert([{ 
-      name, 
-      menus: menus.join(", "), 
-      date: dateValue, 
-      time, 
-      end_time,
-      customer_user_id: customerUserId // 顧客管理用
-    }]);
-    
-    // 2. LINE通知を送信
+    // 1. データベースに保存
+    const { error } = await supabaseClient.from("reservations").insert([
+      { name, date, time, menus, customer_user_id: customerUserId }
+    ]);
+
+    if (error) throw error;
+
+    // 2. LINE通知を送る (Edge Functions)
+    // ※ ここが2回走っていないか確認
     await fetch("https://bcahztzetpfuklipjmxx.functions.supabase.co/dynamic-service", {
-      method: "POST", 
+      method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ 
-        name, 
-        menus: menus.join(", "), 
-        date: dateValue, 
-        time, 
-        customerUserId,
-        customMessage: messageText 
+      body: JSON.stringify({
+        mode: "reserve",
+        name,
+        date,
+        time,
+        menus,
+        customerUserId: customerUserId
       })
     });
-    
-    showCompleteScreen();
-  };
+
+    alert("予約が完了しました！");
+    if (liff.isInClient()) {
+      liff.closeWindow();
+    }
+  } catch (e) {
+    console.error("予約エラー:", e);
+    alert("予約に失敗しました。もう一度お試しください。");
+    // エラーの時だけボタンを再度押せるようにする
+    btn.disabled = false;
+    btn.innerText = "OK";
+  }
 };
 
 document.getElementById("cancelBtn").onclick = () => {
