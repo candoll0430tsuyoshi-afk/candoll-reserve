@@ -1,4 +1,5 @@
-const SUPABASE_URL = "https://bcahztzetpfuklipjmxx.supabase.co";
+// 1. 設定
+const SUPABASE_URL = "https://bcahztzetpfuklipjmxx.supabase.co"; // URL修正済み
 const SUPABASE_KEY = "sb_publishable_rPyAIzNttEK3P8nsnBllYA_FTF-kxJQ";
 const ADMIN_PASSWORD = "candoll2026";
 const adminClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -8,11 +9,9 @@ let reservations = [];
 let offTimes = [];
 let holidays = [];
 let specialOpens = [];
+let MENU_DURATION = {}; // Supabaseから動的に取得
 
-const MENU_DURATION = {
-    "カット": 60, "カラー": 90, "パーマ": 120, "縮毛矯正": 180, "トリートメント": 30, "ヘッドスパ": 30
-};
-
+// 2. 初期化処理
 document.addEventListener("DOMContentLoaded", () => {
     const loginBtn = document.getElementById('login-btn');
     if (loginBtn) {
@@ -33,32 +32,43 @@ async function initAdmin() {
     render();
 }
 
+// 3. データ取得 (メニューテーブル連動)
 async function fetchData() {
-    const [res, off, hol, spec] = await Promise.all([
+    const [res, off, hol, spec, mData] = await Promise.all([
         adminClient.from('reservations').select('*'),
         adminClient.from('off_times').select('*'),
         adminClient.from('holidays').select('*'),
-        adminClient.from('special_open').select('*')
+        adminClient.from('special_open').select('*'),
+        adminClient.from('menus').select('name, duration') // メニュー情報を取得
     ]);
+
     reservations = res.data || [];
     offTimes = off.data || [];
     holidays = hol.data || [];
     specialOpens = spec.data || [];
+
+    // メニューデータをオブジェクトに変換
+    if (mData.data) {
+        MENU_DURATION = {};
+        mData.data.forEach(m => {
+            MENU_DURATION[m.name] = m.duration;
+        });
+    }
 }
 
 const toMin = t => { const [h, m] = t.split(':').map(Number); return h * 60 + m; };
 
+// 4. カレンダー描画
 function render() {
     const wrap = document.getElementById('days-wrapper');
     if (!wrap) return;
     wrap.innerHTML = '';
     
-    // レイアウト調整
+    // レイアウト調整 (スマホ縦並び対応)
     wrap.style.display = "flex";
     wrap.style.flexDirection = window.innerWidth < 600 ? "column" : "row";
-    wrap.style.gap = "20px"; // 日付ごとの間隔を少し広げる
+    wrap.style.gap = "20px";
 
-    // 日付表示（クリックでカレンダー起動）を更新
     const currentNav = document.getElementById('nav-current');
     currentNav.innerText = baseDate.toLocaleDateString('ja-JP', { 
         year: 'numeric', month: '2-digit', day: '2-digit', weekday: 'short' 
@@ -95,6 +105,8 @@ function render() {
 function renderSlot(col, date, time, isClosed) {
     const timeMins = toMin(time);
     const exactRes = reservations.find(r => r.date === date && r.time === time);
+    
+    // 枠の長さを計算 (メニューデータを使用)
     const overlappingRes = reservations.find(r => {
         if (r.date !== date) return false;
         const start = toMin(r.time);
@@ -104,20 +116,18 @@ function renderSlot(col, date, time, isClosed) {
 
     const isOff = offTimes.some(o => o.date === date && o.time === time);
     const div = document.createElement('div');
-    
-    // --- デザインの変更 ---
-    // 予約：薄いグレー(#e5e5ea) / 空き：白(#fff) / 休み：少し暗いグレー
     const status = overlappingRes ? 'reserved' : (isOff || isClosed ? 'off' : 'free');
     div.className = `slot ${status}`;
+
+    // デザイン: 予約は薄いグレー、空きは白、別々の予約の間に隙間
     div.style.border = "1px solid #ddd";
-    div.style.marginBottom = "4px"; // 枠同士に少し隙間を作る
+    div.style.marginBottom = "4px"; 
     div.style.borderRadius = "4px";
 
     if (overlappingRes) {
         div.style.background = "#e5e5ea"; // 薄いグレー
         div.style.color = "#333";
         if (!exactRes) {
-            // 連続する枠は少しだけ上の隙間を詰める（でも別の予約とは離れる）
             div.style.marginTop = "-4px";
             div.style.borderRadius = "0 0 4px 4px";
         } else {
@@ -145,14 +155,7 @@ function renderSlot(col, date, time, isClosed) {
     col.appendChild(div);
 }
 
-// カレンダー変更イベント
-function handleCalendarChange(val) {
-    if(!val) return;
-    baseDate = new Date(val);
-    render();
-}
-
-// (以下の関数は前回のコードとほぼ同じですが、modal部分のボタン配置なども少し整えています)
+// 5. 各種アクション
 async function openSlotModal(date, time, res, isOff) {
     const body = document.getElementById('modal-body');
     let html = `<h3 style="margin-top:0; border-bottom:1px solid #eee; padding-bottom:10px;">${date} ${time}</h3>`;
@@ -180,10 +183,14 @@ async function openSlotModal(date, time, res, isOff) {
             </button>
         `;
     }
-    html += `<button onclick="closeModal()" style="margin-top:15px; width:100%; padding:10px; border:none; background:none; color:#007aff;">閉じる</button>`;
+    html += `<button onclick="closeModal()" style="margin-top:15px; width:100%; padding:10px; border:none; background:none; color:#007aff; cursor:pointer;">閉じる</button>`;
     body.innerHTML = html;
     document.getElementById('slot-modal').style.display = 'flex';
 }
+
+function handleCalendarChange(val) { if(!val) return; baseDate = new Date(val); render(); }
+function moveDate(n) { baseDate.setDate(baseDate.getDate() + n); render(); }
+function closeModal() { document.getElementById('slot-modal').style.display = 'none'; }
 
 async function addManual(date, time) {
     const name = document.getElementById('manual-name').value;
@@ -222,6 +229,3 @@ async function deleteRes(id) {
     await adminClient.from('reservations').delete().eq('id', id);
     closeModal(); initAdmin();
 }
-
-function moveDate(n) { baseDate.setDate(baseDate.getDate() + n); render(); }
-function closeModal() { document.getElementById('slot-modal').style.display = 'none'; }
