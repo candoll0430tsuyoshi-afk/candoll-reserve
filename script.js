@@ -372,28 +372,47 @@ window.addEventListener("load", async () => {
       const res = data[0];
       document.getElementById("cancel-info").innerHTML = `<b>お名前</b>：${res.name}<br><b>日時</b>：${res.date.replace(/-/g, "/")} ${res.time}<br><b>メニュー</b>：${res.menus}`;
       
-      document.getElementById("executeCancelBtn").onclick = async () => {
-        // 標準アラート（confirm）を復活！
+document.getElementById("executeCancelBtn").onclick = async () => {
+        // 1. 確認アラート
         if (!confirm("本当にキャンセルしてよろしいですか？")) return;
 
+        // 2. ボタンを無効化して連打を防ぐ
         const btn = document.getElementById("executeCancelBtn");
+        if (btn.disabled) return; 
         btn.disabled = true;
         btn.innerText = "キャンセル処理中...";
 
-        await supabaseClient.from("reservations").delete().eq("id", res.id);
-        
-        await fetch("https://bcahztzetpfuklipjmxx.functions.supabase.co/dynamic-service", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ 
-            mode: "cancel", 
-            name: res.name, 
-            date: res.date, 
-            time: res.time, 
-            menus: res.menus,
-            customerUserId: customerUserId 
-          })
-        });
+        try {
+          // 3. Supabaseから削除
+          const { error } = await supabaseClient.from("reservations").delete().eq("id", res.id);
+          if (error) throw error;
+
+          // 4. LINE通知を送信（キャンセル通知）
+          await fetch("https://bcahztzetpfuklipjmxx.functions.supabase.co/dynamic-service", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ 
+              mode: "cancel", 
+              name: res.name, 
+              date: res.date, 
+              time: res.time, 
+              menus: res.menus,
+              customerUserId: customerUserId 
+            })
+          });
+
+          // 5. 完了通知
+          alert("予約をキャンセルしました。");
+          liff.closeWindow();
+
+        } catch (e) {
+          console.error("キャンセルエラー:", e);
+          alert("通信エラーが発生しました。もう一度お試しください。");
+          // エラーが起きたらボタンを元に戻す
+          btn.disabled = false;
+          btn.innerText = "予約をキャンセルする";
+        }
+      };
 
         // 標準アラート（alert）を復活！
         alert("予約をキャンセルしました。");
