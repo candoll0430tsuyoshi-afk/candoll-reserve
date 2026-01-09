@@ -354,7 +354,6 @@ function showCompleteScreen() {
 }
 
 // ===== キャンセルモード判定 =====
-// script.js の一番下をこれに差し替え
 window.addEventListener("load", async () => {
   const urlParams = new URLSearchParams(window.location.search);
   if (urlParams.get('action') === 'cancel') {
@@ -379,22 +378,18 @@ window.addEventListener("load", async () => {
       const res = data[0];
       document.getElementById("cancel-info").innerHTML = `<b>お名前</b>：${res.name}<br><b>日時</b>：${res.date.replace(/-/g, "/")} ${res.time}<br><b>メニュー</b>：${res.menus}`;
       
-document.getElementById("executeCancelBtn").onclick = async () => {
-        // 1. 確認アラート
+      document.getElementById("executeCancelBtn").onclick = async () => {
         if (!confirm("本当にキャンセルしてよろしいですか？")) return;
 
-        // 2. ボタンを無効化して連打を防ぐ
         const btn = document.getElementById("executeCancelBtn");
         if (btn.disabled) return; 
         btn.disabled = true;
         btn.innerText = "キャンセル処理中...";
 
         try {
-          // 3. Supabaseから削除
           const { error } = await supabaseClient.from("reservations").delete().eq("id", res.id);
           if (error) throw error;
 
-          // 4. LINE通知を送信（キャンセル通知）
           await fetch("https://bcahztzetpfuklipjmxx.functions.supabase.co/dynamic-service", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -408,26 +403,19 @@ document.getElementById("executeCancelBtn").onclick = async () => {
             })
           });
 
-          // 5. 完了通知
           alert("予約をキャンセルしました。");
           liff.closeWindow();
 
         } catch (e) {
           console.error("キャンセルエラー:", e);
           alert("通信エラーが発生しました。もう一度お試しください。");
-          // エラーが起きたらボタンを元に戻す
           btn.disabled = false;
           btn.innerText = "予約をキャンセルする";
         }
-      };
-
-        // 標準アラート（alert）を復活！
-        alert("予約をキャンセルしました。");
-        liff.closeWindow();
       };
     } else {
       document.getElementById("cancel-info").innerText = "該当する予約が見つかりませんでした。";
       document.getElementById("executeCancelBtn").style.display = "none";
     }
   }
-});
+}); // ← ここで全てのカッコが正しく閉じられます
