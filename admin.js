@@ -1,4 +1,4 @@
-const SUPABASE_URL = "https://bcahzetzetpfuklipjmxx.supabase.co";
+const SUPABASE_URL = "https://bcahztzetpfuklipjmxx.supabase.co";
 const SUPABASE_KEY = "sb_publishable_rPyAIzNttEK3P8nsnBllYA_FTF-kxJQ";
 const ADMIN_PASSWORD = "candoll2026";
 const adminClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
