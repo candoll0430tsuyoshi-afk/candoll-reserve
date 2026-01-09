@@ -50,10 +50,17 @@
     <img src="logo.png" class="logo">
 </div>
 
-<div class="nav-bar">
-    <button class="nav-btn" onclick="moveDate(-1)">前日</button>
-    <div id="nav-current" onclick="openCalendar()">2024-01-08 (月)</div>
-    <button class="nav-btn" onclick="moveDate(1)">翌日</button>
+<div class="admin-nav" style="display: flex; justify-content: center; align-items: center; gap: 20px; padding: 20px;">
+    <button onclick="moveDate(-1)" style="background:#eee; border:none; padding:10px 20px; border-radius:8px;">前日</button>
+    
+    <div style="text-align:center;">
+        <div id="nav-current" style="font-size:18px; font-weight:bold; padding:5px 15px; background:#fff; border:1px solid #ddd; border-radius:20px;">
+            読み込み中...
+        </div>
+        <input type="date" id="calendar-input" style="opacity:0; position:absolute; pointer-events:none;" onchange="handleCalendarChange(this.value)">
+    </div>
+
+    <button onclick="moveDate(1)" style="background:#eee; border:none; padding:10px 20px; border-radius:8px;">翌日</button>
 </div>
 
 <div class="time-grid" id="days-wrapper"></div>
