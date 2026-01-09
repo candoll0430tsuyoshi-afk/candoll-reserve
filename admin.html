@@ -4,46 +4,58 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>予約管理画面</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        body { font-family: sans-serif; margin: 0; background: #f9f9f9; }
-        .admin-container { max-width: 1200px; margin: 0 auto; padding: 10px; }
-        .day-column { background: #fff; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
-        .slot { padding: 12px; cursor: pointer; transition: 0.2s; display: flex; align-items: center; }
-        .slot:hover { opacity: 0.8; }
-        .reserved { border-left: 5px solid #8e8e93; }
-        .free { border-left: 5px solid #34c759; }
-        .off { border-left: 5px solid #ff3b30; }
+        body { font-family: sans-serif; margin: 0; background: #f9f9f9; color: #333; }
+        .admin-nav { display: flex; justify-content: center; align-items: center; gap: 15px; padding: 20px; background: #fff; border-bottom: 1px solid #ddd; }
+        /* 日付部分をボタンのように見せる */
+        .date-picker-container { position: relative; }
+        #nav-current { 
+            font-size: 18px; font-weight: bold; padding: 10px 20px; 
+            background: #fff; border: 2px solid #007aff; border-radius: 25px; 
+            color: #007aff; cursor: pointer; min-width: 140px; text-align: center;
+        }
+        /* スマホでカレンダーを起動しやすくする隠し入力 */
+        #calendar-input {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            opacity: 0; cursor: pointer;
+        }
+        button.nav-btn { background:#eee; border:none; padding:10px 18px; border-radius:10px; cursor:pointer; font-weight:bold; }
+        
+        #days-wrapper { padding: 15px; }
+        .day-column { margin-bottom: 25px; }
+        
+        .slot { 
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            padding: 10px; cursor: pointer; transition: 0.2s; text-align: center;
+        }
+        .time-label { font-size: 14px; font-weight: bold; color: #444; margin-bottom: 2px; } /* 時間の文字を大きく濃く */
+        .slot-info { font-size: 14px; font-weight: bold; width: 100%; } /* 名前・メニューを中央＆強調 */
+        
         .modal-overlay { 
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-            background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; 
+            background: rgba(0,0,0,0.6); display: none; justify-content: center; align-items: center; z-index: 1000;
         }
-        .modal-content { background: #fff; padding: 25px; border-radius: 15px; width: 90%; max-width: 400px; }
+        .modal-content { background: #fff; padding: 20px; border-radius: 15px; width: 90%; max-width: 400px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
+        input, select { font-size: 16px; padding: 12px; border: 1px solid #ddd; border-radius: 8px; width: 100%; box-sizing: border-box; }
     </style>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
-    <div id="login-screen">
-        <div class="login-box">
-            <h2>管理ログイン</h2>
-            <input type="password" id="admin-pass" placeholder="パスワード">
-            <button id="login-btn">ログイン</button>
-        </div>
+    <div id="login-screen" style="padding: 50px 20px; text-align: center;">
+        <h2>管理ログイン</h2>
+        <input type="password" id="admin-pass" style="max-width:200px; margin-bottom:10px;"><br>
+        <button id="login-btn" class="nav-btn" style="background:#007aff; color:#fff; width:200px;">ログイン</button>
     </div>
 
     <div class="admin-container">
-        <div class="admin-nav" style="display: flex; justify-content: center; align-items: center; gap: 20px; padding: 20px;">
-            <button onclick="moveDate(-1)" style="background:#eee; border:none; padding:10px 20px; border-radius:8px; cursor:pointer;">前日</button>
-            
-            <div style="text-align:center;">
-                <div id="nav-current" style="font-size:18px; font-weight:bold; padding:8px 20px; background:#fff; border:1px solid #ddd; border-radius:20px; cursor:pointer;">
-                    読み込み中...
-                </div>
-                <input type="date" id="calendar-input" style="opacity:0; position:absolute; pointer-events:none;" onchange="handleCalendarChange(this.value)">
+        <div class="admin-nav">
+            <button class="nav-btn" onclick="moveDate(-1)">前日</button>
+            <div class="date-picker-container">
+                <div id="nav-current">読み込み中...</div>
+                <input type="date" id="calendar-input" onchange="handleCalendarChange(this.value)">
             </div>
-
-            <button onclick="moveDate(1)" style="background:#eee; border:none; padding:10px 20px; border-radius:8px; cursor:pointer;">翌日</button>
+            <button class="nav-btn" onclick="moveDate(1)">翌日</button>
         </div>
-
         <div id="days-wrapper"></div>
     </div>
 
