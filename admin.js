@@ -91,6 +91,8 @@ function render() {
     }
 }
 
+// (上部の設定やfetchDataはそのまま使用してください)
+
 function renderSlot(col, date, time, isClosed) {
     const timeMins = toMin(time);
     const exactRes = reservations.find(r => r.date === date && r.time === time);
@@ -105,32 +107,39 @@ function renderSlot(col, date, time, isClosed) {
     const isOff = offTimes.some(o => o.date === date && o.time === time);
     const div = document.createElement('div');
     div.className = 'slot';
-    div.style.border = "1px solid #ddd";
-    div.style.marginBottom = "4px"; 
-    div.style.borderRadius = "6px";
 
+    // 色味の設定（枠線は細く、背景で区別）
     if (overlappingRes) {
         div.style.background = "#e5e5ea"; // 薄いグレー
+        div.style.border = "1px solid #ddd"; 
         if (!exactRes) {
             div.style.marginTop = "-4px";
             div.style.borderRadius = "0 0 6px 6px";
+            div.style.borderTop = "none";
         } else {
             div.style.borderRadius = "6px 6px 0 0";
         }
     } else if (isOff || isClosed) {
-        div.style.background = "#d1d1d6";
+        div.style.background = "#f2f2f7";
+        div.style.border = "1px solid #eee";
     } else {
         div.style.background = "#ffffff";
+        div.style.border = "1px solid #eee";
     }
 
     let content = `<div class="time-label">${time}</div><div class="slot-info">`;
     if (overlappingRes) {
-        if (exactRes) content += `${exactRes.name} 様<br><small style="font-weight:normal;">${exactRes.menus}</small>`;
-        else content += `<span style="color:#aaa;">↓</span>`;
+        if (exactRes) {
+            // 名前とメニューを表示（矢印は削除）
+            content += `${exactRes.name} 様<br><span class="menu-label">${exactRes.menus}</span>`;
+        } else {
+            // 続きの枠は空欄にする（矢印を消す）
+            content += ``;
+        }
     } else if (isOff || isClosed) {
-        content += `<span style="color:#8e8e93; font-size:12px;">不可</span>`;
+        content += `<span style="color:#aaa; font-size:12px;">不可</span>`;
     } else {
-        content += `<span style="color:#ccc; font-size:12px;">空き</span>`;
+        content += `<span style="color:#ddd; font-size:12px;">空き</span>`;
     }
     content += `</div>`;
     
@@ -138,6 +147,8 @@ function renderSlot(col, date, time, isClosed) {
     div.onclick = () => openSlotModal(date, time, exactRes || overlappingRes, isOff);
     col.appendChild(div);
 }
+
+// (openSlotModalやその他の関数も前回のままでOKです)
 
 async function openSlotModal(date, time, res, isOff) {
     const body = document.getElementById('modal-body');
