@@ -91,11 +91,16 @@ function render() {
 
 function renderSlot(col, date, time, isClosed) {
     const timeMins = toMin(time);
+    
+    // 1. その時間に「ピッタリ」始まる予約（お名前などの表示用）
     const exactRes = reservations.find(r => r.date === date && r.time === time);
+    
+    // 2. その時間を含んでいる予約（背景色などの判定用）
     const overlappingRes = reservations.find(r => {
         if (r.date !== date) return false;
         const start = toMin(r.time);
-        const duration = MENU_DURATION[r.menus.split(',')[0].trim()] || 60;
+        const firstMenu = r.menus.split(',')[0].trim();
+        const duration = MENU_DURATION[firstMenu] || 60;
         return timeMins >= start && timeMins < start + duration;
     });
 
@@ -103,54 +108,53 @@ function renderSlot(col, date, time, isClosed) {
     const div = document.createElement('div');
     div.className = 'slot';
 
-    // --- 【修正版】角丸ロジック ---
     if (overlappingRes) {
         div.style.background = "#e5e5ea";
         div.style.borderLeft = "1px solid #d1d1d6";
         div.style.borderRight = "1px solid #d1d1d6";
         div.style.marginBottom = "0";
         
-        // 1. 予約の「開始」地点
+        // --- 修正版：予約ID（同一人物）に基づいた角丸判定 ---
+        
+        // A. 予約の開始地点（exactResがある ＝ 予約データそのものの開始時間）
         if (exactRes) {
             div.style.borderTop = "1px solid #d1d1d6";
             div.style.borderBottom = "none";
-            div.style.borderRadius = "12px 12px 0 0"; // 上を丸く
-            div.style.marginTop = "6px";
+            div.style.borderRadius = "15px 15px 0 0"; // 上を丸く
+            div.style.marginTop = "8px"; // 予約の塊の上に少し隙間
         } else {
-            // 2. 予約の「途中」または「最後」
             div.style.borderTop = "none";
             div.style.marginTop = "0";
 
-            // 次の30分枠が、同じ予約の続きかどうかを判定
+            // B. 予約の終了地点の判定
+            // 「次の30分後」が「同じ予約ID」に含まれていないなら、そこが終点
             const nextTimeMins = timeMins + 30;
-            const isLastSlot = !reservations.some(r => {
-                if (r.date !== date) return false;
-                const start = toMin(r.time);
-                const dur = MENU_DURATION[r.menus.split(',')[0].trim()] || 60;
-                return nextTimeMins >= start && nextTimeMins < start + dur;
-            });
+            const resStart = toMin(overlappingRes.time);
+            const firstMenuName = overlappingRes.menus.split(',')[0].trim();
+            const resDuration = MENU_DURATION[firstMenuName] || 60;
+            const resEnd = resStart + resDuration;
 
-            if (isLastSlot) {
-                // ここが予約の「最後」の枠なら、下を丸くする
+            if (nextTimeMins >= resEnd) {
+                // ここがこの予約の最後の30分枠
                 div.style.borderBottom = "1px solid #d1d1d6";
-                div.style.borderRadius = "0 0 12px 12px"; // 下を丸く
-                div.style.marginBottom = "6px";
+                div.style.borderRadius = "0 0 15px 15px"; // 下を丸く
+                div.style.marginBottom = "8px"; // 予約の塊の下に隙間
             } else {
-                // まだ途中の枠なら、まっすぐ
+                // まだ同じ人の予約が続いている途中
                 div.style.borderBottom = "none";
                 div.style.borderRadius = "0";
             }
         }
     } else {
-        // 空き枠や休憩枠の設定
+        // 空き枠・休憩枠（常に独立したカプセル）
         div.style.background = (isOff || isClosed) ? "#f2f2f7" : "#ffffff";
         div.style.border = "1px solid #eee";
-        div.style.borderRadius = "12px"; // 通常枠も角丸
+        div.style.borderRadius = "12px";
         div.style.marginBottom = "6px";
         div.style.marginTop = "0";
     }
 
-    // 文字の表示（時間は左、名前は中央）
+    // 文字表示ロジック
     let content = `<div class="time-label">${time}</div><div class="slot-info">`;
     if (overlappingRes && exactRes) {
         content += `${exactRes.name} 様<span class="menu-label">${exactRes.menus}</span>`;
@@ -158,30 +162,10 @@ function renderSlot(col, date, time, isClosed) {
         content += `<span style="color:#ddd; font-size:13px; font-weight:normal;">${(isOff || isClosed) ? '不可' : '空き'}</span>`;
     }
     content += `</div>`;
+    
     div.innerHTML = content;
     div.onclick = () => openSlotModal(date, time, exactRes || overlappingRes, isOff);
     col.appendChild(div);
-}
-function updateNowLine() {
-    document.querySelectorAll('.now-line').forEach(el => el.remove());
-    const now = new Date();
-    const dateStr = now.toISOString().split('T')[0];
-    const col = document.getElementById(`col-${dateStr}`);
-    if (!col) return;
-
-    const currentMins = now.getHours() * 60 + now.getMinutes();
-    const startMins = 10 * 60;
-    if (currentMins < startMins || currentMins > 19 * 60) return;
-
-    const slots = col.querySelectorAll('.slot');
-    if (slots.length === 0) return;
-    const slotHeight = slots[0].offsetHeight;
-    const offset = ((currentMins - startMins) / 30) * slotHeight + slots[0].offsetTop;
-
-    const line = document.createElement('div');
-    line.className = 'now-line';
-    line.style.top = `${offset}px`;
-    col.appendChild(line);
 }
 
 async function openSlotModal(date, time, res, isOff) {
