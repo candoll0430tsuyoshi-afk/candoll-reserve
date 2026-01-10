@@ -70,12 +70,12 @@
 
     <div class="admin-container">
         <div class="admin-nav">
-            <button class="nav-btn" onclick="moveDate(-1)">前日</button>
+            <button class="nav-btn" onclick="moveDate(-1)"><<</button>
             <div class="date-picker-container">
                 <div id="nav-current">読み込み中...</div>
                 <input type="date" id="calendar-input" onchange="handleCalendarChange(this.value)">
             </div>
-            <button class="nav-btn" onclick="moveDate(1)">翌日</button>
+            <button class="nav-btn" onclick="moveDate(1)">>></button>
         </div>
         <div id="days-wrapper"></div>
     </div>
