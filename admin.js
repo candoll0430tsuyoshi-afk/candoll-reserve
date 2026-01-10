@@ -200,14 +200,33 @@ async function openSlotModal(date, time, res, isOff) {
     document.getElementById('slot-modal').style.display = 'flex';
 }
 
-// 変更保存ボタン用
+// 予約変更・メモ保存の決定版
 window.saveChanges = async function(id) {
-    const d = document.getElementById('new-date').value;
-    const t = document.getElementById('new-time').value;
-    const n = document.getElementById('res-notes').value;
-    const { error } = await adminClient.from('reservations').update({ date: d, time: t, notes: n }).eq('id', id);
-    if (error) { alert("保存に失敗しました"); console.error(error); }
-    else { closeModal(); initAdmin(); }
+    const newDate = document.getElementById('new-date').value;
+    const newTime = document.getElementById('new-time').value;
+    const notes = document.getElementById('res-notes').value;
+
+    console.log("保存開始:", { id, newDate, newTime, notes }); // デバッグ用
+
+    const { data, error } = await adminClient
+        .from('reservations')
+        .update({ 
+            date: newDate, 
+            time: newTime, 
+            notes: notes 
+        })
+        .eq('id', id)
+        .select(); // 更新後のデータを取得して確認
+
+    if (error) {
+        alert("保存エラー: " + error.message);
+        console.error("Supabase Error:", error);
+    } else {
+        console.log("保存成功:", data);
+        closeModal();
+        await fetchData(); // 最新データを再取得
+        render();          // 画面を再描画
+    }
 };
 
 window.handleCalendarChange = function(val) { if(!val) return; baseDate = new Date(val); render(); };
