@@ -164,7 +164,12 @@ function renderSlot(col, date, time, isClosed) {
     content += `</div>`;
     
     div.innerHTML = content;
-    div.onclick = () => openSlotModal(date, time, exactRes || overlappingRes, isOff);
+div.onclick = () => {
+        // もしその枠が「予約の途中」なら overlappingRes を、
+        // 「予約の開始」なら exactRes を優先してモーダルに渡す
+        const targetRes = exactRes || overlappingRes;
+        openSlotModal(date, time, targetRes, isOff);
+    };
     col.appendChild(div);
 }
 
