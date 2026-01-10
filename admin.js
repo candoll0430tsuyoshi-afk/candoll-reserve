@@ -115,19 +115,47 @@ function renderSlot(col, date, time, isClosed) {
             div.draggable = true;
             div.ondragstart = (e) => { e.dataTransfer.setData("text/plain", exactRes.id); div.style.opacity = "0.4"; };
             div.ondragend = () => div.style.opacity = "1";
-            div.ontouchstart = (e) => { div.style.opacity = "0.4"; window.draggingId = exactRes.id; };
-            div.ontouchend = (e) => {
-                div.style.opacity = "1";
-                const touch = e.changedTouches[0];
-                const targetEl = document.elementFromPoint(touch.clientX, touch.clientY);
-                const dropTarget = targetEl ? targetEl.closest('.slot') : null;
-                if (dropTarget && window.draggingId) {
-                    const d = dropTarget.dataset.date;
-                    const t = dropTarget.dataset.time;
-                    if (d && t) handleTouchDrop(window.draggingId, d, t);
-                }
-                window.draggingId = null;
+// --- ここからスマホ用：長押し対応版に書き換え ---
+            let touchTimer; 
+
+            div.ontouchstart = (e) => {
+                // 0.5秒間押し続けたら移動モードを起動
+                touchTimer = setTimeout(() => {
+                    div.style.opacity = "0.4";
+                    window.draggingId = exactRes.id;
+                    if (navigator.vibrate) navigator.vibrate(50); // 掴んだら軽く振動
+                }, 500); 
             };
+
+            div.ontouchend = (e) => {
+                // 0.5秒経つ前に指を離したらタイマーをキャンセル
+                clearTimeout(touchTimer);
+
+                if (window.draggingId) {
+                    div.style.opacity = "1";
+                    const touch = e.changedTouches[0];
+                    const targetEl = document.elementFromPoint(touch.clientX, touch.clientY);
+                    const dropTarget = targetEl ? targetEl.closest('.slot') : null;
+                    
+                    if (dropTarget && window.draggingId) {
+                        const d = dropTarget.dataset.date;
+                        const t = dropTarget.dataset.time;
+                        // 自分自身の場所に落とした場合は何もしない
+                        if (d === date && t === time) {
+                            window.draggingId = null;
+                            return;
+                        }
+                        if (d && t) handleTouchDrop(window.draggingId, d, t);
+                    }
+                    window.draggingId = null;
+                }
+            };
+
+            // 指を動かした（スクロールした）場合もタイマーをキャンセル
+            div.ontouchmove = () => {
+                clearTimeout(touchTimer);
+            };
+            // --- ここまで書き換え ---
             div.style.borderTop = "1px solid #d1d1d6";
             div.style.borderRadius = "15px 15px 0 0";
             div.style.marginTop = "8px";
