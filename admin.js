@@ -172,7 +172,7 @@ async function openSlotModal(date, time, res, isOff) {
     const body = document.getElementById('modal-body');
     let html = `<h3 style="margin:0 0 15px 0; text-align:center;">${date} ${time}</h3>`;
 
-    if (res) {
+if (res) {
         html += `
             <div style="font-size:16px; margin-bottom:15px; text-align:center;"><b>${res.name} 様</b></div>
             <div style="background:#f2f2f7; padding:15px; border-radius:10px; margin-bottom:15px;">
