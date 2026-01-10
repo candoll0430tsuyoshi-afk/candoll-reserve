@@ -172,7 +172,9 @@ async function openSlotModal(date, time, res, isOff) {
     const body = document.getElementById('modal-body');
     let html = `<h3 style="margin:0 0 15px 0; text-align:center;">${date} ${time}</h3>`;
 
-if (res) {
+    if (res) {
+        // 重要：res.idを数値として扱うため、明示的にNumberに変換する処理を挟みます
+        const resId = res.id; 
         html += `
             <div style="font-size:16px; margin-bottom:15px; text-align:center;"><b>${res.name} 様</b></div>
             <div style="background:#f2f2f7; padding:15px; border-radius:10px; margin-bottom:15px;">
@@ -181,9 +183,9 @@ if (res) {
                 <label style="font-size:13px; font-weight:bold; margin-top:10px; display:block;">日付・時間変更</label>
                 <input type="date" id="new-date" value="${res.date}">
                 <input type="time" id="new-time" value="${res.time}">
-                <button onclick="saveChanges('${res.id}')" style="background:#34c759; color:white; border:none; padding:15px; width:100%; border-radius:10px; margin-top:15px; font-weight:bold; font-size:16px; cursor:pointer;">変更を保存</button>
+                <button onclick="saveChanges('${resId}')" style="background:#34c759; color:white; border:none; padding:15px; width:100%; border-radius:10px; margin-top:15px; font-weight:bold; font-size:16px; cursor:pointer;">変更を保存</button>
             </div>
-            <button onclick="deleteRes('${res.id}')" style="background:none; color:#ff3b30; border:none; width:100%; padding:10px; cursor:pointer;">予約を削除</button>
+            <button onclick="deleteRes('${resId}')" style="background:none; color:#ff3b30; border:none; width:100%; padding:10px; cursor:pointer;">予約を削除</button>
         `;
     } else {
         html += `
@@ -200,13 +202,16 @@ if (res) {
     document.getElementById('slot-modal').style.display = 'flex';
 }
 
-// 予約変更・メモ保存の決定版
+// 予約変更・メモ保存の決定版（型の不一致を解消）
 window.saveChanges = async function(id) {
     const newDate = document.getElementById('new-date').value;
     const newTime = document.getElementById('new-time').value;
     const notes = document.getElementById('res-notes').value;
 
-    console.log("保存開始:", { id, newDate, newTime, notes }); // デバッグ用
+    // 数値型に強制変換（SupabaseのIDは大抵int8などの数値型のため）
+    const numericId = Number(id);
+
+    console.log("保存開始（IDを数値化）:", { numericId, newDate, newTime, notes });
 
     const { data, error } = await adminClient
         .from('reservations')
@@ -215,17 +220,21 @@ window.saveChanges = async function(id) {
             time: newTime, 
             notes: notes 
         })
-        .eq('id', id)
-        .select(); // 更新後のデータを取得して確認
+        .eq('id', numericId) // ここで数値として比較させる
+        .select();
 
     if (error) {
         alert("保存エラー: " + error.message);
         console.error("Supabase Error:", error);
+    } else if (data && data.length === 0) {
+        // ここが重要：成功したフリをして更新されていないケースへの対処
+        alert("エラー：指定された予約データが見つかりませんでした。画面をリロードしてやり直してください。");
+        console.warn("Update failed: No rows affected.");
     } else {
         console.log("保存成功:", data);
         closeModal();
-        await fetchData(); // 最新データを再取得
-        render();          // 画面を再描画
+        await fetchData(); 
+        render();          
     }
 };
 
