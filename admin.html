@@ -6,12 +6,11 @@
     <title>予約管理画面</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        /* フォントをモダンなシステムフォントに設定 */
         body { 
             font-family: "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", "Hiragino Sans", Meiryo, sans-serif; 
-            margin: 0; background: #f9f9f9; color: #333; line-height: 1.5;
+            margin: 0; background: #f4f4f9; color: #333;
         }
-        .admin-nav { display: flex; justify-content: center; align-items: center; gap: 15px; padding: 20px; background: #fff; border-bottom: 1px solid #ddd; }
+        .admin-nav { display: flex; justify-content: center; align-items: center; gap: 15px; padding: 20px; background: #fff; border-bottom: 1px solid #ddd; position: sticky; top: 0; z-index: 100; }
         
         .date-picker-container { position: relative; display: inline-block; }
         #nav-current { 
@@ -19,42 +18,29 @@
             background: #fff; border: 1px solid #007aff; border-radius: 25px; 
             color: #007aff; cursor: pointer; min-width: 140px; text-align: center;
         }
-        #calendar-input {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            opacity: 0; cursor: pointer; z-index: 10;
-        }
+        #calendar-input { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; z-index: 10; }
         
         button.nav-btn { background:#eee; border:none; padding:10px 18px; border-radius:10px; cursor:pointer; font-weight:bold; }
         
-        #days-wrapper { padding: 15px; }
-        .day-column { margin-bottom: 25px; }
+        #days-wrapper { padding: 15px; position: relative; }
+        .day-column { margin-bottom: 25px; background: #fff; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); overflow: hidden; position: relative; }
         
-        /* スロットのデザイン */
-        .slot { 
-            display: flex; flex-direction: row; align-items: center; /* 横並び */
-            padding: 10px 15px; cursor: pointer; transition: 0.2s;
-            border: 1px solid #eee; margin-bottom: 4px; border-radius: 8px;
-            min-height: 50px;
-        }
-        /* 時間は左寄せ */
-        .time-label { 
-            font-size: 16px; font-weight: bold; color: #222; 
-            width: 50px; flex-shrink: 0; text-align: left;
-        }
-        /* 名前とメニューは中央寄せ */
-        .slot-info { 
-            flex-grow: 1; text-align: center; font-size: 16px; font-weight: bold;
-        }
-        /* メニューの文字を少し大きく、線は細く */
-        .menu-label { 
-            font-size: 14px; font-weight: normal; color: #555; display: block; margin-top: 2px;
-        }
+        .slot { display: flex; flex-direction: row; align-items: center; padding: 10px 15px; cursor: pointer; transition: 0.2s; border-bottom: 1px solid #f0f0f0; min-height: 55px; box-sizing: border-box; }
+        .time-label { font-size: 16px; font-weight: bold; color: #222; width: 60px; flex-shrink: 0; }
+        .slot-info { flex-grow: 1; text-align: center; font-size: 16px; font-weight: bold; }
+        .menu-label { font-size: 13px; font-weight: normal; color: #666; display: block; margin-top: 2px; }
         
-        .modal-overlay { 
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-            background: rgba(0,0,0,0.6); display: none; justify-content: center; align-items: center; z-index: 1000;
+        /* 現在時刻のライン */
+        .now-line {
+            position: absolute; left: 0; right: 0; height: 2px; background: #ff3b30; z-index: 50; pointer-events: none;
         }
-        .modal-content { background: #fff; padding: 25px; border-radius: 20px; width: 90%; max-width: 400px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+        .now-line::before {
+            content: ""; position: absolute; left: 0; top: -4px; width: 10px; height: 10px; background: #ff3b30; border-radius: 50%;
+        }
+
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: none; justify-content: center; align-items: center; z-index: 1000; }
+        .modal-content { background: #fff; padding: 25px; border-radius: 20px; width: 90%; max-width: 400px; max-height: 90vh; overflow-y: auto; }
+        textarea { width: 100%; height: 100px; padding: 10px; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box; font-size: 14px; margin-top: 5px; }
         input, select { font-size: 16px; padding: 12px; border: 1px solid #ddd; border-radius: 10px; width: 100%; box-sizing: border-box; }
     </style>
 </head>
@@ -82,7 +68,6 @@
             <div id="modal-body"></div>
         </div>
     </div>
-
     <script src="admin.js"></script>
 </body>
 </html>
