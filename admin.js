@@ -218,16 +218,18 @@ async function openSlotModal(date, time, res, isOff) {
             </div>
             <button onclick="deleteRes('${res.id}')" style="background:none; color:#ff3b30; border:none; width:100%; padding:10px; cursor:pointer; font-size:14px;">この予約を削除する</button>
         `;
+// openSlotModal 関数内の else 部分を以下に差し替え
     } else {
         html += `
-            <div style="display:flex; flex-direction:column; gap:12px;">
+            <div style="display:flex; flex-direction:column; gap:12px; background:#f2f2f7; padding:20px; border-radius:15px; margin-bottom:15px;">
+                <label style="font-size:14px; font-weight:bold; color:#666; display:block;">新規予約の追加</label>
                 <input type="text" id="manual-name" placeholder="お客様名" style="width:100%; height:45px; font-size:16px; border:1px solid #ddd; border-radius:8px; padding:0 10px; box-sizing:border-box;">
-                <select id="manual-menu" style="width:100%; height:45px; font-size:16px; border:1px solid #ddd; border-radius:8px; padding:0 10px; box-sizing:border-box; background:#fff;">
+                <select id="manual-menu" style="width:100%; height:45px; font-size:16px; border:1px solid #ddd; border-radius:8px; padding:0 10px; box-sizing:border-box; background:#fff; -webkit-appearance:none; appearance:none;">
                     ${Object.keys(MENU_DURATION).map(m => `<option value="${m}">${m}</option>`).join('')}
                 </select>
                 <button onclick="addManual('${date}', '${time}')" style="background:#007aff; color:white; border:none; height:50px; width:100%; border-radius:10px; font-weight:bold; font-size:16px; margin-top:10px; cursor:pointer;">予約を追加</button>
-                <button onclick="toggleOffTime('${date}', '${time}', ${isOff})" style="background:none; color:#666; border:none; width:100%; padding:15px; cursor:pointer; font-size:14px;">${isOff ? 'この枠を予約可能に戻す' : 'この枠を休憩（不可）にする'}</button>
             </div>
+            <button onclick="toggleOffTime('${date}', '${time}', ${isOff})" style="background:none; color:#666; border:none; width:100%; padding:10px; cursor:pointer; font-size:14px;">${isOff ? 'この枠を予約可能に戻す' : 'この枠を休憩（不可）にする'}</button>
         `;
     }
     html += `<button onclick="closeModal()" style="margin-top:15px; width:100%; padding:10px; border:none; background:none; color:#007aff; font-size:16px; cursor:pointer;">閉じる</button>`;
