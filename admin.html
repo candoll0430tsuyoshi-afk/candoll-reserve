@@ -14,12 +14,38 @@
         .admin-nav { display: flex; justify-content: center; align-items: center; gap: 10px; padding: 15px; background: #fff; border-bottom: 1px solid #ddd; position: sticky; top: 0; z-index: 200; }
         
         /* カレンダー：z-indexを上げて最前面に */
-        .date-picker-container { position: relative; z-index: 210; }
-        #nav-current { 
-            font-size: 17px; font-weight: bold; padding: 8px 15px; 
-            background: #fff; border: 1px solid #007aff; border-radius: 20px; 
-            color: #007aff; cursor: pointer; min-width: 120px; text-align: center;
-        }
+.date-picker-container { 
+    position: relative; 
+    display: inline-block; 
+}
+
+#nav-current { 
+    font-size: 18px; 
+    font-weight: bold; 
+    padding: 10px 25px; 
+    background: #fff; 
+    border: 2px solid #007aff; /* 少し太くしてボタン感をアップ */
+    border-radius: 25px; 
+    color: #007aff; 
+    min-width: 150px; 
+    text-align: center;
+    position: relative; /* 子要素の基準にする */
+    z-index: 1;
+}
+
+/* 隠しカレンダー入力をボタン全体に広げる */
+#calendar-input { 
+    position: absolute; 
+    top: 0; 
+    left: 0; 
+    width: 100%; 
+    height: 100%; 
+    opacity: 0;         /* 透明 */
+    cursor: pointer; 
+    z-index: 10;        /* 文字よりも上に配置して、どこを触っても反応させる */
+    appearance: none;   /* 標準デザインを消す */
+    -webkit-appearance: none;
+}
         #calendar-input { 
             position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
             opacity: 0; cursor: pointer; z-index: 220;
