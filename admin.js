@@ -232,3 +232,35 @@ async function toggleDay(date, isClosed) {
     initAdmin();
 }
 async function deleteRes(id) { if (!confirm("本当に削除しますか？")) return; await adminClient.from('reservations').delete().eq('id', id); closeModal(); initAdmin(); }
+// 現在時刻の赤い線を引くための関数
+function updateNowLine() {
+    // すでに引いてある線を一旦消す
+    document.querySelectorAll('.now-line').forEach(el => el.remove());
+    
+    const now = new Date();
+    // 日本時間の今日の日付 (YYYY-MM-DD)
+    const dateStr = now.toLocaleDateString('sv-SE'); 
+    const col = document.getElementById(`col-${dateStr}`);
+    
+    // 今日の列が表示されていない場合は何もしない
+    if (!col) return;
+
+    const currentMins = now.getHours() * 60 + now.getMinutes();
+    const startMins = 10 * 60; // 営業開始 10:00
+    const endMins = 19 * 60;   // 19:00 まで表示対象
+
+    // 営業時間外なら線を引かない
+    if (currentMins < startMins || currentMins > endMins) return;
+
+    const slots = col.querySelectorAll('.slot');
+    if (slots.length === 0) return;
+
+    // スロット1つ分の高さを取得して、今の時間が上から何ピクセルの位置か計算
+    const slotHeight = slots[0].offsetHeight;
+    const offset = ((currentMins - startMins) / 30) * slotHeight + slots[0].offsetTop;
+
+    const line = document.createElement('div');
+    line.className = 'now-line';
+    line.style.top = `${offset}px`;
+    col.appendChild(line);
+}
