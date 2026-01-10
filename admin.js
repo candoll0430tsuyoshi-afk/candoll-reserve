@@ -103,54 +103,54 @@ function renderSlot(col, date, time, isClosed) {
     const div = document.createElement('div');
     div.className = 'slot';
 
-    // --- ここから修正：枠線を繋げるロジック ---
+    // --- 【修正版】角丸ロジック ---
     if (overlappingRes) {
         div.style.background = "#e5e5ea";
         div.style.borderLeft = "1px solid #d1d1d6";
         div.style.borderRight = "1px solid #d1d1d6";
-        div.style.borderBottom = "none"; // 基本、下線は消す
-        div.style.marginBottom = "0";     // 隙間をゼロにする
+        div.style.marginBottom = "0";
         
+        // 1. 予約の「開始」地点
         if (exactRes) {
-            // 予約の開始地点
             div.style.borderTop = "1px solid #d1d1d6";
-            div.style.borderRadius = "8px 8px 0 0";
-            div.style.marginTop = "4px"; // 別の予約との間に少しだけ隙間を作る
+            div.style.borderBottom = "none";
+            div.style.borderRadius = "12px 12px 0 0"; // 上を丸く
+            div.style.marginTop = "6px";
         } else {
-            // 予約の途中
+            // 2. 予約の「途中」または「最後」
             div.style.borderTop = "none";
             div.style.marginTop = "0";
-            
-            // 次の枠が予約でなければ（＝予約の終了地点なら）下丸みをつける
+
+            // 次の30分枠が、同じ予約の続きかどうかを判定
             const nextTimeMins = timeMins + 30;
-            const isEnd = !reservations.some(r => {
+            const isLastSlot = !reservations.some(r => {
                 if (r.date !== date) return false;
                 const start = toMin(r.time);
                 const dur = MENU_DURATION[r.menus.split(',')[0].trim()] || 60;
                 return nextTimeMins >= start && nextTimeMins < start + dur;
             });
-            
-            if (isEnd) {
+
+            if (isLastSlot) {
+                // ここが予約の「最後」の枠なら、下を丸くする
                 div.style.borderBottom = "1px solid #d1d1d6";
-                div.style.borderRadius = "0 0 8px 8px";
-                div.style.marginBottom = "4px";
+                div.style.borderRadius = "0 0 12px 12px"; // 下を丸く
+                div.style.marginBottom = "6px";
             } else {
+                // まだ途中の枠なら、まっすぐ
+                div.style.borderBottom = "none";
                 div.style.borderRadius = "0";
             }
         }
-    } else if (isOff || isClosed) {
-        div.style.background = "#f2f2f7";
-        div.style.border = "1px solid #eee";
-        div.style.marginBottom = "4px";
-        div.style.borderRadius = "8px";
     } else {
-        div.style.background = "#ffffff";
+        // 空き枠や休憩枠の設定
+        div.style.background = (isOff || isClosed) ? "#f2f2f7" : "#ffffff";
         div.style.border = "1px solid #eee";
-        div.style.marginBottom = "4px";
-        div.style.borderRadius = "8px";
+        div.style.borderRadius = "12px"; // 通常枠も角丸
+        div.style.marginBottom = "6px";
+        div.style.marginTop = "0";
     }
-    // --- 修正ここまで ---
 
+    // 文字の表示（時間は左、名前は中央）
     let content = `<div class="time-label">${time}</div><div class="slot-info">`;
     if (overlappingRes && exactRes) {
         content += `${exactRes.name} 様<span class="menu-label">${exactRes.menus}</span>`;
@@ -162,7 +162,6 @@ function renderSlot(col, date, time, isClosed) {
     div.onclick = () => openSlotModal(date, time, exactRes || overlappingRes, isOff);
     col.appendChild(div);
 }
-
 function updateNowLine() {
     document.querySelectorAll('.now-line').forEach(el => el.remove());
     const now = new Date();
