@@ -312,6 +312,7 @@ async function toggleDay(date, isClosed) {
 }
 async function deleteRes(id) { if (!confirm("本当に削除しますか？")) return; await adminClient.from('reservations').delete().eq('id', id); closeModal(); initAdmin(); }
 // 現在時刻の赤い線を引くための関数
+// 現在時刻の赤い線を引くための関数
 function updateNowLine() {
     // すでに引いてある線を一旦消す
     document.querySelectorAll('.now-line').forEach(el => el.remove());
@@ -343,13 +344,10 @@ function updateNowLine() {
     line.style.top = `${offset}px`;
     col.appendChild(line);
 }
-async function handleDrop(e, newDate, newTime) {
-    e.preventDefault();
-    const id = e.dataTransfer.getData("text/plain");
-    if (!id) return;
 
+// スマホ用ドロップ処理を共通化して追加
+async function handleTouchDrop(id, newDate, newTime) {
     if (!confirm(`${newDate} ${newTime} に移動しますか？`)) return;
-
     const { error } = await adminClient
         .from('reservations')
         .update({ date: newDate, time: newTime })
