@@ -218,7 +218,29 @@ async function openSlotModal(date, time, res, isOff) {
             </div>
             <button onclick="deleteRes('${res.id}')" style="background:none; color:#ff3b30; border:none; width:100%; padding:10px; cursor:pointer; font-size:14px;">この予約を削除する</button>
         `;
-// openSlotModal 関数内の else 部分を以下に差し替え
+async function openSlotModal(date, time, res, isOff) {
+    const body = document.getElementById('modal-body');
+    
+    // 日付から曜日を計算
+    const dayOfWeek = ['日','月','火','水','木','金','土'][new Date(date).getDay()];
+    // タイトルに曜日を追加
+    let html = `<h3 style="margin:0 0 20px 0; text-align:center; color:#333; font-size:18px;">${date}(${dayOfWeek}) ${time}</h3>`;
+
+    if (res) {
+        html += `
+            <div style="font-size:18px; margin-bottom:20px; text-align:center; color:#000;"><b>${res.name} 様</b></div>
+            <div style="background:#f2f2f7; padding:20px; border-radius:15px; margin-bottom:15px;">
+                <div style="margin-bottom:15px;">
+                    <label style="font-size:14px; font-weight:bold; color:#666; display:block; margin-bottom:8px;">予約日時の変更</label>
+                    <div style="display:flex; flex-direction:column; gap:10px;">
+                        <input type="date" id="new-date" value="${res.date}" style="width:100%; height:45px; font-size:16px; border:1px solid #ddd; border-radius:8px; padding:0 10px; box-sizing:border-box;">
+                        <input type="time" id="new-time" value="${res.time}" style="width:100%; height:45px; font-size:16px; border:1px solid #ddd; border-radius:8px; padding:0 10px; box-sizing:border-box;">
+                    </div>
+                </div>
+                <button onclick="saveChanges('${res.id}')" style="background:#34c759; color:white; border:none; height:50px; width:100%; border-radius:10px; font-weight:bold; font-size:16px; cursor:pointer; margin-top:10px;">変更を保存</button>
+            </div>
+            <button onclick="deleteRes('${res.id}')" style="background:none; color:#ff3b30; border:none; width:100%; padding:10px; cursor:pointer; font-size:14px;">この予約を削除する</button>
+        `;
     } else {
         html += `
             <div style="display:flex; flex-direction:column; gap:12px; background:#f2f2f7; padding:20px; border-radius:15px; margin-bottom:15px;">
@@ -229,7 +251,12 @@ async function openSlotModal(date, time, res, isOff) {
                 </select>
                 <button onclick="addManual('${date}', '${time}')" style="background:#007aff; color:white; border:none; height:50px; width:100%; border-radius:10px; font-weight:bold; font-size:16px; margin-top:10px; cursor:pointer;">予約を追加</button>
             </div>
-            <button onclick="toggleOffTime('${date}', '${time}', ${isOff})" style="background:none; color:#666; border:none; width:100%; padding:10px; cursor:pointer; font-size:14px;">${isOff ? 'この枠を予約可能に戻す' : 'この枠を休憩（不可）にする'}</button>
+            
+            <div style="padding: 0 20px;">
+                <button onclick="toggleOffTime('${date}', '${time}', ${isOff})" style="background:${isOff ? '#ff9500' : '#8e8e93'}; color:white; border:none; height:45px; width:100%; border-radius:10px; font-weight:bold; font-size:15px; cursor:pointer;">
+                    ${isOff ? 'この枠を予約可能に戻す' : 'この枠を休憩（不可）にする'}
+                </button>
+            </div>
         `;
     }
     html += `<button onclick="closeModal()" style="margin-top:15px; width:100%; padding:10px; border:none; background:none; color:#007aff; font-size:16px; cursor:pointer;">閉じる</button>`;
