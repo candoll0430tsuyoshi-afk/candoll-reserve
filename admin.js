@@ -239,32 +239,21 @@ async function openSlotModal(date, time, res, isOff) {
 window.saveChanges = async function(id) {
     const newDate = document.getElementById('new-date').value;
     const newTime = document.getElementById('new-time').value;
-    const notes = document.getElementById('res-notes').value;
 
-    // 数値型に強制変換（SupabaseのIDは大抵int8などの数値型のため）
     const numericId = Number(id);
-
-    console.log("保存開始（IDを数値化）:", { numericId, newDate, newTime, notes });
 
     const { data, error } = await adminClient
         .from('reservations')
         .update({ 
             date: newDate, 
-            time: newTime, 
-            notes: notes 
+            time: newTime
         })
-        .eq('id', numericId) // ここで数値として比較させる
+        .eq('id', numericId)
         .select();
 
     if (error) {
         alert("保存エラー: " + error.message);
-        console.error("Supabase Error:", error);
-    } else if (data && data.length === 0) {
-        // ここが重要：成功したフリをして更新されていないケースへの対処
-        alert("エラー：指定された予約データが見つかりませんでした。画面をリロードしてやり直してください。");
-        console.warn("Update failed: No rows affected.");
     } else {
-        console.log("保存成功:", data);
         closeModal();
         await fetchData(); 
         render();          
