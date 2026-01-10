@@ -34,19 +34,31 @@
             z-index: 1;
         }
 
-        /* 隠しカレンダー：ボタン全体に広げて最前面に置く */
-        #calendar-input { 
-            position: absolute; 
-            top: 0; 
-            left: 0; 
-            width: 100%; 
-            height: 100%; 
-            opacity: 0;         /* 透明 */
-            cursor: pointer; 
-            z-index: 10;        /* 確実に一番上にする */
-            appearance: none;   
-            -webkit-appearance: none;
-        }
+#calendar-input { 
+    position: absolute; 
+    top: 0; 
+    left: 0; 
+    width: 100%; 
+    height: 100%; 
+    opacity: 0;         /* 透明にする */
+    cursor: pointer; 
+    z-index: 10;        
+    
+    /* ↓ここが重要：ブラウザの既定デザインを無視して全体をクリック可能にする */
+    display: block;
+}
+
+/* Chromeなどのブラウザでカレンダーアイコンをボタン全体に広げる魔法のコード */
+#calendar-input::-webkit-calendar-picker-indicator {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    cursor: pointer;
+}
         
         button.nav-btn { background:#eee; border:none; padding:10px 15px; border-radius:8px; cursor:pointer; font-weight:bold; }
         
