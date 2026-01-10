@@ -254,7 +254,7 @@ async function openSlotModal(date, time, res, isOff) {
             
             <div style="padding: 0 20px;">
                 <button onclick="toggleOffTime('${date}', '${time}', ${isOff})" style="background:${isOff ? '#ff9500' : '#8e8e93'}; color:white; border:none; height:45px; width:100%; border-radius:10px; font-weight:bold; font-size:15px; cursor:pointer;">
-                    ${isOff ? 'この枠を予約可能に戻す' : 'この枠を休憩（不可）にする'}
+                    ${isOff ? 'この枠を予約可能に戻す' : 'この枠を予約不可にする'}
                 </button>
             </div>
         `;
