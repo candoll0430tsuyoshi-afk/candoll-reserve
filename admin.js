@@ -91,11 +91,7 @@ function render() {
 
 function renderSlot(col, date, time, isClosed) {
     const timeMins = toMin(time);
-    
-    // 1. その時間に「ピッタリ」始まる予約（お名前などの表示用）
     const exactRes = reservations.find(r => r.date === date && r.time === time);
-    
-    // 2. その時間を含んでいる予約（背景色などの判定用）
     const overlappingRes = reservations.find(r => {
         if (r.date !== date) return false;
         const start = toMin(r.time);
@@ -107,54 +103,48 @@ function renderSlot(col, date, time, isClosed) {
     const isOff = offTimes.some(o => o.date === date && o.time === time);
     const div = document.createElement('div');
     div.className = 'slot';
+    
+    // ドロップ先の受付設定
+    div.ondragover = (e) => e.preventDefault();
+    div.ondrop = (e) => handleDrop(e, date, time);
 
     if (overlappingRes) {
         div.style.background = "#e5e5ea";
-        div.style.borderLeft = "1px solid #d1d1d6";
-        div.style.borderRight = "1px solid #d1d1d6";
-        div.style.marginBottom = "0";
-        
-        // --- 修正版：予約ID（同一人物）に基づいた角丸判定 ---
-        
-        // A. 予約の開始地点（exactResがある ＝ 予約データそのものの開始時間）
+        // 予約の「開始枠（お名前がある枠）」だけをドラッグ可能にする
         if (exactRes) {
+            div.draggable = true;
+            div.ondragstart = (e) => {
+                e.dataTransfer.setData("text/plain", exactRes.id);
+                div.style.opacity = "0.4";
+            };
+            div.ondragend = () => div.style.opacity = "1";
+            
             div.style.borderTop = "1px solid #d1d1d6";
-            div.style.borderBottom = "none";
-            div.style.borderRadius = "15px 15px 0 0"; // 上を丸く
-            div.style.marginTop = "8px"; // 予約の塊の上に少し隙間
+            div.style.borderRadius = "15px 15px 0 0";
+            div.style.marginTop = "8px";
         } else {
             div.style.borderTop = "none";
             div.style.marginTop = "0";
-
-            // B. 予約の終了地点の判定
-            // 「次の30分後」が「同じ予約ID」に含まれていないなら、そこが終点
-            const nextTimeMins = timeMins + 30;
+            // 続き枠の判定
+            const nextMins = timeMins + 30;
             const resStart = toMin(overlappingRes.time);
-            const firstMenuName = overlappingRes.menus.split(',')[0].trim();
-            const resDuration = MENU_DURATION[firstMenuName] || 60;
-            const resEnd = resStart + resDuration;
-
-            if (nextTimeMins >= resEnd) {
-                // ここがこの予約の最後の30分枠
+            const dur = MENU_DURATION[overlappingRes.menus.split(',')[0].trim()] || 60;
+            if (nextMins >= resStart + dur) {
                 div.style.borderBottom = "1px solid #d1d1d6";
-                div.style.borderRadius = "0 0 15px 15px"; // 下を丸く
-                div.style.marginBottom = "8px"; // 予約の塊の下に隙間
+                div.style.borderRadius = "0 0 15px 15px";
+                div.style.marginBottom = "8px";
             } else {
-                // まだ同じ人の予約が続いている途中
                 div.style.borderBottom = "none";
                 div.style.borderRadius = "0";
             }
         }
     } else {
-        // 空き枠・休憩枠（常に独立したカプセル）
         div.style.background = (isOff || isClosed) ? "#f2f2f7" : "#ffffff";
         div.style.border = "1px solid #eee";
         div.style.borderRadius = "12px";
         div.style.marginBottom = "6px";
-        div.style.marginTop = "0";
     }
 
-    // 文字表示ロジック
     let content = `<div class="time-label">${time}</div><div class="slot-info">`;
     if (overlappingRes && exactRes) {
         content += `${exactRes.name} 様<span class="menu-label">${exactRes.menus}</span>`;
@@ -164,12 +154,7 @@ function renderSlot(col, date, time, isClosed) {
     content += `</div>`;
     
     div.innerHTML = content;
-div.onclick = () => {
-        // もしその枠が「予約の途中」なら overlappingRes を、
-        // 「予約の開始」なら exactRes を優先してモーダルに渡す
-        const targetRes = exactRes || overlappingRes;
-        openSlotModal(date, time, targetRes, isOff);
-    };
+    div.onclick = () => openSlotModal(date, time, exactRes || overlappingRes, isOff);
     col.appendChild(div);
 }
 
