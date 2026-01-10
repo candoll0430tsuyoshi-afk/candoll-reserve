@@ -104,28 +104,52 @@ function renderSlot(col, date, time, isClosed) {
     const div = document.createElement('div');
     div.className = 'slot';
     
-    // ドロップ先の受付設定
+    // ドロップ先としての設定（PC用）
     div.ondragover = (e) => e.preventDefault();
     div.ondrop = (e) => handleDrop(e, date, time);
 
+    // ドロップ先としての情報を保持（スマホ用）
+    div.dataset.date = date;
+    div.dataset.time = time;
+
     if (overlappingRes) {
         div.style.background = "#e5e5ea";
-        // 予約の「開始枠（お名前がある枠）」だけをドラッグ可能にする
+        
         if (exactRes) {
+            // --- PC用：マウス操作 ---
             div.draggable = true;
             div.ondragstart = (e) => {
                 e.dataTransfer.setData("text/plain", exactRes.id);
                 div.style.opacity = "0.4";
             };
             div.ondragend = () => div.style.opacity = "1";
-            
+
+            // --- スマホ用：タッチ操作 ---
+            div.ontouchstart = (e) => {
+                div.style.opacity = "0.4";
+                window.draggingId = exactRes.id; // 触れたIDを保持
+            };
+            div.ontouchend = (e) => {
+                div.style.opacity = "1";
+                const touch = e.changedTouches[0];
+                const targetEl = document.elementFromPoint(touch.clientX, touch.clientY);
+                const dropTarget = targetEl ? targetEl.closest('.slot') : null;
+                
+                if (dropTarget && window.draggingId) {
+                    const d = dropTarget.dataset.date;
+                    const t = dropTarget.dataset.time;
+                    if (d && t) handleTouchDrop(window.draggingId, d, t);
+                }
+                window.draggingId = null;
+            };
+
             div.style.borderTop = "1px solid #d1d1d6";
             div.style.borderRadius = "15px 15px 0 0";
             div.style.marginTop = "8px";
         } else {
+            // 続き枠のロジック（角丸など）
             div.style.borderTop = "none";
             div.style.marginTop = "0";
-            // 続き枠の判定
             const nextMins = timeMins + 30;
             const resStart = toMin(overlappingRes.time);
             const dur = MENU_DURATION[overlappingRes.menus.split(',')[0].trim()] || 60;
@@ -152,10 +176,26 @@ function renderSlot(col, date, time, isClosed) {
         content += `<span style="color:#ddd; font-size:13px; font-weight:normal;">${(isOff || isClosed) ? '不可' : '空き'}</span>`;
     }
     content += `</div>`;
-    
     div.innerHTML = content;
-    div.onclick = () => openSlotModal(date, time, exactRes || overlappingRes, isOff);
+
+    div.onclick = (e) => {
+        // ドラッグ（半透明）状態のときはクリック判定を無視する
+        if (div.style.opacity === "0.4") return;
+        openSlotModal(date, time, exactRes || overlappingRes, isOff);
+    };
     col.appendChild(div);
+}
+
+// スマホ用ドロップ処理を共通化して追加
+async function handleTouchDrop(id, newDate, newTime) {
+    if (!confirm(`${newDate} ${newTime} に移動しますか？`)) return;
+    const { error } = await adminClient
+        .from('reservations')
+        .update({ date: newDate, time: newTime })
+        .eq('id', Number(id));
+
+    if (error) alert("移動失敗: " + error.message);
+    else { await fetchData(); render(); }
 }
 
 async function openSlotModal(date, time, res, isOff) {
