@@ -282,3 +282,22 @@ function updateNowLine() {
     line.style.top = `${offset}px`;
     col.appendChild(line);
 }
+async function handleDrop(e, newDate, newTime) {
+    e.preventDefault();
+    const id = e.dataTransfer.getData("text/plain");
+    if (!id) return;
+
+    if (!confirm(`${newDate} ${newTime} に移動しますか？`)) return;
+
+    const { error } = await adminClient
+        .from('reservations')
+        .update({ date: newDate, time: newTime })
+        .eq('id', Number(id));
+
+    if (error) {
+        alert("移動失敗: " + error.message);
+    } else {
+        await fetchData();
+        render();
+    }
+}
