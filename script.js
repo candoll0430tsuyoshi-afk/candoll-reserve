@@ -4,8 +4,8 @@ let runtime = "web";
 let customerUserId = null;
 let MENU_DATA = {};
 let HOLIDAYS = [];
-let OFF_TIMES = [];    // 追加
-let SPECIAL_OPENS = []; // 追加
+let OFF_TIMES = [];
+let SPECIAL_OPENS = [];
 
 // LINE LIFF 初期化
 const miniappReady = (async () => {
@@ -119,9 +119,12 @@ function updateDateOptions() {
 
   dateSelect.innerHTML = '<option value="">日付を選択</option>';
   chipContainer.innerHTML = "";
+  
+  // 今日の日付の 00:00:00 を確実に取得
   const today = new Date();
   today.setHours(0,0,0,0);
 
+  // i=1 から始めることで「当日予約不可（明日から）」を維持
   for (let i = 1; i < 90; i++) {
     const d = new Date(today);
     d.setDate(today.getDate() + i);
@@ -134,12 +137,10 @@ function updateDateOptions() {
     const dowNum = d.getDay();
     const dow = week[dowNum];
 
-// 定休日と臨時休日の判定
     const isFixedHoliday = (dowNum === 1 || (dowNum === 2 && (d.getDate() <= 7 || (d.getDate() >= 15 && d.getDate() <= 21))));
     const isCustomHoliday = HOLIDAYS.includes(value);
-    const isSpecialOpen = SPECIAL_OPENS.some(s => s.date === value); // ★追加
+    const isSpecialOpen = SPECIAL_OPENS.some(s => s.date === value);
 
-    // 特別営業日なら、定休日であっても休みを解除する
     let isHoliday = (isFixedHoliday || isCustomHoliday) && !isSpecialOpen;
 
     let dayClass = "";
@@ -156,8 +157,8 @@ function updateDateOptions() {
 
     const chip = document.createElement("div");
     chip.className = `date-chip ${dayClass}`;
-    
     const statusText = isHoliday ? `<span style="font-size:9px; display:block; margin-top:2px;">定休日</span>` : '';
+    
     chip.innerHTML = `
       <span class="month-label">${parseInt(m)}月</span>
       <span style="font-size:22px; font-weight:800; line-height:1;">${parseInt(day)}</span>
@@ -203,11 +204,10 @@ async function updateTimeOptions() {
     const end = `${String(endD.getHours()).padStart(2,"0")}:${String(endD.getMinutes()).padStart(2,"0")}`;
     
     let isDisabled = (end > "19:00");
-// 1. 管理画面で設定した「休憩時間」に入っているかチェック
+
     const isOffTime = OFF_TIMES.some(o => o.date === date && o.time === start);
     if (isOffTime) isDisabled = true;
 
-    // 2. 他の人の予約と重なっていないかチェック
     for (const r of reserved) {
       const toMin = t => { const [h,m] = t.split(":").map(Number); return h*60+m; };
       if (toMin(start) < toMin(r.end) && toMin(r.start) < toMin(end)) { isDisabled = true; break; }
@@ -258,23 +258,20 @@ document.getElementById("reserveForm").onsubmit = async e => {
   document.getElementById("reserveForm").style.display = "none";
   document.getElementById("confirm-screen").style.display = "block";
 
-  // 「OK」ボタン（確定ボタン）を押した時の処理
+  // 「OK」ボタンを押した時の処理
   document.getElementById("okBtn").onclick = async () => {
     const btn = document.getElementById("okBtn");
-    
-    // 二重送信防止ガード
     if (btn.disabled) return;
     btn.disabled = true;
     btn.innerText = "送信中...";
 
     try {
-      // 終了時間を計算
       const required = menus.map(m => MENU_DATA[m] || 0).reduce((a, b) => a + b, 0);
       const [sh, sm] = time.split(":").map(Number);
       const endD = new Date(2000, 0, 1, sh, sm + required);
       const end_time = `${String(endD.getHours()).padStart(2, "0")}:${String(endD.getMinutes()).padStart(2, "0")}`;
 
-      // LINE通知の文言を設定
+      // ★ 確実に文章を作る（深夜でも計算が狂わないように固定）
       const messageText = `【ご予約内容】\n名前：${name} 様\n日時：${formattedDate} (${dow}) ${time}\nメニュー：${menus.join(", ")}\n\nご予約のキャンセルはこちらから\nhttps://liff.line.me/2008611644-EZd5nkl0?action=cancel`;
 
       // 1. Supabaseへ保存
@@ -313,7 +310,7 @@ document.getElementById("reserveForm").onsubmit = async e => {
       btn.innerText = "OK";
     }
   };
-}; // ここで reserveForm.onsubmit が終了
+};
 
 // キャンセル（戻る）ボタン
 document.getElementById("cancelBtn").onclick = () => {
@@ -322,7 +319,7 @@ document.getElementById("cancelBtn").onclick = () => {
   document.getElementById("reserveForm").style.display = "block";
 };
 
-// 完了アニメーション
+// 完了画面
 function showCompleteScreen() {
   const container = document.querySelector(".container");
   container.innerHTML = `
@@ -353,7 +350,7 @@ function showCompleteScreen() {
   };
 }
 
-// ===== キャンセルモード判定 =====
+// キャンセルモード判定
 window.addEventListener("load", async () => {
   const urlParams = new URLSearchParams(window.location.search);
   if (urlParams.get('action') === 'cancel') {
@@ -418,4 +415,4 @@ window.addEventListener("load", async () => {
       document.getElementById("executeCancelBtn").style.display = "none";
     }
   }
-}); // ← ここで全てのカッコが正しく閉じられます
+});
