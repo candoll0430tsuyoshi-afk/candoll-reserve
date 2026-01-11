@@ -92,19 +92,19 @@ function render() {
 function renderSlot(col, date, time, isClosed) {
     const timeMins = toMin(time);
     const exactRes = reservations.find(r => r.date === date && r.time === time);
+    
+    // ★個別設定(manual_duration)があればそれを使い、なければメニューから計算する
     const overlappingRes = reservations.find(r => {
         if (r.date !== date) return false;
         const start = toMin(r.time);
         const firstMenu = r.menus.split(',')[0].trim();
-        const duration = MENU_DURATION[firstMenu] || 60;
+        const duration = r.manual_duration || MENU_DURATION[firstMenu] || 60;
         return timeMins >= start && timeMins < start + duration;
     });
 
     const isOff = offTimes.some(o => o.date === date && o.time === time);
     const div = document.createElement('div');
     div.className = 'slot';
-    
-    // 全スロット共通：黒い線枠を追加
     div.style.border = "1px solid #000"; 
     div.style.boxSizing = "border-box";
     
@@ -114,13 +114,12 @@ function renderSlot(col, date, time, isClosed) {
     div.dataset.time = time;
 
     if (overlappingRes) {
-        div.style.background = "#e5e5ea"; // 予約あり：グレー背景
+        div.style.background = "#e5e5ea";
         if (exactRes) {
             div.draggable = true;
             div.ondragstart = (e) => { e.dataTransfer.setData("text/plain", exactRes.id); div.style.opacity = "0.4"; };
             div.ondragend = () => div.style.opacity = "1";
 
-            // タッチ操作（長押し移動）
             let touchTimer; 
             div.ontouchstart = (e) => {
                 touchTimer = setTimeout(() => {
@@ -148,12 +147,13 @@ function renderSlot(col, date, time, isClosed) {
 
             div.style.borderRadius = "15px 15px 0 0";
             div.style.marginTop = "8px";
-            div.style.borderBottom = "none"; // 重なり部分は下の枠と結合
+            div.style.borderBottom = "none";
         } else {
             div.style.marginTop = "0";
             const nextMins = timeMins + 30;
             const resStart = toMin(overlappingRes.time);
-            const dur = MENU_DURATION[overlappingRes.menus.split(',')[0].trim()] || 60;
+            // ★ここも個別設定(manual_duration)を優先
+            const dur = overlappingRes.manual_duration || MENU_DURATION[overlappingRes.menus.split(',')[0].trim()] || 60;
             
             if (nextMins >= resStart + dur) {
                 div.style.borderRadius = "0 0 15px 15px";
@@ -166,7 +166,6 @@ function renderSlot(col, date, time, isClosed) {
             }
         }
     } else {
-        // 空き枠または不可
         div.style.background = (isOff || isClosed) ? "#f2f2f7" : "#ffffff";
         div.style.borderRadius = "12px";
         div.style.marginBottom = "6px";
@@ -204,9 +203,19 @@ async function openSlotModal(date, time, res, isOff) {
     let html = `<h3 style="margin:0 0 20px 0; text-align:center; color:#333; font-size:18px;">${date}(${dayOfWeek}) ${time}</h3>`;
 
     if (res) {
+        // ★現在の所要時間を取得（個別設定があればそれ、なければメニュー基本時間）
+        const currentDur = res.manual_duration || MENU_DURATION[res.menus.split(',')[0].trim()] || 60;
+
         html += `
             <div style="font-size:18px; margin-bottom:20px; text-align:center; color:#000;"><b>${res.name} 様</b></div>
             <div style="background:#f2f2f7; padding:20px; border-radius:15px; margin-bottom:15px;">
+                <label style="font-size:14px; font-weight:bold; color:#666; display:block; margin-bottom:8px;">所要時間の変更</label>
+                <select id="new-duration" style="width:100%; height:45px; font-size:16px; border:1px solid #ddd; border-radius:8px; padding:0 10px; margin-bottom:15px; background:#fff;">
+                    ${[30, 45, 60, 75, 90, 105, 120, 135, 150, 165, 180, 210, 240].map(m => 
+                        `<option value="${m}" ${currentDur == m ? 'selected' : ''}>${Math.floor(m/60)>0 ? Math.floor(m/60)+'時間':''}${m%60>0 ? m%60+'分':''}(${m}分)</option>`
+                    ).join('')}
+                </select>
+
                 <label style="font-size:14px; font-weight:bold; color:#666; display:block; margin-bottom:8px;">予約日時の変更</label>
                 <div style="display:flex; flex-direction:column; gap:10px;">
                     <input type="date" id="new-date" value="${res.date}" style="width:100%; height:45px; font-size:16px; border:1px solid #ddd; border-radius:8px; padding:0 10px; box-sizing:border-box;">
@@ -239,7 +248,15 @@ async function openSlotModal(date, time, res, isOff) {
 window.saveChanges = async function(id) {
     const newDate = document.getElementById('new-date').value;
     const newTime = document.getElementById('new-time').value;
-    const { error } = await adminClient.from('reservations').update({ date: newDate, time: newTime }).eq('id', Number(id));
+    // ★追加：選択された所要時間を取得
+    const newDuration = document.getElementById('new-duration').value;
+
+    const { error } = await adminClient.from('reservations').update({ 
+        date: newDate, 
+        time: newTime,
+        manual_duration: Number(newDuration) // ★個別時間を保存
+    }).eq('id', Number(id));
+
     if (error) alert("保存エラー: " + error.message);
     else { closeModal(); await fetchData(); render(); }
 };
