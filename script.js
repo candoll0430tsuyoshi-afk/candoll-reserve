@@ -44,7 +44,7 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 });
 
-// ★追加：分を「約◯時間◯分」に変換（30分単位切り上げ）する関数
+// ★分を「約◯時間◯分」に変換（30分単位切り上げ）する関数
 function formatDurationText(totalMin) {
   if (totalMin === 0) return "";
   const roundedMin = Math.ceil(totalMin / 30) * 30;
@@ -56,7 +56,7 @@ function formatDurationText(totalMin) {
   return text;
 }
 
-// ★追加：目安時間の表示更新
+// ★目安時間の表示更新
 function updateTotalDurationDisplay() {
   const menus = Array.from(document.querySelectorAll(".menu-select")).map(s => s.value).filter(v => v !== "");
   const total = menus.map(m => MENU_DATA[m] || 0).reduce((a, b) => a + b, 0);
@@ -103,7 +103,7 @@ function setupSelectColorChange(selectElement) {
       selectElement.classList.remove("placeholder-color");
       selectElement.classList.add("selected-color");
     }
-    updateTotalDurationDisplay(); // 時間表示を更新
+    updateTotalDurationDisplay();
     updateTimeOptions();
   });
 }
@@ -134,7 +134,7 @@ async function loadHolidays() {
     supabaseClient.from("special_open").select("date")
   ]);
 
-  HOLIDAYS = resHolidays.data.map(h => h.date) || [];
+  HOLIDAYS = resHolidays.data ? resHolidays.data.map(h => h.date) : [];
   OFF_TIMES = resOff.data || [];
   SPECIAL_OPENS = resSpec.data || [];
 }
@@ -202,7 +202,7 @@ function updateDateOptions() {
   }
 }
 
-// ===== 時間表示ロジック =====
+// ===== 時間表示ロジック（エラー修正箇所） =====
 async function updateTimeOptions() {
   const date = document.getElementById("date").value;
   const timeSelect = document.getElementById("time");
@@ -218,7 +218,12 @@ async function updateTimeOptions() {
   const required = menus.map(m => MENU_DATA[m] || 0).reduce((a, b) => a + b, 0);
 
   const { data } = await supabaseClient.from("reservations").select("time,end_time").eq("date", date);
-  const reserved = (data || []).map(r => ({ start: r.time.trim(), end: r.end_time.trim() }));
+
+  // 【エラー修正】r.time や r.end_time が null の場合に備えて保護を入れる
+  const reserved = (data || []).map(r => ({ 
+    start: (r.time || "").trim(), 
+    end: (r.end_time || "").trim() 
+  })).filter(r => r.start !== "" && r.end !== "");
 
   const slots = ["10:00","10:30","11:00","11:30","12:00","12:30","13:00","13:30","14:00","14:30","15:00","15:30","16:00","16:30","17:00","17:30","18:00"];
 
@@ -271,7 +276,7 @@ document.getElementById("reserveForm").onsubmit = async e => {
   }
   
   const required = menus.map(m => MENU_DATA[m] || 0).reduce((a, b) => a + b, 0);
-  const prettyDuration = formatDurationText(required); // ★切り上げ表示用
+  const prettyDuration = formatDurationText(required); 
   
   const week = ["日", "月", "火", "水", "木", "金", "土"];
   const d = new Date(dateValue.replace(/-/g, "/"));
