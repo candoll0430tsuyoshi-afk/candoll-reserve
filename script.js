@@ -382,7 +382,7 @@ function showCompleteScreen() {
   `;
   document.getElementById("closeBtn").onclick = () => {
     if (window.liff && liff.isInClient()) liff.closeWindow();
-    else window.location.href = "https://candoll0430tsuyoshi-afk.github.io/candoll-reserve/";
+    else window.location.href = "https://candoll.vercel.app/";
   };
 }
 window.addEventListener("load", async () => {
