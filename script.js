@@ -44,6 +44,32 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 });
 
+// ★追加：分を「約◯時間◯分」に変換（30分単位切り上げ）する関数
+function formatDurationText(totalMin) {
+  if (totalMin === 0) return "";
+  const roundedMin = Math.ceil(totalMin / 30) * 30;
+  const h = Math.floor(roundedMin / 60);
+  const m = roundedMin % 60;
+  let text = "約";
+  if (h > 0) text += `${h}時間`;
+  if (m > 0) text += `${m}分`;
+  return text;
+}
+
+// ★追加：目安時間の表示更新
+function updateTotalDurationDisplay() {
+  const menus = Array.from(document.querySelectorAll(".menu-select")).map(s => s.value).filter(v => v !== "");
+  const total = menus.map(m => MENU_DATA[m] || 0).reduce((a, b) => a + b, 0);
+  const displayElement = document.getElementById("durationDisplay");
+  
+  if (total > 0 && displayElement) {
+    displayElement.innerHTML = `目安所要時間：<b>${formatDurationText(total)}</b>`;
+    displayElement.style.display = "block";
+  } else if (displayElement) {
+    displayElement.style.display = "none";
+  }
+}
+
 // ===== メニュー読み込み & 色切り替え =====
 async function loadMenus() {
   if (!supabaseClient) return;
@@ -77,6 +103,7 @@ function setupSelectColorChange(selectElement) {
       selectElement.classList.remove("placeholder-color");
       selectElement.classList.add("selected-color");
     }
+    updateTotalDurationDisplay(); // 時間表示を更新
     updateTimeOptions();
   });
 }
@@ -119,11 +146,9 @@ function updateDateOptions() {
 
   dateSelect.innerHTML = '<option value="">日付を選択</option>';
   chipContainer.innerHTML = "";
-  
   const today = new Date();
   today.setHours(0,0,0,0);
 
-  // i=1 (明日) から i=31 (約1ヶ月後) までを表示するように修正
   for (let i = 1; i < 31; i++) {
     const d = new Date(today);
     d.setDate(today.getDate() + i);
@@ -203,7 +228,6 @@ async function updateTimeOptions() {
     const end = `${String(endD.getHours()).padStart(2,"0")}:${String(endD.getMinutes()).padStart(2,"0")}`;
     
     let isDisabled = (end > "19:00");
-
     const isOffTime = OFF_TIMES.some(o => o.date === date && o.time === start);
     if (isOffTime) isDisabled = true;
 
@@ -246,13 +270,16 @@ document.getElementById("reserveForm").onsubmit = async e => {
     return;
   }
   
+  const required = menus.map(m => MENU_DATA[m] || 0).reduce((a, b) => a + b, 0);
+  const prettyDuration = formatDurationText(required); // ★切り上げ表示用
+  
   const week = ["日", "月", "火", "水", "木", "金", "土"];
   const d = new Date(dateValue.replace(/-/g, "/"));
   const dow = week[d.getDay()];
   const formattedDate = dateValue.replace(/-/g, "/");
 
   document.querySelector(".greeting").style.display = "none";
-  document.getElementById("confirm-text").innerHTML = `<b>お名前</b>：${name}<br><b>メニュー</b>：${menus.join(", ")}<br><b>日時</b>：${formattedDate} (${dow}) ${time}`;
+  document.getElementById("confirm-text").innerHTML = `<b>お名前</b>：${name}<br><b>メニュー</b>：${menus.join(", ")}<br><b>日時</b>：${formattedDate} (${dow}) ${time}<br><b>目安時間</b>：${prettyDuration}`;
   document.getElementById("reserveForm").style.display = "none";
   document.getElementById("confirm-screen").style.display = "block";
 
@@ -263,12 +290,11 @@ document.getElementById("reserveForm").onsubmit = async e => {
     btn.innerText = "送信中...";
 
     try {
-      const required = menus.map(m => MENU_DATA[m] || 0).reduce((a, b) => a + b, 0);
       const [sh, sm] = time.split(":").map(Number);
       const endD = new Date(2000, 0, 1, sh, sm + required);
       const end_time = `${String(endD.getHours()).padStart(2, "0")}:${String(endD.getMinutes()).padStart(2, "0")}`;
 
-      const messageText = `【ご予約内容】\n名前：${name} 様\n日時：${formattedDate} (${dow}) ${time}\nメニュー：${menus.join(", ")}\n\nご予約のキャンセルはこちらから\nhttps://liff.line.me/2008611644-EZd5nkl0?action=cancel`;
+      const messageText = `【ご予約内容】\n名前：${name} 様\n日時：${formattedDate} (${dow}) ${time}\n目安時間：${prettyDuration}\nメニュー：${menus.join(", ")}\n\nご予約のキャンセルはこちらから\nhttps://liff.line.me/2008611644-EZd5nkl0?action=cancel`;
 
       const { error } = await supabaseClient.from("reservations").insert([{ 
         name, 
