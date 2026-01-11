@@ -120,12 +120,11 @@ function updateDateOptions() {
   dateSelect.innerHTML = '<option value="">日付を選択</option>';
   chipContainer.innerHTML = "";
   
-  // 今日の 00:00:00 を確実に取得
   const today = new Date();
   today.setHours(0,0,0,0);
 
-  // i=1 から始めることで「当日予約不可」を維持
-  for (let i = 1; i < 90; i++) {
+  // i=1 (明日) から i=31 (約1ヶ月後) までを表示するように修正
+  for (let i = 1; i < 31; i++) {
     const d = new Date(today);
     d.setDate(today.getDate() + i);
     const y = d.getFullYear();
@@ -252,13 +251,11 @@ document.getElementById("reserveForm").onsubmit = async e => {
   const dow = week[d.getDay()];
   const formattedDate = dateValue.replace(/-/g, "/");
 
-  // 確認画面の表示
   document.querySelector(".greeting").style.display = "none";
   document.getElementById("confirm-text").innerHTML = `<b>お名前</b>：${name}<br><b>メニュー</b>：${menus.join(", ")}<br><b>日時</b>：${formattedDate} (${dow}) ${time}`;
   document.getElementById("reserveForm").style.display = "none";
   document.getElementById("confirm-screen").style.display = "block";
 
-  // 「OK」ボタンを押した時の処理
   document.getElementById("okBtn").onclick = async () => {
     const btn = document.getElementById("okBtn");
     if (btn.disabled) return;
@@ -273,7 +270,6 @@ document.getElementById("reserveForm").onsubmit = async e => {
 
       const messageText = `【ご予約内容】\n名前：${name} 様\n日時：${formattedDate} (${dow}) ${time}\nメニュー：${menus.join(", ")}\n\nご予約のキャンセルはこちらから\nhttps://liff.line.me/2008611644-EZd5nkl0?action=cancel`;
 
-      // 1. Supabaseへ保存
       const { error } = await supabaseClient.from("reservations").insert([{ 
         name, 
         menus: menus.join(", "), 
@@ -285,7 +281,6 @@ document.getElementById("reserveForm").onsubmit = async e => {
 
       if (error) throw error;
 
-      // 2. LINE通知を送信
       await fetch("https://bcahztzetpfuklipjmxx.functions.supabase.co/dynamic-service", {
         method: "POST", 
         headers: { "Content-Type": "application/json" },
@@ -311,14 +306,12 @@ document.getElementById("reserveForm").onsubmit = async e => {
   };
 };
 
-// キャンセル（戻る）ボタン
 document.getElementById("cancelBtn").onclick = () => {
   document.querySelector(".greeting").style.display = "block";
   document.getElementById("confirm-screen").style.display = "none";
   document.getElementById("reserveForm").style.display = "block";
 };
 
-// 完了画面
 function showCompleteScreen() {
   const container = document.querySelector(".container");
   container.innerHTML = `
@@ -349,7 +342,6 @@ function showCompleteScreen() {
   };
 }
 
-// キャンセルモード判定
 window.addEventListener("load", async () => {
   const urlParams = new URLSearchParams(window.location.search);
   if (urlParams.get('action') === 'cancel') {
