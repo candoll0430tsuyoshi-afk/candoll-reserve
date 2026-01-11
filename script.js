@@ -44,33 +44,44 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 });
 
-// ★分を「約◯時間◯分」に変換（30分単位切り上げ）する関数
+// ★分を「約◯時間◯分」に変換（30分単位切り上げ）
 function formatDurationText(totalMin) {
   if (totalMin === 0) return "";
   const roundedMin = Math.ceil(totalMin / 30) * 30;
   const h = Math.floor(roundedMin / 60);
   const m = roundedMin % 60;
-  let text = "約";
+  let text = "目安：約";
   if (h > 0) text += `${h}時間`;
   if (m > 0) text += `${m}分`;
   return text;
 }
 
-// ★目安時間の表示更新
+// ★目安時間の表示更新（ボタンの左横に表示）
 function updateTotalDurationDisplay() {
   const menus = Array.from(document.querySelectorAll(".menu-select")).map(s => s.value).filter(v => v !== "");
   const total = menus.map(m => MENU_DATA[m] || 0).reduce((a, b) => a + b, 0);
-  const displayElement = document.getElementById("durationDisplay");
   
-  if (total > 0 && displayElement) {
-    displayElement.innerHTML = `目安所要時間：<b>${formatDurationText(total)}</b>`;
-    displayElement.style.display = "block";
-  } else if (displayElement) {
+  // durationDisplayというIDの要素がHTMLになければ、ボタンの前に自動作成します
+  let displayElement = document.getElementById("durationDisplay");
+  if (!displayElement) {
+    displayElement = document.createElement("span");
+    displayElement.id = "durationDisplay";
+    displayElement.style.marginRight = "10px";
+    displayElement.style.fontSize = "14px";
+    displayElement.style.color = "#666";
+    const addBtn = document.getElementById("addMenu");
+    if (addBtn) addBtn.parentNode.insertBefore(displayElement, addBtn);
+  }
+  
+  if (total > 0) {
+    displayElement.innerHTML = `<b>${formatDurationText(total)}</b>`;
+    displayElement.style.display = "inline";
+  } else {
     displayElement.style.display = "none";
   }
 }
 
-// ===== メニュー読み込み & 色切り替え =====
+// ===== メニュー読み込み =====
 async function loadMenus() {
   if (!supabaseClient) return;
   const { data, error } = await supabaseClient.from("menus").select("name, duration");
@@ -103,7 +114,7 @@ function setupSelectColorChange(selectElement) {
       selectElement.classList.remove("placeholder-color");
       selectElement.classList.add("selected-color");
     }
-    updateTotalDurationDisplay();
+    updateTotalDurationDisplay(); // 時間表示を更新
     updateTimeOptions();
   });
 }
@@ -202,7 +213,7 @@ function updateDateOptions() {
   }
 }
 
-// ===== 時間表示ロジック（エラー修正箇所） =====
+// ===== 時間表示ロジック（エラー修正済み） =====
 async function updateTimeOptions() {
   const date = document.getElementById("date").value;
   const timeSelect = document.getElementById("time");
@@ -219,7 +230,7 @@ async function updateTimeOptions() {
 
   const { data } = await supabaseClient.from("reservations").select("time,end_time").eq("date", date);
 
-  // 【エラー修正】r.time や r.end_time が null の場合に備えて保護を入れる
+  // 【エラー修正】nullチェックを強化
   const reserved = (data || []).map(r => ({ 
     start: (r.time || "").trim(), 
     end: (r.end_time || "").trim() 
@@ -284,7 +295,7 @@ document.getElementById("reserveForm").onsubmit = async e => {
   const formattedDate = dateValue.replace(/-/g, "/");
 
   document.querySelector(".greeting").style.display = "none";
-  document.getElementById("confirm-text").innerHTML = `<b>お名前</b>：${name}<br><b>メニュー</b>：${menus.join(", ")}<br><b>日時</b>：${formattedDate} (${dow}) ${time}<br><b>目安時間</b>：${prettyDuration}`;
+  document.getElementById("confirm-text").innerHTML = `<b>お名前</b>：${name}<br><b>メニュー</b>：${menus.join(", ")}<br><b>日時</b>：${formattedDate} (${dow}) ${time}<br><b>${prettyDuration}</b>`;
   document.getElementById("reserveForm").style.display = "none";
   document.getElementById("confirm-screen").style.display = "block";
 
@@ -299,7 +310,7 @@ document.getElementById("reserveForm").onsubmit = async e => {
       const endD = new Date(2000, 0, 1, sh, sm + required);
       const end_time = `${String(endD.getHours()).padStart(2, "0")}:${String(endD.getMinutes()).padStart(2, "0")}`;
 
-      const messageText = `【ご予約内容】\n名前：${name} 様\n日時：${formattedDate} (${dow}) ${time}\n目安時間：${prettyDuration}\nメニュー：${menus.join(", ")}\n\nご予約のキャンセルはこちらから\nhttps://liff.line.me/2008611644-EZd5nkl0?action=cancel`;
+      const messageText = `【ご予約内容】\n名前：${name} 様\n日時：${formattedDate} (${dow}) ${time}\n${prettyDuration}\nメニュー：${menus.join(", ")}\n\nご予約のキャンセルはこちらから\nhttps://liff.line.me/2008611644-EZd5nkl0?action=cancel`;
 
       const { error } = await supabaseClient.from("reservations").insert([{ 
         name, 
@@ -347,25 +358,10 @@ function showCompleteScreen() {
   const container = document.querySelector(".container");
   container.innerHTML = `
     <div style="padding: 60px 20px; text-align: center;">
-      <div class="checkmark-wrapper">
-        <svg class="checkmark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52">
-          <circle class="checkmark__circle" cx="26" cy="26" r="25" fill="none"/>
-          <path class="checkmark__check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/>
-        </svg>
-      </div>
       <h2 style="font-size:22px; margin-top:25px; font-weight:600;">予約を承りました</h2>
       <p style="color:#86868b; font-size:15px; line-height:1.6;">ご来店お待ちしております。</p>
       <button id="closeBtn" style="margin-top:40px; padding:16px; width:100%; border-radius:14px; background:#000; color:#fff; border:none; font-size:17px; font-weight:600; cursor:pointer;">閉じる</button>
     </div>
-    <style>
-      .checkmark-wrapper { display: flex; justify-content: center; }
-      .checkmark { width: 80px; height: 80px; border-radius: 50%; stroke-width: 2; stroke: #fff; animation: fill .4s ease-in-out .4s forwards, scale .3s ease-in-out .9s both; }
-      .checkmark__circle { stroke-dasharray: 166; stroke-dashoffset: 166; stroke-width: 2; stroke: #4caf50; fill: none; animation: stroke 0.6s forwards; }
-      .checkmark__check { transform-origin: 50% 50%; stroke-dasharray: 48; stroke-dashoffset: 48; animation: stroke 0.3s forwards 0.8s; }
-      @keyframes stroke { 100% { stroke-dashoffset: 0; } }
-      @keyframes scale { 0%, 100% { transform: none; } 50% { transform: scale3d(1.1, 1.1, 1); } }
-      @keyframes fill { 100% { box-shadow: inset 0px 0px 0px 40px #4caf50; } }
-    </style>
   `;
   document.getElementById("closeBtn").onclick = () => {
     if (window.liff && liff.isInClient()) liff.closeWindow();
@@ -381,11 +377,7 @@ window.addEventListener("load", async () => {
     document.getElementById("cancel-screen").style.display = "block";
 
     await miniappReady; 
-    if (!customerUserId) {
-      document.getElementById("cancel-info").innerText = "LINEから開き直してください。";
-      document.getElementById("executeCancelBtn").style.display = "none";
-      return;
-    }
+    if (!customerUserId) return;
 
     const { data } = await supabaseClient.from("reservations")
       .select("*")
@@ -395,46 +387,14 @@ window.addEventListener("load", async () => {
 
     if (data && data.length > 0) {
       const res = data[0];
-      document.getElementById("cancel-info").innerHTML = `<b>お名前</b>：${res.name}<br><b>日時</b>：${res.date.replace(/-/g, "/")} ${res.time}<br><b>メニュー</b>：${res.menus}`;
-      
+      document.getElementById("cancel-info").innerHTML = `<b>お名前</b>：${res.name}<br><b>日時</b>：${res.date.replace(/-/g, "/")} ${res.time}`;
       document.getElementById("executeCancelBtn").onclick = async () => {
-        if (!confirm("本当にキャンセルしてよろしいですか？")) return;
-
-        const btn = document.getElementById("executeCancelBtn");
-        if (btn.disabled) return; 
-        btn.disabled = true;
-        btn.innerText = "キャンセル処理中...";
-
-        try {
-          const { error } = await supabaseClient.from("reservations").delete().eq("id", res.id);
-          if (error) throw error;
-
-          await fetch("https://bcahztzetpfuklipjmxx.functions.supabase.co/dynamic-service", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ 
-              mode: "cancel", 
-              name: res.name, 
-              date: res.date, 
-              time: res.time, 
-              menus: res.menus,
-              customerUserId: customerUserId 
-            })
-          });
-
-          alert("予約をキャンセルしました。");
-          liff.closeWindow();
-
-        } catch (e) {
-          console.error("キャンセルエラー:", e);
-          alert("通信エラーが発生しました。もう一度お試しください。");
-          btn.disabled = false;
-          btn.innerText = "予約をキャンセルする";
+        const { error } = await supabaseClient.from("reservations").delete().eq("id", res.id);
+        if (!error) {
+           alert("予約をキャンセルしました。");
+           liff.closeWindow();
         }
       };
-    } else {
-      document.getElementById("cancel-info").innerText = "該当する予約が見つかりませんでした。";
-      document.getElementById("executeCancelBtn").style.display = "none";
     }
   }
 });
