@@ -404,13 +404,35 @@ window.addEventListener("load", async () => {
     if (data && data.length > 0) {
       const res = data[0];
       document.getElementById("cancel-info").innerHTML = `<b>お名前</b>：${res.name}<br><b>日時</b>：${res.date.replace(/-/g, "/")} ${res.time}`;
-      document.getElementById("executeCancelBtn").onclick = async () => {
+     document.getElementById("executeCancelBtn").onclick = async () => {
+        // 通知用のメッセージ内容を作成
+        const cancelMessage = `【予約キャンセル】\n${res.name} 様の予約がキャンセルされました。\n日時：${res.date.replace(/-/g, "/")} ${res.time}`;
+
+        // 1. データベースから予約を削除
         const { error } = await supabaseClient.from("reservations").delete().eq("id", res.id);
+        
         if (!error) {
-           alert("予約をキャンセルしました。");
-           liff.closeWindow();
+          try {
+            // 2. 通知プログラム（Edge Functions）を呼び出してLINE通知を送る
+            await fetch("https://bcahztzetpfuklipjmxx.functions.supabase.co/dynamic-service", {
+              method: "POST", 
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ 
+                mode: "cancel", 
+                name: res.name,
+                date: res.date,
+                time: res.time,
+                customerUserId: customerUserId,
+                customMessage: cancelMessage 
+              })
+            });
+          } catch (e) {
+            console.error("通知送信エラー:", e);
+          }
+
+          alert("予約をキャンセルしました。");
+          liff.closeWindow(); // LIFFウィンドウを閉じる
+        } else {
+          alert("キャンセル処理に失敗しました。");
         }
       };
-    }
-  }
-});
