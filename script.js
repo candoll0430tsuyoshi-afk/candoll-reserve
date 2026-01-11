@@ -47,7 +47,8 @@ document.addEventListener("DOMContentLoaded", () => {
 // ★分を「約◯時間◯分」に変換（30分単位切り上げ）
 function formatDurationText(totalMin) {
   if (totalMin === 0) return "";
-  const roundedMin = Math.ceil(totalMin / 30) * 30;
+  // 15で割って切り上げて15をかける（15分単位の切り上げ）
+  const roundedMin = Math.ceil(totalMin / 15) * 15; 
   const h = Math.floor(roundedMin / 60);
   const m = roundedMin % 60;
   let text = "目安：約";
@@ -236,7 +237,8 @@ async function updateTimeOptions() {
     end: (r.end_time || "").trim() 
   })).filter(r => r.start !== "" && r.end !== "");
 
-  const slots = ["10:00","10:30","11:00","11:30","12:00","12:30","13:00","13:30","14:00","14:30","15:00","15:30","16:00","16:30","17:00","17:30","18:00"];
+  // 223行目付近
+const slots = ["10:00","10:15","10:30","10:45","11:00","11:15","11:30","11:45","12:00","12:15","12:30","12:45","13:00","13:15","13:30","13:45","14:00","14:15","14:30","14:45","15:00","15:15","15:30","15:45","16:00","16:15","16:30","16:45","17:00","17:15","17:30","17:45","18:00","18:15","18:30","18:45"];
 
   slots.forEach(start => {
     const [sh, sm] = start.split(":").map(Number);
