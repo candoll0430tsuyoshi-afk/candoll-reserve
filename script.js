@@ -120,11 +120,11 @@ function updateDateOptions() {
   dateSelect.innerHTML = '<option value="">日付を選択</option>';
   chipContainer.innerHTML = "";
   
-  // 今日の日付の 00:00:00 を確実に取得
+  // 今日の 00:00:00 を確実に取得
   const today = new Date();
   today.setHours(0,0,0,0);
 
-  // i=1 から始めることで「当日予約不可（明日から）」を維持
+  // i=1 から始めることで「当日予約不可」を維持
   for (let i = 1; i < 90; i++) {
     const d = new Date(today);
     d.setDate(today.getDate() + i);
@@ -271,7 +271,6 @@ document.getElementById("reserveForm").onsubmit = async e => {
       const endD = new Date(2000, 0, 1, sh, sm + required);
       const end_time = `${String(endD.getHours()).padStart(2, "0")}:${String(endD.getMinutes()).padStart(2, "0")}`;
 
-      // ★ 確実に文章を作る（深夜でも計算が狂わないように固定）
       const messageText = `【ご予約内容】\n名前：${name} 様\n日時：${formattedDate} (${dow}) ${time}\nメニュー：${menus.join(", ")}\n\nご予約のキャンセルはこちらから\nhttps://liff.line.me/2008611644-EZd5nkl0?action=cancel`;
 
       // 1. Supabaseへ保存
