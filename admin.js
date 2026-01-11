@@ -104,88 +104,79 @@ function renderSlot(col, date, time, isClosed) {
     const div = document.createElement('div');
     div.className = 'slot';
     
+    // 全スロット共通：黒い線枠を追加
+    div.style.border = "1px solid #000"; 
+    div.style.boxSizing = "border-box";
+    
     div.ondragover = (e) => e.preventDefault();
     div.ondrop = (e) => handleDrop(e, date, time);
     div.dataset.date = date;
     div.dataset.time = time;
 
     if (overlappingRes) {
-        div.style.background = "#e5e5ea";
+        div.style.background = "#e5e5ea"; // 予約あり：グレー背景
         if (exactRes) {
             div.draggable = true;
             div.ondragstart = (e) => { e.dataTransfer.setData("text/plain", exactRes.id); div.style.opacity = "0.4"; };
             div.ondragend = () => div.style.opacity = "1";
-// --- ここからスマホ用：長押し対応版に書き換え ---
-            let touchTimer; 
 
+            // タッチ操作（長押し移動）
+            let touchTimer; 
             div.ontouchstart = (e) => {
-                // 0.5秒間押し続けたら移動モードを起動
                 touchTimer = setTimeout(() => {
                     div.style.opacity = "0.4";
                     window.draggingId = exactRes.id;
-                    if (navigator.vibrate) navigator.vibrate(50); // 掴んだら軽く振動
+                    if (navigator.vibrate) navigator.vibrate(50);
                 }, 500); 
             };
-
             div.ontouchend = (e) => {
-                // 0.5秒経つ前に指を離したらタイマーをキャンセル
                 clearTimeout(touchTimer);
-
                 if (window.draggingId) {
                     div.style.opacity = "1";
                     const touch = e.changedTouches[0];
                     const targetEl = document.elementFromPoint(touch.clientX, touch.clientY);
                     const dropTarget = targetEl ? targetEl.closest('.slot') : null;
-                    
                     if (dropTarget && window.draggingId) {
                         const d = dropTarget.dataset.date;
                         const t = dropTarget.dataset.time;
-                        // 自分自身の場所に落とした場合は何もしない
-                        if (d === date && t === time) {
-                            window.draggingId = null;
-                            return;
-                        }
-                        if (d && t) handleTouchDrop(window.draggingId, d, t);
+                        if (!(d === date && t === time) && d && t) handleTouchDrop(window.draggingId, d, t);
                     }
                     window.draggingId = null;
                 }
             };
+            div.ontouchmove = () => clearTimeout(touchTimer);
 
-            // 指を動かした（スクロールした）場合もタイマーをキャンセル
-            div.ontouchmove = () => {
-                clearTimeout(touchTimer);
-            };
-            // --- ここまで書き換え ---
-            div.style.borderTop = "1px solid #d1d1d6";
             div.style.borderRadius = "15px 15px 0 0";
             div.style.marginTop = "8px";
+            div.style.borderBottom = "none"; // 重なり部分は下の枠と結合
         } else {
-            div.style.borderTop = "none";
             div.style.marginTop = "0";
             const nextMins = timeMins + 30;
             const resStart = toMin(overlappingRes.time);
             const dur = MENU_DURATION[overlappingRes.menus.split(',')[0].trim()] || 60;
+            
             if (nextMins >= resStart + dur) {
-                div.style.borderBottom = "1px solid #d1d1d6";
                 div.style.borderRadius = "0 0 15px 15px";
                 div.style.marginBottom = "8px";
+                div.style.borderTop = "none";
             } else {
-                div.style.borderBottom = "none";
                 div.style.borderRadius = "0";
+                div.style.borderTop = "none";
+                div.style.borderBottom = "none";
             }
         }
     } else {
+        // 空き枠または不可
         div.style.background = (isOff || isClosed) ? "#f2f2f7" : "#ffffff";
-        div.style.border = "1px solid #eee";
         div.style.borderRadius = "12px";
         div.style.marginBottom = "6px";
     }
 
     let content = `<div class="time-label">${time}</div><div class="slot-info">`;
     if (overlappingRes && exactRes) {
-        content += `${exactRes.name} 様<span class="menu-label">${exactRes.menus}</span>`;
+        content += `<b style="color:#000;">${exactRes.name} 様</b><span class="menu-label">${exactRes.menus}</span>`;
     } else if (!overlappingRes) {
-        content += `<span style="color:#ddd; font-size:13px; font-weight:normal;">${(isOff || isClosed) ? '不可' : '空き'}</span>`;
+        content += `<span style="color:#666; font-size:13px;">${(isOff || isClosed) ? '不可' : '空き'}</span>`;
     }
     content += `</div>`;
     div.innerHTML = content;
