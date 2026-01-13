@@ -4,20 +4,31 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Candoll 予約フォーム</title>
-<link href="https://fonts.googleapis.com/css2?family=Raleway:wght@300;400;600&display=swap" rel="stylesheet">
+
     <style>
 body {
-    /* 英語・数字はRaleway、日本語はヒラギノ */
-    font-family: 'Raleway', "Hiragino Sans", "Hiragino Kaku Gothic ProN", sans-serif;
-    /* 線を細めにする設定（400が綺麗です） */
-    font-weight: 400; 
+    /* ヒラギノを最優先に指定し、Ralewayを削除しました */
+    font-family: "Hiragino Sans", "Hiragino Kaku Gothic ProN", sans-serif;
+    /* 全体を一貫して細めのウェイトに統一 */
+    font-weight: 300; 
     background: #ffffff;
     color: #000000;
     margin: 0;
     padding: 0;
     text-align: center;
-    /* 文字をクリアに見せる設定 */
     -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* 数字が含まれる場所も、すべてヒラギノの細い線に統一します */
+.date-chip, .time-slot, #durationDisplay, .month-label, .dow-label {
+    font-family: "Hiragino Sans", "Hiragino Kaku Gothic ProN", sans-serif;
+    font-weight: 300 !important;
+}
+
+/* 見出しの太さを調整（もし細すぎると感じたらここを400にしてください） */
+label, h2 {
+    font-weight: 400;
 }
         .container {
             width: 90%;
