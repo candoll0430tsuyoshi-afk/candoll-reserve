@@ -407,19 +407,23 @@ function showCompleteScreen() {
 
 // すでに予約があるかチェックし、画面上部に追従バナーを表示する
 async function checkExistingReservation() {
-  if (runtime !== "miniapp" || !customerUserId) return;
+  if (!customerUserId) return; // IDがないなら何もしない
 
   const today = new Date().toISOString().split('T')[0];
+  console.log("検索開始:", today, customerUserId); // ★正しく動いているか確認用
 
   const { data, error } = await supabaseClient
     .from("reservations")
     .select("id, date, time")
     .eq("customer_user_id", customerUserId)
-    .gte("date", today)
+    .gte("date", today) // 今日以降
     .order("date", { ascending: true })
-    .order("time", { ascending: true })
-    .header("Cache-Control", "no-cache")
     .limit(1);
+
+  if (error) {
+    console.error("検索エラー:", error);
+    return;
+  }
 
   if (data && data.length > 0) {
     const res = data[0];
