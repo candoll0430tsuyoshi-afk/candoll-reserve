@@ -425,7 +425,7 @@ async function checkExistingReservation() {
     notice.className = "reservation-notice";
     notice.innerHTML = `
       <div style="flex-grow: 1;">
-         <b>予約情報</b><br>
+         <b>次回の予約情報</b><br>
         <span style="font-size: 15px;">${formattedDate}(${dayOfWeek}) ${res.time}</span>
       </div>
       <button onclick="showCancelSection()" class="notice-cancel-btn">キャンセル</button>
