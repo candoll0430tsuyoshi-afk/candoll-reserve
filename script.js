@@ -29,7 +29,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
   loadMenus();
   loadHolidays().then(updateDateOptions);
-  miniappReady.then(checkExistingReservation);
+ miniappReady.then(async () => {
+  // ログインが完了し、customerUserId がセットされるのを待ってから実行
+  if (customerUserId) {
+    await checkExistingReservation();
+  }
+});
   
   document.getElementById("addMenu").onclick = () => {
     const container = document.getElementById("menuContainer");
