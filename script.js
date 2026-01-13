@@ -121,17 +121,22 @@ function setupSelectColorChange(selectElement) {
 
 function renderMenuOptions(selectElement, data, categories) {
   selectElement.innerHTML = '<option value="">メニューを選択してください</option>';
+  
   Object.keys(categories).forEach(catName => {
     const group = document.createElement("optgroup");
     group.label = catName;
     
     const filtered = data.filter(m => {
+      // 全角「＋」と半角「+」の両方に対応させる
+      const hasPlus = m.name.includes("＋") || m.name.includes("+");
       const hasKeyword = categories[catName].some(k => m.name.includes(k));
+
       if (catName === "組み合わせ") {
-        return hasKeyword; // 「組み合わせ」には「＋」入りを入れる
+        // 「組み合わせ」グループ：プラス記号があるものだけ
+        return hasPlus;
       } else {
-        // それ以外にはキーワードが入っていて、かつ「＋」が入っていないものだけ入れる
-        return hasKeyword && !m.name.includes("＋");
+        // それ以外のグループ：キーワードが入っていて、かつプラス記号が「絶対に入っていない」ものだけ
+        return hasKeyword && !hasPlus;
       }
     });
 
