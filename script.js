@@ -7,6 +7,7 @@ let HOLIDAYS = [];
 let OFF_TIMES = [];
 let SPECIAL_OPENS = [];
 
+
 // LINE LIFF 初期化
 const miniappReady = (async () => {
   try {
@@ -28,7 +29,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
   loadMenus();
   loadHolidays().then(updateDateOptions);
-
+miniappReady.then(checkExistingReservation);
+  
   document.getElementById("addMenu").onclick = () => {
     const container = document.getElementById("menuContainer");
     const firstWrapper = container.querySelector(".select-wrapper");
@@ -398,7 +400,52 @@ function showCompleteScreen() {
     else window.location.href = "https://candoll.vercel.app/";
   };
 }
+// すでに予約があるかチェックし、あれば一番上に表示する
+async function checkExistingReservation() {
+  if (runtime !== "miniapp" || !customerUserId) return;
 
+  const today = new Date().toISOString().split('T')[0];
+
+  const { data, error } = await supabaseClient
+    .from("reservations")
+    .select("id, date, time")
+    .eq("customer_user_id", customerUserId) // 列名は既存コードに合わせました
+    .gte("date", today)
+    .order("date", { ascending: true })
+    .order("time", { ascending: true })
+    .limit(1);
+
+  if (data && data.length > 0) {
+    const res = data[0];
+    const dateObj = new Date(res.date.replace(/-/g, "/"));
+    const dayOfWeek = ["日", "月", "火", "水", "木", "金", "土"][dateObj.getDay()];
+    const formattedDate = res.date.replace(/-/g, "/");
+
+    const notice = document.createElement("div");
+    notice.className = "reservation-notice";
+    notice.innerHTML = `
+      <div style="flex-grow: 1;">
+        📅 <b>予約確認</b><br>
+        <span style="font-size: 15px;">${formattedDate}(${dayOfWeek}) ${res.time}</span>
+      </div>
+      <button onclick="showCancelSection()" class="notice-cancel-btn">変更・取消</button>
+    `;
+    
+    const container = document.querySelector(".container");
+    container.insertBefore(notice, container.firstChild);
+  }
+}
+
+// ボタンからキャンセル画面へ飛ばす処理
+function showCancelSection() {
+  // 予約フォームを隠してキャンセル画面を表示
+  document.getElementById("reserveForm").style.display = "none";
+  document.querySelector(".greeting").style.display = "none";
+  document.getElementById("cancel-screen").style.display = "block";
+  
+  // URLにaction=cancelがついている時と同じ処理を擬似的に実行
+  window.dispatchEvent(new Event('load'));
+}
 // ===== キャンセル処理 =====
 window.addEventListener("load", async () => {
   const urlParams = new URLSearchParams(window.location.search);
