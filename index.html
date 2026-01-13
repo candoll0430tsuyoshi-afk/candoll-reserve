@@ -87,50 +87,83 @@ label, h2 {
             font-weight: 500;
         }
 
-        /* --- 日付チップ（横並び修正版） --- */
+/* --- 日付チップ（レイアウト固定・細め統一版） --- */
         .date-chips {
             display: flex;
             overflow-x: auto;
             white-space: nowrap;
             gap: 12px;
-            padding: 10px 5px;
+            padding: 10px 5px 15px; /* 下に少し余裕を持たせる */
             margin-bottom: 25px;
             -webkit-overflow-scrolling: touch;
         }
-        .date-chips::-webkit-scrollbar { display: none; }
+
+        /* ★スクロールバーを表示する設定 */
+        .date-chips::-webkit-scrollbar {
+            display: block !important;
+            height: 5px;
+        }
+        .date-chips::-webkit-scrollbar-thumb {
+            background: #d2d2d7;
+            border-radius: 10px;
+        }
 
         .date-chip {
-            flex: 0 0 68px; /* 幅を固定して縦並びを防止 */
-            height: 85px;
+            flex: 0 0 68px;
+            height: 95px; /* 定休日が入っても大丈夫な高さ */
             display: flex;
             flex-direction: column;
-            justify-content: center;
             align-items: center;
             border: 1px solid #e0e0e0;
             border-radius: 14px;
             background: #fff;
-            position: relative;
+            position: relative; /* 子要素の基準位置 */
             cursor: pointer;
             transition: all 0.2s ease;
             box-sizing: border-box;
-            padding-top: 12px;
+            font-family: "Hiragino Sans", "Hiragino Kaku Gothic ProN", sans-serif;
+            font-weight: 300; /* 細めに統一 */
         }
         .date-chip:active { transform: scale(0.95); }
 
+        /* 月表示：左上に固定 */
         .month-label {
             position: absolute;
             top: 8px;
             left: 8px;
             font-size: 10px;
-            font-weight: bold;
+            font-weight: 300;
             color: #8e8e93;
         }
-        .dow-label {
-            font-size: 11px;
-            font-weight: 600;
-            margin-top: 2px;
+
+        /* 日にち数字：中央付近に固定 */
+        .date-number {
+            position: absolute;
+            top: 22px;
+            font-size: 24px;
+            font-weight: 300;
+            line-height: 1;
         }
 
+        /* 曜日表示：数字の下に固定 */
+        .dow-label {
+            position: absolute;
+            top: 54px;
+            font-size: 11px;
+            font-weight: 300;
+        }
+
+        /* 定休日・満席などのステータス：一番下に固定 */
+        .status-text {
+            position: absolute;
+            bottom: 8px;
+            font-size: 9px;
+            font-weight: 300;
+            width: 100%;
+            text-align: center;
+        }
+
+        /* 選択時・土日の色設定 */
         .date-chip.selected { background: #000; color: #fff !important; border-color: #000; }
         .date-chip.selected .month-label { color: #fff; opacity: 0.8; }
         .date-chip.sat { color: #007aff; }
