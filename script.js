@@ -100,21 +100,33 @@ async function loadMenus() {
   };
 
   const firstSelect = document.querySelector(".menu-select");
+  // ここで、各カテゴリーのキーワードに合致するものだけを表示する
+  // あなたが完成させていた renderMenuOptions を呼び出します
   renderMenuOptions(firstSelect, data, categories);
   setupSelectColorChange(firstSelect);
 }
 
-function setupSelectColorChange(selectElement) {
-  selectElement.addEventListener("change", () => {
-    if (selectElement.value === "") {
-      selectElement.classList.add("placeholder-color");
-      selectElement.classList.remove("selected-color");
-    } else {
-      selectElement.classList.remove("placeholder-color");
-      selectElement.classList.add("selected-color");
+// ★ここが重要です：カテゴリーの重複を防ぐロジック
+function renderMenuOptions(selectElement, data, categories) {
+  selectElement.innerHTML = '<option value="">メニューを選択してください</option>';
+  Object.keys(categories).forEach(catName => {
+    const group = document.createElement("optgroup");
+    group.label = catName;
+    
+    // カテゴリーに属するキーワード（例："+"）を含むメニューだけを抽出
+    const filtered = data.filter(m => 
+      categories[catName].some(k => m.name.includes(k))
+    );
+    
+    if (filtered.length > 0) {
+      filtered.forEach(m => {
+        const op = document.createElement("option");
+        op.value = m.name;
+        op.textContent = m.name;
+        group.appendChild(op);
+      });
+      selectElement.appendChild(group);
     }
-    updateTotalDurationDisplay(); 
-    updateTimeOptions();
   });
 }
 
