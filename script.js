@@ -120,7 +120,7 @@ function setupSelectColorChange(selectElement) {
 }
 
 function renderMenuOptions(selectElement, data, categories) {
-  selectElement.innerHTML = '<option value="">メニューを選択してください</option>';
+  selectElement.innerHTML = '<option value="">メニューを選択</option>';
   
   Object.keys(categories).forEach(catName => {
     const group = document.createElement("optgroup");
