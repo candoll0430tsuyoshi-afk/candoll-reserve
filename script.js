@@ -208,11 +208,11 @@ function updateDateOptions() {
     chip.className = `date-chip ${dayClass}`;
     const statusText = isHoliday ? `<span style="font-size:9px; display:block; margin-top:2px;">定休日</span>` : '';
     
-    chip.innerHTML = `
+chip.innerHTML = `
       <span class="month-label">${parseInt(m)}月</span>
-      <span style="font-size:22px; font-weight:800; line-height:1;">${parseInt(day)}</span>
+      <span class="date-number">${parseInt(day)}</span>
       <span class="dow-label">(${dow})</span>
-      ${statusText}
+      ${isHoliday ? '<span class="status-text">定休日</span>' : ''}
     `;
 
     if (!isHoliday) {
