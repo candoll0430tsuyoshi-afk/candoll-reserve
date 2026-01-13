@@ -405,14 +405,17 @@ window.addEventListener("load", async () => {
       const res = data[0];
       document.getElementById("cancel-info").innerHTML = `<b>お名前</b>：${res.name}<br><b>日時</b>：${res.date.replace(/-/g, "/")} ${res.time}`;
       
-      document.getElementById("executeCancelBtn").onclick = async () => {
+document.getElementById("executeCancelBtn").onclick = async () => {
+        // ★確認：script(2).jsの「確認アラート」をそのまま使う
+        if (!confirm("本当にキャンセルしてもよろしいですか？")) return;
+
         const cancelMessage = `【予約キャンセル】\n${res.name} 様の予約がキャンセルされました。\n日時：${res.date.replace(/-/g, "/")} ${res.time}`;
 
         const { error } = await supabaseClient.from("reservations").delete().eq("id", res.id);
         
         if (!error) {
           try {
-            // ★3：キャンセル通知を送信（前回追加したもの）
+            // ★追加：キャンセル通知をLINEに送る
             await fetch("https://bcahztzetpfuklipjmxx.functions.supabase.co/dynamic-service", {
               method: "POST", 
               headers: { "Content-Type": "application/json" },
