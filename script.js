@@ -26,7 +26,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const supabaseKey = "sb_publishable_rPyAIzNttEK3P8nsnBllYA_FTF-kxJQ";
   supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 
-  // 初期読み込みの順序を整理（メニュー→休日→日付の順で確実に行う）
   loadMenus().then(() => {
     loadHolidays().then(() => {
       updateDateOptions();
@@ -54,7 +53,6 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 });
 
-// ★施術時間の計算・表示
 function formatDurationText(totalMin) {
   if (totalMin === 0) return "";
   const roundedMin = Math.ceil(totalMin / 15) * 15; 
@@ -69,18 +67,13 @@ function formatDurationText(totalMin) {
 function updateTotalDurationDisplay() {
   const menus = Array.from(document.querySelectorAll(".menu-select")).map(s => s.value).filter(v => v !== "");
   const total = menus.map(m => Number(MENU_DATA[m]) || 0).reduce((a, b) => a + b, 0);
-  
   let displayElement = document.getElementById("durationDisplay");
   if (!displayElement) {
     displayElement = document.createElement("span");
     displayElement.id = "durationDisplay";
-    displayElement.style.marginRight = "10px";
-    displayElement.style.fontSize = "14px";
-    displayElement.style.color = "#666";
     const addBtn = document.getElementById("addMenu");
     if (addBtn) addBtn.parentNode.insertBefore(displayElement, addBtn);
   }
-  
   if (total > 0) {
     displayElement.innerHTML = `<b>${formatDurationText(total)}</b>`;
     displayElement.style.display = "inline";
@@ -95,13 +88,7 @@ async function loadMenus() {
   if (error) return;
   MENU_DATA = {};
   data.forEach(m => { MENU_DATA[m.name] = Number(m.duration); });
-
-  const categories = {
-    "組み合わせ": ["＋", "+"], "カット": ["カット"], "カラー": ["カラー", "ヘナ"],
-    "パーマ": ["パーマ"], "ストレート": ["ストレート"], "トリートメント": ["トリートメント"], "メニュー未定": ["相談"]
-  };
   const firstSelect = document.querySelector(".menu-select");
-  renderMenuOptions(firstSelect, data, categories);
   setupSelectColorChange(firstSelect);
 }
 
@@ -116,29 +103,6 @@ function setupSelectColorChange(selectElement) {
     }
     updateTotalDurationDisplay(); 
     updateTimeOptions();
-  });
-}
-
-function renderMenuOptions(selectElement, data, categories) {
-  selectElement.innerHTML = '<option value="">メニューを選択</option>';
-  Object.keys(categories).forEach(catName => {
-    const group = document.createElement("optgroup");
-    group.label = catName;
-    const filtered = data.filter(m => {
-      const hasPlus = m.name.includes("＋") || m.name.includes("+");
-      const hasKeyword = categories[catName].some(k => m.name.includes(k));
-      if (catName === "組み合わせ") return hasPlus;
-      else return hasKeyword && !hasPlus;
-    });
-    if (filtered.length > 0) {
-      filtered.forEach(m => {
-        const op = document.createElement("option");
-        op.value = m.name;
-        op.textContent = m.name;
-        group.appendChild(op);
-      });
-      selectElement.appendChild(group);
-    }
   });
 }
 
@@ -200,7 +164,6 @@ function updateDateOptions() {
   }
 }
 
-// ===== 時間表示（★最新情報を取得するよう修正） =====
 async function updateTimeOptions() {
   const date = document.getElementById("date").value;
   const timeSelect = document.getElementById("time");
@@ -242,14 +205,14 @@ async function updateTimeOptions() {
   });
 }
 
-// ===== 予約送信 =====
+// ===== 予約送信（確認画面とアニメーション復活） =====
 document.getElementById("reserveForm").onsubmit = async e => {
   e.preventDefault();
   const name = document.getElementById("name").value;
   const dateValue = document.getElementById("date").value;
   const time = document.getElementById("time").value;
   const menus = Array.from(document.querySelectorAll(".menu-select")).map(s => s.value).filter(v => v !== "");
-  if (!name || !dateValue || !time || menus.length === 0) { alert("入力不足です"); return; }
+  if (!name || !dateValue || !time || menus.length === 0) { alert("すべて選択してください"); return; }
   
   const footer = document.querySelector(".sticky-footer");
   if (footer) footer.style.display = "none";
@@ -268,6 +231,7 @@ document.getElementById("reserveForm").onsubmit = async e => {
     const btn = document.getElementById("okBtn");
     if (btn.disabled) return;
     btn.disabled = true;
+    btn.innerText = "送信中...";
     try {
       const [sh, sm] = time.split(":").map(Number);
       const endD = new Date(2000, 0, 1, sh, sm + required);
@@ -281,20 +245,26 @@ document.getElementById("reserveForm").onsubmit = async e => {
         body: JSON.stringify({ mode: "reserve", name, menus: menus.join(", "), date: dateValue, time, customerUserId })
       });
       showCompleteScreen();
-    } catch (e) { alert("失敗しました"); btn.disabled = false; }
+    } catch (e) { alert("失敗しました"); btn.disabled = false; btn.innerText = "OK"; }
   };
 };
 
-// ===== バナー表示（★曜日追加・キャッシュ対策） =====
+document.getElementById("cancelBtn").onclick = () => {
+  const footer = document.querySelector(".sticky-footer");
+  if (footer) footer.style.display = "block";
+  document.querySelector(".greeting").style.display = "block";
+  document.getElementById("confirm-screen").style.display = "none";
+  document.getElementById("reserveForm").style.display = "block";
+};
+
+// ===== バナー表示（曜日追加） =====
 async function checkExistingReservation() {
   if (!customerUserId) return;
   const today = new Date().toISOString().split('T')[0];
   const { data, error } = await supabaseClient.from("reservations").select("id, date, time").eq("customer_user_id", customerUserId).gte("date", today).order("date", { ascending: true }).setHeader("Cache-Control", "no-cache"); 
-
   const oldNotice = document.querySelector(".sticky-reservation-notice-top");
   if (oldNotice) oldNotice.remove();
   document.body.style.paddingTop = "0px";
-
   if (data && data.length > 0) {
     const res = data[0];
     const d = new Date(res.date.replace(/-/g, "/"));
@@ -312,16 +282,15 @@ function goToCancelLink() {
   window.location.href = "https://liff.line.me/2008611644-EZd5nkl0?action=cancel";
 }
 
-// ===== キャンセル処理（★挨拶非表示・曜日追加） =====
+// ===== キャンセル処理（挨拶非表示・曜日追加） =====
 window.addEventListener("load", async () => {
   const urlParams = new URLSearchParams(window.location.search);
   if (urlParams.get('action') === 'cancel') {
     document.getElementById("reserveForm").style.display = "none";
-    document.querySelector(".greeting").style.display = "none"; // ★ここを追加：メッセージを消す
+    document.querySelector(".greeting").style.display = "none";
     document.getElementById("cancel-screen").style.display = "block";
     await miniappReady;
     const { data } = await supabaseClient.from("reservations").select("*").eq("customer_user_id", customerUserId).order("date", { ascending: true }).limit(1);
-
     if (data && data.length > 0) {
       const res = data[0];
       const d = new Date(res.date.replace(/-/g, "/"));
@@ -343,6 +312,7 @@ window.addEventListener("load", async () => {
 });
 
 function showCompleteScreen() {
-  document.querySelector(".container").innerHTML = `<div style="padding: 60px 20px; text-align: center;"><h2>予約を承りました</h2><button id="closeBtn" style="margin-top:40px; padding:16px; width:100%; border-radius:14px; background:#000; color:#fff; border:none; font-size:17px; font-weight:600;">閉じる</button></div>`;
+  const container = document.querySelector(".container");
+  container.innerHTML = `<div style="padding: 60px 20px; text-align: center;"><div class="checkmark-wrapper"><svg class="checkmark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52"><circle class="checkmark__circle" cx="26" cy="26" r="25" fill="none"/><path class="checkmark__check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/></svg></div><h2 style="font-size:22px; margin-top:25px; font-weight:600;">予約を承りました</h2><p style="color:#86868b; font-size:15px; line-height:1.6;">ご来店お待ちしております。</p><button id="closeBtn" style="margin-top:40px; padding:16px; width:100%; border-radius:14px; background:#000; color:#fff; border:none; font-size:17px; font-weight:600;">閉じる</button></div><style>.checkmark-wrapper{display:flex;justify-content:center}.checkmark{width:80px;height:80px;border-radius:50%;stroke-width:2;stroke:#fff;animation:fill .4s ease-in-out .4s forwards,scale .3s ease-in-out .9s both}.checkmark__circle{stroke-dasharray:166;stroke-dashoffset:166;stroke-width:2;stroke:#4caf50;fill:none;animation:stroke .6s forwards}.checkmark__check{transform-origin:50% 50%;stroke-dasharray:48;stroke-dashoffset:48;animation:stroke .3s forwards .8s}@keyframes stroke{100%{stroke-dashoffset:0}}@keyframes scale{0%,100%{transform:none}50%{transform:scale3d(1.1,1.1,1)}}@keyframes fill{100%{box-shadow:inset 0px 0px 0px 40px #4caf50}}</style>`;
   document.getElementById("closeBtn").onclick = () => liff.closeWindow();
 }
