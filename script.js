@@ -27,15 +27,14 @@ document.addEventListener("DOMContentLoaded", () => {
   const supabaseKey = "sb_publishable_rPyAIzNttEK3P8nsnBllYA_FTF-kxJQ";
   supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 
-  // メニューと休日を読み込んでから、日付の選択肢を作る
+  // ★修正：メニューと休日を確実に読み込んでから日付を更新する
   loadMenus();
   loadHolidays().then(() => {
     updateDateOptions();
   });
 
-  // バナーの表示（ログイン完了を待ってから実行）
+  // ★修正：ログイン完了を待ってからバナーを表示する
   miniappReady.then(async () => {
-    console.log("LINEログイン状態確認:", customerUserId); 
     if (customerUserId) {
       await checkExistingReservation();
     }
@@ -231,7 +230,7 @@ function updateDateOptions() {
   }
 }
 
-// ===== 時間表示ロジック =====
+// ===== 時間表示ロジック（修正版：重複判定の強化） =====
 async function updateTimeOptions() {
   const date = document.getElementById("date").value;
   const timeSelect = document.getElementById("time");
@@ -262,8 +261,9 @@ async function updateTimeOptions() {
     const isOffTime = OFF_TIMES.some(o => o.date === date && o.time === start);
     if (isOffTime) isDisabled = true;
 
+    // ★予約重複判定の厳密化
+    const toMin = t => { const [h,m] = t.split(":").map(Number); return h*60+m; };
     for (const r of reserved) {
-      const toMin = t => { const [h,m] = t.split(":").map(Number); return h*60+m; };
       if (toMin(start) < toMin(r.end) && toMin(r.start) < toMin(end)) { isDisabled = true; break; }
     }
 
@@ -365,10 +365,10 @@ function showCompleteScreen() {
   };
 }
 
+// ===== バナー表示ロジック =====
 async function checkExistingReservation() {
   if (runtime !== "miniapp" || !customerUserId) return;
   const today = new Date().toISOString().split('T')[0];
-  console.log("検索開始:", today, customerUserId);
 
   const { data, error } = await supabaseClient
     .from("reservations")
@@ -378,7 +378,7 @@ async function checkExistingReservation() {
     .order("date", { ascending: true })
     .limit(1);
 
-  if (error) { console.error("バナー取得エラー:", error); return; }
+  if (error) return;
 
   if (data && data.length > 0) {
     const res = data[0];
@@ -401,7 +401,7 @@ function goToCancelLink() {
   window.location.href = "https://liff.line.me/2008611644-EZd5nkl0?action=cancel";
 }
 
-// ===== キャンセル処理 =====
+// ===== キャンセル処理（バナー即時削除追加） =====
 window.addEventListener("load", async () => {
   const urlParams = new URLSearchParams(window.location.search);
   if (urlParams.get('action') === 'cancel') {
@@ -426,13 +426,14 @@ window.addEventListener("load", async () => {
         const { error } = await supabaseClient.from("reservations").delete().eq("id", res.id);
         
         if (!error) {
+            // ★バナーを即座に消去する
             const topNotice = document.querySelector(".sticky-reservation-notice-top");
             if (topNotice) {
                 topNotice.remove();
                 document.body.style.paddingTop = "0px";
             }
             try {
-                await fetch("https://bcahzetzetpfuklipjmxx.functions.supabase.co/dynamic-service", {
+                await fetch("https://bcahztzetpfuklipjmxx.functions.supabase.co/dynamic-service", {
                     method: "POST", 
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ mode: "cancel", name: res.name, date: res.date, time: res.time, customerUserId: customerUserId, customMessage: cancelMessage })
