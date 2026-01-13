@@ -81,6 +81,7 @@ function updateTotalDurationDisplay() {
 }
 
 // ===== メニュー読み込み（グループの重複を修正） =====
+// ===== メニュー読み込み（重複防止と細かな制御） =====
 async function loadMenus() {
   if (!supabaseClient) return;
   const { data, error } = await supabaseClient.from("menus").select("name, duration");
@@ -89,7 +90,6 @@ async function loadMenus() {
   MENU_DATA = {};
   data.forEach(m => { MENU_DATA[m.name] = m.duration; });
 
-  // カテゴリーの定義
   const categories = {
     "組み合わせ": ["＋"],
     "カット": ["カット"],
@@ -105,7 +105,6 @@ async function loadMenus() {
   setupSelectColorChange(firstSelect);
 }
 
-// セレクトボックスの色と計算の連動
 function setupSelectColorChange(selectElement) {
   selectElement.addEventListener("change", () => {
     if (selectElement.value === "") {
@@ -120,24 +119,18 @@ function setupSelectColorChange(selectElement) {
   });
 }
 
-// ★修正：組み合わせ（＋）が他のグループに混ざらないようにするロジック
 function renderMenuOptions(selectElement, data, categories) {
   selectElement.innerHTML = '<option value="">メニューを選択してください</option>';
-  
   Object.keys(categories).forEach(catName => {
     const group = document.createElement("optgroup");
     group.label = catName;
     
     const filtered = data.filter(m => {
-      // 1. そのカテゴリーのキーワード（「カット」など）が含まれているかチェック
       const hasKeyword = categories[catName].some(k => m.name.includes(k));
-      
       if (catName === "組み合わせ") {
-        // 「組み合わせ」グループには「＋」がついているものだけを入れる
-        return hasKeyword;
+        return hasKeyword; // 「組み合わせ」には「＋」入りを入れる
       } else {
-        // 「カット」や「カラー」などのグループには、
-        // キーワードが含まれていて、かつ「＋」が「含まれていない」ものだけを入れる
+        // それ以外にはキーワードが入っていて、かつ「＋」が入っていないものだけ入れる
         return hasKeyword && !m.name.includes("＋");
       }
     });
