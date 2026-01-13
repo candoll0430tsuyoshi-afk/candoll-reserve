@@ -166,18 +166,31 @@
         .confirm-btn { width: 45%; padding: 15px; border-radius: 10px; border: none; cursor: pointer; margin: 5px; font-size: 16px; }
         .ok { background: #000; color: #fff; }
         .cancel { background: #f5f5f7; color: #000; }
-    /* ★追加：予約ボタンを下に固定するバナーの設定 */
-.sticky-footer {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    background: #ffffff;
-    padding: 15px 20px;
-    box-shadow: 0 -5px 15px rgba(0,0,0,0.08); /* 上方向に少し影をつけて浮かせます */
-    box-sizing: border-box;
-    z-index: 1000;
-}
+/* --- 日付チップのスクロールバーを表示 --- */
+        .date-chips::-webkit-scrollbar {
+            display: block; /* 非表示を解除 */
+            height: 5px;
+        }
+        .date-chips::-webkit-scrollbar-thumb {
+            background: #d2d2d7;
+            border-radius: 10px;
+        }
+
+        /* --- 予約ボタンの固定バナー --- */
+        .sticky-footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: #ffffff;
+            padding: 15px 20px 30px;
+            box-shadow: 0 -5px 15px rgba(0,0,0,0.05);
+            box-sizing: border-box;
+            z-index: 1000;
+        }
+        #reserveForm {
+            padding-bottom: 120px; /* ボタンと被らないための余白 */
+        }
 
 /* ★追加：ボタンが下に来るので、フォームの最後に余白を作って被らないようにする */
 #reserveForm {
