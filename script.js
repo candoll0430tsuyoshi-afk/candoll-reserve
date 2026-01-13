@@ -80,8 +80,7 @@ function updateTotalDurationDisplay() {
   }
 }
 
-// ===== メニュー読み込み（グループの重複を修正） =====
-// ===== メニュー読み込み（重複防止と細かな制御） =====
+// ===== メニュー読み込み（重複防止・強化版） =====
 async function loadMenus() {
   if (!supabaseClient) return;
   const { data, error } = await supabaseClient.from("menus").select("name, duration");
@@ -91,7 +90,7 @@ async function loadMenus() {
   data.forEach(m => { MENU_DATA[m.name] = m.duration; });
 
   const categories = {
-    "組み合わせ": ["＋"],
+    "組み合わせ": ["＋", "+"],
     "カット": ["カット"],
     "カラー": ["カラー", "ヘナ"],
     "パーマ": ["パーマ"],
@@ -127,15 +126,16 @@ function renderMenuOptions(selectElement, data, categories) {
     group.label = catName;
     
     const filtered = data.filter(m => {
-      // 全角「＋」と半角「+」の両方に対応させる
+      // 名前の中に全角「＋」か半角「+」が入っているか判定
       const hasPlus = m.name.includes("＋") || m.name.includes("+");
+      // そのグループのキーワードが含まれているか判定
       const hasKeyword = categories[catName].some(k => m.name.includes(k));
 
       if (catName === "組み合わせ") {
-        // 「組み合わせ」グループ：プラス記号があるものだけ
+        // 「組み合わせ」グループには、プラス記号があるものだけを入れる
         return hasPlus;
       } else {
-        // それ以外のグループ：キーワードが入っていて、かつプラス記号が「絶対に入っていない」ものだけ
+        // それ以外のグループには、キーワードが含まれていて、かつプラス記号が【絶対に入っていない】ものだけを入れる
         return hasKeyword && !hasPlus;
       }
     });
@@ -151,25 +151,6 @@ function renderMenuOptions(selectElement, data, categories) {
     }
   });
 }
-
-function renderMenuOptions(selectElement, data, categories) {
-  selectElement.innerHTML = '<option value="">メニューを選択</option>';
-  Object.keys(categories).forEach(catName => {
-    const group = document.createElement("optgroup");
-    group.label = catName;
-    const filtered = data.filter(m => categories[catName].some(k => m.name.includes(k)));
-    if (filtered.length > 0) {
-      filtered.forEach(m => {
-        const op = document.createElement("option");
-        op.value = m.name;
-        op.textContent = m.name;
-        group.appendChild(op);
-      });
-      selectElement.appendChild(group);
-    }
-  });
-}
-
 // ===== 休日・日付ロジック =====
 async function loadHolidays() {
   const [resHolidays, resOff, resSpec] = await Promise.all([
