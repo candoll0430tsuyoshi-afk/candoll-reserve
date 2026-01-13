@@ -281,6 +281,10 @@ document.getElementById("reserveForm").onsubmit = async e => {
     return;
   }
   
+  // ★1：確認画面へ行くときに追従バナーを隠す
+  const footer = document.querySelector(".sticky-footer");
+  if (footer) footer.style.display = "none";
+
   const required = menus.map(m => MENU_DATA[m] || 0).reduce((a, b) => a + b, 0);
   const prettyDuration = formatDurationText(required); 
   
@@ -341,6 +345,10 @@ document.getElementById("reserveForm").onsubmit = async e => {
 };
 
 document.getElementById("cancelBtn").onclick = () => {
+  // ★2：戻るボタンを押したときに追従バナーを再表示
+  const footer = document.querySelector(".sticky-footer");
+  if (footer) footer.style.display = "block";
+
   document.querySelector(".greeting").style.display = "block";
   document.getElementById("confirm-screen").style.display = "none";
   document.getElementById("reserveForm").style.display = "block";
@@ -376,7 +384,7 @@ function showCompleteScreen() {
   };
 }
 
-// ===== キャンセル処理（通知機能を追加） =====
+// ===== キャンセル処理 =====
 window.addEventListener("load", async () => {
   const urlParams = new URLSearchParams(window.location.search);
   if (urlParams.get('action') === 'cancel') {
@@ -404,7 +412,7 @@ window.addEventListener("load", async () => {
         
         if (!error) {
           try {
-            // ★ここが不足していた「通知を送る」ためのコードです
+            // ★3：キャンセル通知を送信（前回追加したもの）
             await fetch("https://bcahztzetpfuklipjmxx.functions.supabase.co/dynamic-service", {
               method: "POST", 
               headers: { "Content-Type": "application/json" },
