@@ -29,11 +29,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
   loadMenus();
   loadHolidays().then(updateDateOptions);
-miniappReady.then(async () => {
-  if (customerUserId) {
-    await checkExistingReservation();
-  }
-});
+  // 元の script.js の呼び出し方を維持
+  miniappReady.then(checkExistingReservation);
   
   document.getElementById("addMenu").onclick = () => {
     const container = document.getElementById("menuContainer");
@@ -50,7 +47,7 @@ miniappReady.then(async () => {
   };
 });
 
-// ★分を「約◯時間◯分」に変換（30分単位切り上げ）
+// ★施術時間のテキスト変換
 function formatDurationText(totalMin) {
   if (totalMin === 0) return "";
   const roundedMin = Math.ceil(totalMin / 15) * 15; 
@@ -62,7 +59,7 @@ function formatDurationText(totalMin) {
   return text;
 }
 
-// ★目安時間の表示更新
+// 目安時間の表示更新
 function updateTotalDurationDisplay() {
   const menus = Array.from(document.querySelectorAll(".menu-select")).map(s => s.value).filter(v => v !== "");
   const total = menus.map(m => MENU_DATA[m] || 0).reduce((a, b) => a + b, 0);
@@ -86,7 +83,7 @@ function updateTotalDurationDisplay() {
   }
 }
 
-// ===== メニュー読み込み（元のロジックを保持） =====
+// メニュー読み込み
 async function loadMenus() {
   if (!supabaseClient) return;
   const { data, error } = await supabaseClient.from("menus").select("name, duration");
@@ -150,7 +147,7 @@ function renderMenuOptions(selectElement, data, categories) {
   });
 }
 
-// ===== 休日・日付（元のロジックを保持・曜日の判定含む） =====
+// 休日・日付オプション（★曜日の追加）
 async function loadHolidays() {
   const [resHolidays, resOff, resSpec] = await Promise.all([
     supabaseClient.from("holidays").select("date"),
@@ -173,6 +170,8 @@ function updateDateOptions() {
   const today = new Date();
   today.setHours(0,0,0,0);
 
+  const weekNames = ["日", "月", "火", "水", "木", "金", "土"];
+
   for (let i = 1; i < 31; i++) {
     const d = new Date(today);
     d.setDate(today.getDate() + i);
@@ -181,9 +180,8 @@ function updateDateOptions() {
     const day = ("0" + d.getDate()).slice(-2);
     const value = `${y}-${m}-${day}`;
     
-    const week = ["日","月","火","水","木","金","土"];
     const dowNum = d.getDay();
-    const dow = week[dowNum];
+    const dow = weekNames[dowNum];
 
     const isFixedHoliday = (dowNum === 1 || (dowNum === 2 && (d.getDate() <= 7 || (d.getDate() >= 15 && d.getDate() <= 21))));
     const isCustomHoliday = HOLIDAYS.includes(value);
@@ -199,6 +197,7 @@ function updateDateOptions() {
     if (!isHoliday) {
       const op = document.createElement("option");
       op.value = value;
+      // ★曜日の追加
       op.textContent = `${y}/${m}/${day}(${dow})`;
       dateSelect.appendChild(op);
     }
@@ -206,6 +205,7 @@ function updateDateOptions() {
     const chip = document.createElement("div");
     chip.className = `date-chip ${dayClass}`;
     
+    // ★チップにも曜日を追加
     chip.innerHTML = `
       <span class="month-label">${parseInt(m)}月</span>
       <span class="date-number">${parseInt(day)}</span>
@@ -225,7 +225,7 @@ function updateDateOptions() {
   }
 }
 
-// ===== 時間表示（重複判定の正確性を維持） =====
+// 時間オプション
 async function updateTimeOptions() {
   const date = document.getElementById("date").value;
   const timeSelect = document.getElementById("time");
@@ -239,7 +239,6 @@ async function updateTimeOptions() {
   const menus = Array.from(document.querySelectorAll(".menu-select")).map(s => s.value).filter(v => v !== "");
   const required = menus.map(m => MENU_DATA[m] || 0).reduce((a, b) => a + b, 0);
 
-  // ★重複判定を正しく行うためCache-Controlを追加
   const { data } = await supabaseClient.from("reservations").select("time,end_time").eq("date", date).setHeader("Cache-Control", "no-cache");
   const reserved = (data || []).map(r => ({ 
     start: (r.time || "").trim(), 
@@ -282,7 +281,7 @@ async function updateTimeOptions() {
   });
 }
 
-// ===== 予約送信（フローを元の完璧な状態に） =====
+// ===== 予約確定処理（script.jsの通知ロジックを完全復元） =====
 document.getElementById("reserveForm").onsubmit = async e => {
   e.preventDefault();
   const name = document.getElementById("name").value;
@@ -300,13 +299,17 @@ document.getElementById("reserveForm").onsubmit = async e => {
 
   const required = menus.map(m => MENU_DATA[m] || 0).reduce((a, b) => a + b, 0);
   const prettyDuration = formatDurationText(required); 
-  const week = ["日", "月", "火", "水", "木", "金", "土"];
+
+  // ★曜日の計算（通知用）
+  const weekNames = ["日", "月", "火", "水", "木", "金", "土"];
   const d = new Date(dateValue.replace(/-/g, "/"));
-  const dow = week[d.getDay()];
-  const formattedDate = `${dateValue.replace(/-/g, "/")} (${dow})`;
+  const formattedDateWithDay = `${dateValue.replace(/-/g, "/")} (${weekNames[d.getDay()]})`;
+
+  // ★通知用メッセージ（script.jsの形式を完全維持）
+  const reserveMessage = `【新規予約】\n${name} 様\nメニュー：${menus.join(", ")}\n日時：${formattedDateWithDay} ${time}\n${prettyDuration}`;
 
   document.querySelector(".greeting").style.display = "none";
-  document.getElementById("confirm-text").innerHTML = `<b>お名前</b>：${name}<br><b>メニュー</b>：${menus.join(", ")}<br><b>日時</b>：${formattedDate} ${time}<br><b>${prettyDuration}</b>`;
+  document.getElementById("confirm-text").innerHTML = `<b>お名前</b>：${name}<br><b>メニュー</b>：${menus.join(", ")}<br><b>日時</b>：${formattedDateWithDay} ${time}<br><b>${prettyDuration}</b>`;
   document.getElementById("reserveForm").style.display = "none";
   document.getElementById("confirm-screen").style.display = "block";
 
@@ -327,10 +330,19 @@ document.getElementById("reserveForm").onsubmit = async e => {
 
       if (error) throw error;
 
+      // ★通知処理（script.jsのfetch構造を復元）
       await fetch("https://bcahztzetpfuklipjmxx.functions.supabase.co/dynamic-service", {
         method: "POST", 
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ mode: "reserve", name, menus: menus.join(", "), date: dateValue, time, customerUserId })
+        body: JSON.stringify({ 
+          mode: "reserve", 
+          name, 
+          menus: menus.join(", "), 
+          date: dateValue, 
+          time, 
+          customerUserId,
+          customMessage: reserveMessage 
+        })
       });
       showCompleteScreen();
     } catch (e) {
@@ -349,7 +361,7 @@ document.getElementById("cancelBtn").onclick = () => {
   document.getElementById("reserveForm").style.display = "block";
 };
 
-// 予約完了（アニメーション含む）
+// 予約完了画面
 function showCompleteScreen() {
   const container = document.querySelector(".container");
   container.innerHTML = `<div style="padding: 60px 20px; text-align: center;"><div class="checkmark-wrapper"><svg class="checkmark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52"><circle class="checkmark__circle" cx="26" cy="26" r="25" fill="none"/><path class="checkmark__check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/></svg></div><h2 style="font-size:22px; margin-top:25px; font-weight:600;">予約を承りました</h2><p style="color:#86868b; font-size:15px; line-height:1.6;">ご来店お待ちしております。</p><button id="closeBtn" style="margin-top:40px; padding:16px; width:100%; border-radius:14px; background:#000; color:#fff; border:none; font-size:17px; font-weight:600; cursor:pointer;">閉じる</button></div><style>.checkmark-wrapper { display: flex; justify-content: center; }.checkmark { width: 80px; height: 80px; border-radius: 50%; stroke-width: 2; stroke: #fff; animation: fill .4s ease-in-out .4s forwards, scale .3s ease-in-out .9s both; }.checkmark__circle { stroke-dasharray: 166; stroke-dashoffset: 166; stroke-width: 2; stroke: #4caf50; fill: none; animation: stroke 0.6s forwards; }.checkmark__check { transform-origin: 50% 50%; stroke-dasharray: 48; stroke-dashoffset: 48; animation: stroke 0.3s forwards 0.8s; }@keyframes stroke { 100% { stroke-dashoffset: 0; } }@keyframes scale { 0%, 100% { transform: none; } 50% { transform: scale3d(1.1, 1.1, 1); } }@keyframes fill { 100% { box-shadow: inset 0px 0px 0px 40px #4caf50; } }</style>`;
@@ -359,7 +371,7 @@ function showCompleteScreen() {
   };
 }
 
-// ===== バナー（曜日表示・キャッシュ対策） =====
+// 予約確認バナー（★曜日の追加）
 async function checkExistingReservation() {
   if (!customerUserId) return;
   const today = new Date().toISOString().split('T')[0];
@@ -379,13 +391,14 @@ async function checkExistingReservation() {
 
   if (data && data.length > 0) {
     const res = data[0];
+    // ★曜日の計算
+    const weekNames = ["日", "月", "火", "水", "木", "金", "土"];
     const d = new Date(res.date.replace(/-/g, "/"));
-    const week = ["日", "月", "火", "水", "木", "金", "土"];
-    const formattedDate = `${res.date.replace(/-/g, "/")} (${week[d.getDay()]})`;
+    const formattedDateWithDay = `${res.date.replace(/-/g, "/")} (${weekNames[d.getDay()]})`;
 
     const notice = document.createElement("div");
     notice.className = "sticky-reservation-notice-top";
-    notice.innerHTML = `<div class="notice-content"><span class="notice-title">次回の予約情報</span><span class="notice-datetime">${formattedDate} ${res.time}</span></div><button onclick="goToCancelLink()" class="notice-cancel-btn-red">キャンセル</button>`;
+    notice.innerHTML = `<div class="notice-content"><span class="notice-title">次回の予約情報</span><span class="notice-datetime">${formattedDateWithDay} ${res.time}</span></div><button onclick="goToCancelLink()" class="notice-cancel-btn-red">キャンセル</button>`;
     document.body.appendChild(notice);
     document.body.style.paddingTop = "60px";
   }
@@ -395,12 +408,15 @@ function goToCancelLink() {
   window.location.href = "https://liff.line.me/2008611644-EZd5nkl0?action=cancel";
 }
 
-// ===== キャンセル（挨拶非表示・曜日表示） =====
+// ===== キャンセル画面（★挨拶非表示・曜日追加・通知復元） =====
 window.addEventListener("load", async () => {
   const urlParams = new URLSearchParams(window.location.search);
   if (urlParams.get('action') === 'cancel') {
     document.getElementById("reserveForm").style.display = "none";
-    document.querySelector(".greeting").style.display = "none"; // 挨拶を消す
+    // ★挨拶を非表示にする
+    const greeting = document.querySelector(".greeting");
+    if (greeting) greeting.style.display = "none";
+
     document.getElementById("cancel-screen").style.display = "block";
 
     await miniappReady; 
@@ -410,21 +426,50 @@ window.addEventListener("load", async () => {
 
     if (data && data.length > 0) {
       const res = data[0];
+      const weekNames = ["日", "月", "火", "水", "木", "金", "土"];
       const d = new Date(res.date.replace(/-/g, "/"));
-      const week = ["日", "月", "火", "水", "木", "金", "土"];
-      const formattedDate = `${res.date.replace(/-/g, "/")} (${week[d.getDay()]})`;
-      document.getElementById("cancel-info").innerHTML = `<b>お名前</b>：${res.name}<br><b>日時</b>：${formattedDate} ${res.time}`;
+      const formattedDateWithDay = `${res.date.replace(/-/g, "/")} (${weekNames[d.getDay()]})`;
+
+      document.getElementById("cancel-info").innerHTML = `<b>お名前</b>：${res.name}<br><b>日時</b>：${formattedDateWithDay} ${res.time}`;
       
       document.getElementById("executeCancelBtn").onclick = async () => {
         if (!confirm("本当にキャンセルしてもよろしいですか？")) return;
+
+        const cancelMessage = `【予約キャンセル】\n${res.name} 様の予約がキャンセルされました。\n日時：${formattedDateWithDay} ${res.time}`;
+
         const { error } = await supabaseClient.from("reservations").delete().eq("id", res.id);
+        
         if (!error) {
-            const topNotice = document.querySelector(".sticky-reservation-notice-top");
-            if (topNotice) { topNotice.remove(); document.body.style.paddingTop = "0px"; }
-            alert("キャンセルしました。");
-            liff.closeWindow();
+          const topNotice = document.querySelector(".sticky-reservation-notice-top");
+          if (topNotice) {
+            topNotice.remove();
+            document.body.style.paddingTop = "0px";
+          }
+          try {
+            // ★キャンセル通知（script.jsのfetch構造を復元）
+            await fetch("https://bcahztzetpfuklipjmxx.functions.supabase.co/dynamic-service", {
+              method: "POST", 
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ 
+                mode: "cancel", 
+                name: res.name,
+                date: res.date,
+                time: res.time,
+                customerUserId: customerUserId,
+                customMessage: cancelMessage 
+              })
+            });
+          } catch (e) { console.error("通知エラー:", e); }
+
+          alert("予約をキャンセルしました。");
+          liff.closeWindow();
+        } else {
+          alert("キャンセルに失敗しました。");
         }
       };
+    } else {
+      document.getElementById("cancel-info").innerText = "予約情報が見つかりませんでした。";
+      document.getElementById("executeCancelBtn").style.display = "none";
     }
   }
 });
