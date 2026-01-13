@@ -80,7 +80,7 @@ function updateTotalDurationDisplay() {
   }
 }
 
-// ===== メニュー読み込み =====
+// ===== メニュー読み込み（script(2).jsのロジックを完全復元） =====
 async function loadMenus() {
   if (!supabaseClient) return;
   const { data, error } = await supabaseClient.from("menus").select("name, duration");
@@ -100,24 +100,31 @@ async function loadMenus() {
   };
 
   const firstSelect = document.querySelector(".menu-select");
-  // ここで、各カテゴリーのキーワードに合致するものだけを表示する
-  // あなたが完成させていた renderMenuOptions を呼び出します
   renderMenuOptions(firstSelect, data, categories);
-  setupSelectColorChange(firstSelect);
+  setupSelectColorChange(firstSelect); // ここでエラーが出ていたので定義を下に含めます
 }
 
-// ★ここが重要です：カテゴリーの重複を防ぐロジック
+// ★ここから下の2つの関数が script(2).js から漏れてはいけない重要な関数です
+function setupSelectColorChange(selectElement) {
+  selectElement.addEventListener("change", () => {
+    if (selectElement.value === "") {
+      selectElement.classList.add("placeholder-color");
+      selectElement.classList.remove("selected-color");
+    } else {
+      selectElement.classList.remove("placeholder-color");
+      selectElement.classList.add("selected-color");
+    }
+    updateTotalDurationDisplay(); 
+    updateTimeOptions();
+  });
+}
+
 function renderMenuOptions(selectElement, data, categories) {
   selectElement.innerHTML = '<option value="">メニューを選択してください</option>';
   Object.keys(categories).forEach(catName => {
     const group = document.createElement("optgroup");
     group.label = catName;
-    
-    // カテゴリーに属するキーワード（例："+"）を含むメニューだけを抽出
-    const filtered = data.filter(m => 
-      categories[catName].some(k => m.name.includes(k))
-    );
-    
+    const filtered = data.filter(m => categories[catName].some(k => m.name.includes(k)));
     if (filtered.length > 0) {
       filtered.forEach(m => {
         const op = document.createElement("option");
