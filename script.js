@@ -80,7 +80,7 @@ function updateTotalDurationDisplay() {
   }
 }
 
-// ===== メニュー読み込み（script(2).jsのロジックを完全復元） =====
+// ===== メニュー読み込み（グループの重複を修正） =====
 async function loadMenus() {
   if (!supabaseClient) return;
   const { data, error } = await supabaseClient.from("menus").select("name, duration");
@@ -89,6 +89,7 @@ async function loadMenus() {
   MENU_DATA = {};
   data.forEach(m => { MENU_DATA[m.name] = m.duration; });
 
+  // カテゴリーの定義
   const categories = {
     "組み合わせ": ["＋"],
     "カット": ["カット"],
@@ -101,10 +102,10 @@ async function loadMenus() {
 
   const firstSelect = document.querySelector(".menu-select");
   renderMenuOptions(firstSelect, data, categories);
-  setupSelectColorChange(firstSelect); // ここでエラーが出ていたので定義を下に含めます
+  setupSelectColorChange(firstSelect);
 }
 
-// ★ここから下の2つの関数が script(2).js から漏れてはいけない重要な関数です
+// セレクトボックスの色と計算の連動
 function setupSelectColorChange(selectElement) {
   selectElement.addEventListener("change", () => {
     if (selectElement.value === "") {
@@ -119,12 +120,28 @@ function setupSelectColorChange(selectElement) {
   });
 }
 
+// ★修正：組み合わせ（＋）が他のグループに混ざらないようにするロジック
 function renderMenuOptions(selectElement, data, categories) {
   selectElement.innerHTML = '<option value="">メニューを選択してください</option>';
+  
   Object.keys(categories).forEach(catName => {
     const group = document.createElement("optgroup");
     group.label = catName;
-    const filtered = data.filter(m => categories[catName].some(k => m.name.includes(k)));
+    
+    const filtered = data.filter(m => {
+      // 1. そのカテゴリーのキーワード（「カット」など）が含まれているかチェック
+      const hasKeyword = categories[catName].some(k => m.name.includes(k));
+      
+      if (catName === "組み合わせ") {
+        // 「組み合わせ」グループには「＋」がついているものだけを入れる
+        return hasKeyword;
+      } else {
+        // 「カット」や「カラー」などのグループには、
+        // キーワードが含まれていて、かつ「＋」が「含まれていない」ものだけを入れる
+        return hasKeyword && !m.name.includes("＋");
+      }
+    });
+
     if (filtered.length > 0) {
       filtered.forEach(m => {
         const op = document.createElement("option");
