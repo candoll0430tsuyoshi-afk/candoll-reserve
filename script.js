@@ -50,7 +50,7 @@ function formatDurationText(totalMin) {
   const roundedMin = Math.ceil(totalMin / 15) * 15; 
   const h = Math.floor(roundedMin / 60);
   const m = roundedMin % 60;
-  let text = "目安：約";
+  let text = "施術時間：約";
   if (h > 0) text += `${h}時間`;
   if (m > 0) text += `${m}分`;
   return text;
