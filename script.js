@@ -29,7 +29,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   loadMenus();
   loadHolidays().then(updateDateOptions);
-miniappReady.then(checkExistingReservation);
+  miniappReady.then(checkExistingReservation);
   
   document.getElementById("addMenu").onclick = () => {
     const container = document.getElementById("menuContainer");
@@ -400,7 +400,7 @@ function showCompleteScreen() {
     else window.location.href = "https://candoll.vercel.app/";
   };
 }
-// すでに予約があるかチェックし、あれば一番上に表示する
+// すでに予約があるかチェックし、画面上部に追従バナーを表示する
 async function checkExistingReservation() {
   if (runtime !== "miniapp" || !customerUserId) return;
 
@@ -409,7 +409,7 @@ async function checkExistingReservation() {
   const { data, error } = await supabaseClient
     .from("reservations")
     .select("id, date, time")
-    .eq("customer_user_id", customerUserId) // 列名は既存コードに合わせました
+    .eq("customer_user_id", customerUserId)
     .gte("date", today)
     .order("date", { ascending: true })
     .order("time", { ascending: true })
@@ -421,30 +421,31 @@ async function checkExistingReservation() {
     const dayOfWeek = ["日", "月", "火", "水", "木", "金", "土"][dateObj.getDay()];
     const formattedDate = res.date.replace(/-/g, "/");
 
+    // 既存のバナーがあれば削除
+    const oldNotice = document.querySelector(".sticky-reservation-notice-top");
+    if (oldNotice) oldNotice.remove();
+
     const notice = document.createElement("div");
-    notice.className = "reservation-notice";
+    notice.className = "sticky-reservation-notice-top";
     notice.innerHTML = `
-      <div style="flex-grow: 1;">
-         <b>次回の予約情報</b><br>
-        <span style="font-size: 15px;">${formattedDate}(${dayOfWeek}) ${res.time}</span>
+      <div class="notice-content">
+        <span class="notice-title">次回の予約情報</span>
+        <span class="notice-datetime">${formattedDate}(${dayOfWeek}) ${res.time}</span>
       </div>
-      <button onclick="showCancelSection()" class="notice-cancel-btn">キャンセル</button>
+      <button onclick="goToCancelLink()" class="notice-cancel-btn-red">キャンセル</button>
     `;
     
-    const container = document.querySelector(".container");
-    container.insertBefore(notice, container.firstChild);
+    document.body.appendChild(notice);
+    
+    // バナーの高さ分、コンテンツを下にずらす
+    document.body.style.paddingTop = "60px";
   }
 }
 
-// ボタンからキャンセル画面へ飛ばす処理
-function showCancelSection() {
-  // 予約フォームを隠してキャンセル画面を表示
-  document.getElementById("reserveForm").style.display = "none";
-  document.querySelector(".greeting").style.display = "none";
-  document.getElementById("cancel-screen").style.display = "block";
-  
-  // URLにaction=cancelがついている時と同じ処理を擬似的に実行
-  window.dispatchEvent(new Event('load'));
+// キャンセルリンク（LINEトークと同じURL）へ飛ばす
+function goToCancelLink() {
+  const cancelUrl = "https://liff.line.me/2008611644-EZd5nkl0?action=cancel";
+  window.location.href = cancelUrl;
 }
 // ===== キャンセル処理 =====
 window.addEventListener("load", async () => {
