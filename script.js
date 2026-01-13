@@ -29,8 +29,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
   loadMenus();
   loadHolidays().then(updateDateOptions);
- miniappReady.then(async () => {
-  // ログインが完了し、customerUserId がセットされるのを待ってから実行
+miniappReady.then(async () => {
+  console.log("LINEログイン状態確認:", customerUserId); // 念のためログを出します
   if (customerUserId) {
     await checkExistingReservation();
   }
