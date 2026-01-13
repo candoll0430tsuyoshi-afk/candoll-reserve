@@ -284,7 +284,6 @@ document.getElementById("reserveForm").onsubmit = async e => {
     return;
   }
   
-  // 確認画面へ行くときに追従バナーを隠す
   const topNotice = document.querySelector(".sticky-reservation-notice-top");
   if (topNotice) topNotice.style.display = "none";
 
@@ -375,7 +374,7 @@ function showCompleteScreen() {
   };
 }
 
-// すでに予約があるかチェックし、画面上部に追従バナーを表示する
+// 予約チェックとバナー表示
 async function checkExistingReservation() {
   if (runtime !== "miniapp" || !customerUserId) return;
   const today = new Date().toISOString().split('T')[0];
@@ -386,7 +385,7 @@ async function checkExistingReservation() {
     .gte("date", today)
     .order("date", { ascending: true })
     .order("time", { ascending: true })
-    .header("Cache-Control", "no-cache") // キャッシュ無効化
+    .header("Cache-Control", "no-cache") 
     .limit(1);
 
   const oldNotice = document.querySelector(".sticky-reservation-notice-top");
@@ -421,7 +420,7 @@ function goToCancelLink() {
   window.location.href = cancelUrl;
 }
 
-// ===== キャンセル処理 =====
+// キャンセル画面の処理
 window.addEventListener("load", async () => {
   const urlParams = new URLSearchParams(window.location.search);
   if (urlParams.get('action') === 'cancel') {
