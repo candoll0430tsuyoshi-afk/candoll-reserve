@@ -480,11 +480,15 @@ document.getElementById("executeCancelBtn").onclick = async () => {
 
         const { error } = await supabaseClient.from("reservations").delete().eq("id", res.id);
         
-        if (!error) {const topNotice = document.querySelector(".sticky-reservation-notice-top");
+        if (!error) {
+          // 1. まず現在のバナーを消す
+          const topNotice = document.querySelector(".sticky-reservation-notice-top");
           if (topNotice) {
             topNotice.remove();
             document.body.style.paddingTop = "0px";
-            }
+          }
+          // 2. 他に予約があるか再確認して、あれば新しいバナーを出す
+          await checkExistingReservation();
           try {
             // ★追加：キャンセル通知をLINEに送る
             await fetch("https://bcahztzetpfuklipjmxx.functions.supabase.co/dynamic-service", {
