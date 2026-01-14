@@ -339,18 +339,20 @@ document.getElementById("reserveForm").onsubmit = async e => {
 
       if (error) throw error;
 
-// 254行目からの fetch 部分を書き換え
+
 await fetch("https://bcahztzetpfuklipjmxx.functions.supabase.co/dynamic-service", {
   method: "POST", 
   headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({ 
-    mode: "reserve",
-    name: name, // 明示的に書く
-    userId: customerUserId, // ★もし関数側が "userId" を待っていたらこれで直ります
-    customerUserId: customerUserId, // 両方送っておけば確実
-    message: messageText, // ★もし関数側が "message" を待っていたら
-    customMessage: messageText 
-  })
+// script.js の 258行目付近
+body: JSON.stringify({ 
+  mode: "reserve",
+  name: name, 
+  menus: menus.join(", "), // ← ここが Edge Function の 18行目の 'menus' に対応
+  date: dateValue, 
+  time: time, 
+  customerUserId: customerUserId,
+  customMessage: messageText 
+})
 });
       showCompleteScreen();
     } catch (e) {
