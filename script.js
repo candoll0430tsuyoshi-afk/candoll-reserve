@@ -463,10 +463,12 @@ window.addEventListener("load", async () => {
     await miniappReady; 
     if (!customerUserId) return;
 
+const todayForCancel = new Date().toISOString().split('T')[0];
     const { data } = await supabaseClient.from("reservations")
-      .select("*")
+      .select("id, name, date, time")
       .eq("customer_user_id", customerUserId)
-      .order("created_at", { ascending: false })
+      .gte("date", todayForCancel) // 今日以降の予約に限定
+      .order("date", { ascending: true }) // 一番近い予約を特定
       .limit(1);
 
     if (data && data.length > 0) {
