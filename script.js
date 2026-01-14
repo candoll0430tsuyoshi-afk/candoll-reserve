@@ -402,7 +402,8 @@ function showCompleteScreen() {
 }
 // すでに予約があるかチェックし、画面上部に追従バナーを表示する
 async function checkExistingReservation() {
-  if (runtime !== "miniapp" || !customerUserId) return;
+  // customerUserIdがない場合はLIFFの初期化を待つために何もしない
+  if (!customerUserId) return;
 
   const today = new Date().toISOString().split('T')[0];
 
@@ -413,7 +414,7 @@ async function checkExistingReservation() {
     .gte("date", today)
     .order("date", { ascending: true })
     .order("time", { ascending: true })
-    .header("Cache-Control", "no-cache")
+    .setHeader("Cache-Control", "no-cache") // .header を .setHeader に修正
     .limit(1);
 
   if (data && data.length > 0) {
@@ -442,7 +443,6 @@ async function checkExistingReservation() {
     document.body.style.paddingTop = "60px";
   }
 }
-
 // キャンセルリンク（LINEトークと同じURL）へ飛ばす
 function goToCancelLink() {
   const cancelUrl = "https://liff.line.me/2008611644-EZd5nkl0?action=cancel";
