@@ -414,8 +414,12 @@ async function checkExistingReservation() {
     .gte("date", today)
     .order("date", { ascending: true })
     .order("time", { ascending: true })
-    .setHeader("Cache-Control", "no-cache") // .header を .setHeader に修正
+.order("time", { ascending: true })
+    .abortSignal(AbortController.timeout ? AbortController.timeout(5000) : null)
     .limit(1);
+
+  // 追加：URLにランダムな数字を混ぜてキャッシュを強制突破する
+  supabaseClient.from("reservations").url.searchParams.set("t", Date.now());
 
   if (data && data.length > 0) {
     const res = data[0];
