@@ -1,4 +1,4 @@
-// ===== グローバル設定 ====
+// ===== グローバル設定 ===
 let supabaseClient = null;
 let runtime = "web"; 
 let customerUserId = null;
