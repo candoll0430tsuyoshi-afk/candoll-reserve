@@ -345,7 +345,7 @@ await fetch("https://bcahztzetpfuklipjmxx.functions.supabase.co/dynamic-service"
   body: JSON.stringify({ 
   mode: "reserve",
   name: name, 
-  menus: menus.join(", "), // ← ここが Edge Function の 18行目の 'menus' に対応
+  menus: menus.join(", "),
   date: dateValue, 
   time: time, 
   customerUserId: customerUserId,
