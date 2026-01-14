@@ -242,22 +242,27 @@ async function updateTimeOptions() {
   gridContainer.innerHTML = ""; 
   timeSelect.innerHTML = '<option value="">選択</option>';
 
-  // 1. ここで宣言（1回目）
+  // メニューの取得
   const menus = Array.from(document.querySelectorAll(".menu-select")).map(s => s.value).filter(v => v !== "");
 
-  // 2. 未選択チェック
+  // メニュー未選択時の表示
   if (menus.length === 0) {
     gridContainer.innerHTML = "<p style='grid-column:1/-1; text-align:center; padding:20px; color:#86868b; font-size:14px;'>先にメニューを選択してください</p>";
     return;
   }
 
-  // 3. 日付未選択チェック
+  // 日付がまだ選ばれていない場合はここで止める
   if (!date) return;
 
-  // 4. ここにあった「const menus = ...」は削除しました（エラーの原因のため）
+  // キャッシュを無効化して最新の予約状況を取得
   const required = menus.map(m => MENU_DATA[m] || 0).reduce((a, b) => a + b, 0);
+  
+  // Supabaseへのリクエストにタイムスタンプを付与（キャッシュ対策）
+  const { data, error } = await supabaseClient.from("reservations")
+    .select("time,end_time")
+    .eq("date", date)
+    .setHeader("Cache-Control", "no-cache");
 
-  const { data } = await supabaseClient.from("reservations").select("time,end_time").eq("date", date);
   const reserved = (data || []).map(r => ({ 
     start: (r.time || "").trim(), 
     end: (r.end_time || "").trim() 
