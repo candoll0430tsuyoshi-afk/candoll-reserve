@@ -7,7 +7,6 @@ let HOLIDAYS = [];
 let OFF_TIMES = [];
 let SPECIAL_OPENS = [];
 
-
 // LINE LIFF 初期化
 const miniappReady = (async () => {
   try {
@@ -46,7 +45,7 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 });
 
-// ★分を「約◯時間◯分」に変換（30分単位切り上げ）
+// ★分を「約◯時間◯分」に変換
 function formatDurationText(totalMin) {
   if (totalMin === 0) return "";
   const roundedMin = Math.ceil(totalMin / 15) * 15; 
@@ -58,7 +57,7 @@ function formatDurationText(totalMin) {
   return text;
 }
 
-// ★目安時間の表示更新（ボタンの左横に表示）
+// ★目安時間の表示更新
 function updateTotalDurationDisplay() {
   const menus = Array.from(document.querySelectorAll(".menu-select")).map(s => s.value).filter(v => v !== "");
   const total = menus.map(m => MENU_DATA[m] || 0).reduce((a, b) => a + b, 0);
@@ -82,7 +81,7 @@ function updateTotalDurationDisplay() {
   }
 }
 
-// ===== メニュー読み込み（重複防止・強化版） =====
+// ===== メニュー読み込み =====
 async function loadMenus() {
   if (!supabaseClient) return;
   const { data, error } = await supabaseClient.from("menus").select("name, duration");
@@ -129,18 +128,10 @@ function renderMenuOptions(selectElement, data, categories) {
     group.label = catName;
     
     const filtered = data.filter(m => {
-      // 名前の中に全角「＋」か半角「+」が入っているか判定
       const hasPlus = m.name.includes("＋") || m.name.includes("+");
-      // そのグループのキーワードが含まれているか判定
       const hasKeyword = categories[catName].some(k => m.name.includes(k));
-
-      if (catName === "組み合わせ") {
-        // 「組み合わせ」グループには、プラス記号があるものだけを入れる
-        return hasPlus;
-      } else {
-        // それ以外のグループには、キーワードが含まれていて、かつプラス記号が【絶対に入っていない】ものだけを入れる
-        return hasKeyword && !hasPlus;
-      }
+      if (catName === "組み合わせ") return hasPlus;
+      else return hasKeyword && !hasPlus;
     });
 
     if (filtered.length > 0) {
@@ -154,6 +145,7 @@ function renderMenuOptions(selectElement, data, categories) {
     }
   });
 }
+
 // ===== 休日・日付ロジック =====
 async function loadHolidays() {
   const [resHolidays, resOff, resSpec] = await Promise.all([
@@ -208,12 +200,11 @@ function updateDateOptions() {
     }
 
     const chip = document.createElement("div");
-const menusSelected = Array.from(document.querySelectorAll(".menu-select")).map(s => s.value).filter(v => v !== "");
+    const menusSelected = Array.from(document.querySelectorAll(".menu-select")).map(s => s.value).filter(v => v !== "");
     const menuNotSelectedClass = menusSelected.length === 0 ? " disabled-by-menu" : "";
     chip.className = `date-chip ${dayClass}${menuNotSelectedClass}`;
-    const statusText = isHoliday ? `<span style="font-size:9px; display:block; margin-top:2px;">定休日</span>` : '';
     
-chip.innerHTML = `
+    chip.innerHTML = `
       <span class="month-label">${parseInt(m)}月</span>
       <span class="date-number">${parseInt(day)}</span>
       <span class="dow-label">(${dow})</span>
@@ -242,26 +233,18 @@ async function updateTimeOptions() {
   gridContainer.innerHTML = ""; 
   timeSelect.innerHTML = '<option value="">選択</option>';
 
-  // メニューの取得
   const menus = Array.from(document.querySelectorAll(".menu-select")).map(s => s.value).filter(v => v !== "");
-
-  // メニュー未選択時の表示
   if (menus.length === 0) {
     gridContainer.innerHTML = "<p style='grid-column:1/-1; text-align:center; padding:20px; color:#86868b; font-size:14px;'>先にメニューを選択してください</p>";
     return;
   }
-
-  // 日付がまだ選ばれていない場合はここで止める
   if (!date) return;
 
-  // キャッシュを無効化して最新の予約状況を取得
   const required = menus.map(m => MENU_DATA[m] || 0).reduce((a, b) => a + b, 0);
   
-  // Supabaseへのリクエストにタイムスタンプを付与（キャッシュ対策）
   const { data, error } = await supabaseClient.from("reservations")
     .select("time,end_time")
-    .eq("date", date)
-    .setHeader("Cache-Control", "no-cache");
+    .eq("date", date);
 
   const reserved = (data || []).map(r => ({ 
     start: (r.time || "").trim(), 
@@ -304,11 +287,9 @@ async function updateTimeOptions() {
   });
 }
 
-// ===== 予約送信 =====
-// ===== 260行目付近：予約送信処理の修正 =====
+// ===== 予約送信処理 =====
 document.getElementById("reserveForm").onsubmit = async e => {
   e.preventDefault();
-  // 1. ここで入力値を最新の状態として取得する
   const name = document.getElementById("name").value;
   const dateValue = document.getElementById("date").value;
   const time = document.getElementById("time").value;
@@ -319,12 +300,8 @@ document.getElementById("reserveForm").onsubmit = async e => {
     return;
   }
   
-  const footer = document.querySelector(".sticky-footer");
-  if (footer) footer.style.display = "none";
-
   const required = menus.map(m => MENU_DATA[m] || 0).reduce((a, b) => a + b, 0);
   const prettyDuration = formatDurationText(required); 
-  
   const d = new Date(dateValue.replace(/-/g, "/"));
   const week = ["日", "月", "火", "水", "木", "金", "土"];
   const dow = week[d.getDay()];
@@ -335,61 +312,46 @@ document.getElementById("reserveForm").onsubmit = async e => {
   document.getElementById("reserveForm").style.display = "none";
   document.getElementById("confirm-screen").style.display = "block";
 
-document.getElementById("okBtn").onclick = async () => {
-  const btn = document.getElementById("okBtn");
-  if (btn.disabled) return;
-  btn.disabled = true;
-  btn.innerText = "送信中...";
+  // 送信ボタン
+  document.getElementById("okBtn").onclick = async () => {
+    const btn = document.getElementById("okBtn");
+    if (btn.disabled) return;
+    btn.disabled = true;
+    btn.innerText = "送信中...";
 
-  try {
-    const [sh, sm] = time.split(":").map(Number);
-    const endD = new Date(2000, 0, 1, sh, sm + required);
-    const end_time = `${String(endD.getHours()).padStart(2, "0")}:${String(endD.getMinutes()).padStart(2, "0")}`;
+    try {
+      const [sh, sm] = time.split(":").map(Number);
+      const endD = new Date(2000, 0, 1, sh, sm + required);
+      const end_time = `${String(endD.getHours()).padStart(2, "0")}:${String(endD.getMinutes()).padStart(2, "0")}`;
 
-    // 1. Supabaseへ予約を保存
-    const { error } = await supabaseClient.from("reservations").insert([{ 
-      name, 
-      menus: menus.join(", "), 
-      date: dateValue, 
-      time, 
-      end_time,
-      customer_user_id: customerUserId 
-    }]);
+      // 1. 保存
+      const { error } = await supabaseClient.from("reservations").insert([{ 
+        name, menus: menus.join(", "), date: dateValue, time, end_time, customer_user_id: customerUserId 
+      }]);
+      if (error) throw error;
 
-    if (error) throw error;
+      // 2. 通知
+      const messageText = `【ご予約内容】\n名前：${name} 様\n日時：${formattedDate} (${dow}) ${time}\n${prettyDuration}\nメニュー：${menus.join(", ")}\n\nご予約のキャンセルはこちらから\nhttps://liff.line.me/2008611644-EZd5nkl0?action=cancel`;
 
-    // 2. LINE通知を送信
-    const messageText = `【ご予約内容】\n名前：${name} 様\n日時：${formattedDate} (${dow}) ${time}\n${prettyDuration}\nメニュー：${menus.join(", ")}\n\nご予約のキャンセルはこちらから\nhttps://liff.line.me/2008611644-EZd5nkl0?action=cancel`;
+      await fetch("https://bcahztzetpfuklipjmxx.functions.supabase.co/dynamic-service", {
+        method: "POST", 
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          mode: "reserve", name, menus: menus.join(", "), date: dateValue, time, customerUserId, customMessage: messageText 
+        })
+      });
 
-    await fetch("https://bcahztzetpfuklipjmxx.functions.supabase.co/dynamic-service", {
-      method: "POST", 
-      headers: { 
-        "Content-Type": "application/json",
-        // ★もしFunction側で認証が必要な場合は以下を追加
-        // "Authorization": `Bearer ${supabaseKey}` 
-      },
-      body: JSON.stringify({ 
-        mode: "reserve",
-        name: name, 
-        menus: menus.join(", "), 
-        date: dateValue, 
-        time: time, 
-        customerUserId: customerUserId,
-        customMessage: messageText 
-      })
-    });
-
-    showCompleteScreen();
-  } catch (e) {
-    console.error("予約エラー:", e);
-    alert("予約に失敗しました。詳細:" + e.message); // エラー内容を表示するように変更
-    btn.disabled = false;
-    btn.innerText = "OK";
-  }
+      showCompleteScreen();
+    } catch (e) {
+      console.error("予約エラー:", e);
+      alert("予約に失敗しました。詳細:" + e.message);
+      btn.disabled = false;
+      btn.innerText = "OK";
+    }
+  };
 };
+
 document.getElementById("cancelBtn").onclick = () => {
-  const footer = document.querySelector(".sticky-footer");
-  if (footer) footer.style.display = "block";
   document.querySelector(".greeting").style.display = "block";
   document.getElementById("confirm-screen").style.display = "none";
   document.getElementById("reserveForm").style.display = "block";
@@ -399,25 +361,10 @@ function showCompleteScreen() {
   const container = document.querySelector(".container");
   container.innerHTML = `
     <div style="padding: 60px 20px; text-align: center;">
-      <div class="checkmark-wrapper">
-        <svg class="checkmark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52">
-          <circle class="checkmark__circle" cx="26" cy="26" r="25" fill="none"/>
-          <path class="checkmark__check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/>
-        </svg>
-      </div>
+      <div class="checkmark-wrapper"><svg class="checkmark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52"><circle class="checkmark__circle" cx="26" cy="26" r="25" fill="none"/><path class="checkmark__check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/></svg></div>
       <h2 style="font-size:22px; margin-top:25px; font-weight:600;">予約を承りました</h2>
-      <p style="color:#86868b; font-size:15px; line-height:1.6;">ご来店お待ちしております。</p>
       <button id="closeBtn" style="margin-top:40px; padding:16px; width:100%; border-radius:14px; background:#000; color:#fff; border:none; font-size:17px; font-weight:600; cursor:pointer;">閉じる</button>
     </div>
-    <style>
-      .checkmark-wrapper { display: flex; justify-content: center; }
-      .checkmark { width: 80px; height: 80px; border-radius: 50%; stroke-width: 2; stroke: #fff; animation: fill .4s ease-in-out .4s forwards, scale .3s ease-in-out .9s both; }
-      .checkmark__circle { stroke-dasharray: 166; stroke-dashoffset: 166; stroke-width: 2; stroke: #4caf50; fill: none; animation: stroke 0.6s forwards; }
-      .checkmark__check { transform-origin: 50% 50%; stroke-dasharray: 48; stroke-dashoffset: 48; animation: stroke 0.3s forwards 0.8s; }
-      @keyframes stroke { 100% { stroke-dashoffset: 0; } }
-      @keyframes scale { 0%, 100% { transform: none; } 50% { transform: scale3d(1.1, 1.1, 1); } }
-      @keyframes fill { 100% { box-shadow: inset 0px 0px 0px 40px #4caf50; } }
-    </style>
   `;
   document.getElementById("closeBtn").onclick = () => {
     if (window.liff && liff.isInClient()) liff.closeWindow();
@@ -428,19 +375,15 @@ function showCompleteScreen() {
 async function checkExistingReservation() {
   if (!customerUserId) return;
   const today = new Date().toISOString().split('T')[0];
-  const { data } = await supabaseClient.from("reservations").select("id, date, time").eq("customer_user_id", customerUserId).gte("date", today).order("date", { ascending: true }).order("time", { ascending: true }).limit(1);
+  const { data } = await supabaseClient.from("reservations").select("id, date, time").eq("customer_user_id", customerUserId).gte("date", today).order("date", { ascending: true }).limit(1);
   if (data && data.length > 0) {
     const res = data[0];
     const dateObj = new Date(res.date.replace(/-/g, "/"));
     const dayOfWeek = ["日", "月", "火", "水", "木", "金", "土"][dateObj.getDay()];
-    const formattedDate = res.date.replace(/-/g, "/");
-    const oldNotice = document.querySelector(".sticky-reservation-notice-top");
-    if (oldNotice) oldNotice.remove();
     const notice = document.createElement("div");
     notice.className = "sticky-reservation-notice-top";
-    notice.innerHTML = `<div class="notice-content"><span class="notice-title">次回の予約情報</span><span class="notice-datetime">${formattedDate}(${dayOfWeek}) ${res.time}</span></div><button onclick=\"goToCancelLink()\" class=\"notice-cancel-btn-red\">キャンセル</button>`;
+    notice.innerHTML = `<div class="notice-content"><span>次回の予約：${res.date.replace(/-/g, "/")}(${dayOfWeek}) ${res.time}</span></div><button onclick=\"goToCancelLink()\">キャンセル</button>`;
     document.body.appendChild(notice);
-    document.body.style.paddingTop = "60px";
   }
 }
 
@@ -455,27 +398,20 @@ window.addEventListener("load", async () => {
     await miniappReady; 
     if (!customerUserId) return;
     const todayForCancel = new Date().toISOString().split('T')[0];
-    const { data } = await supabaseClient.from("reservations").select("id, name, date, time").eq("customer_user_id", customerUserId).gte("date", todayForCancel).order("date", { ascending: true }).limit(1);
+    const { data } = await supabaseClient.from("reservations").select("id, name, date, time").eq("customer_user_id", customerUserId).gte("date", todayForCancel).limit(1);
     if (data && data.length > 0) {
       const res = data[0];
-      const dCancel = new Date(res.date.replace(/-/g, "/"));
-      const dowCancel = ["日", "月", "火", "水", "木", "金", "土"][dCancel.getDay()];
-      document.getElementById("cancel-info").innerHTML = `<b>お名前</b>：${res.name}<br><b>日時</b>：${res.date.replace(/-/g, "/")} (${dowCancel}) ${res.time}`;     
+      document.getElementById("cancel-info").innerHTML = `<b>お名前</b>：${res.name}<br><b>日時</b>：${res.date.replace(/-/g, "/")} ${res.time}`;     
       document.getElementById("executeCancelBtn").onclick = async () => {
         if (!confirm("本当にキャンセルしてもよろしいですか？")) return;
         const { error } = await supabaseClient.from("reservations").delete().eq("id", res.id);
         if (!error) {
-          const topNotice = document.querySelector(".sticky-reservation-notice-top");
-          if (topNotice) { topNotice.remove(); document.body.style.paddingTop = "0px"; }
-          const cancelMessage = `【予約キャンセル】\n${res.name} 様の予約がキャンセルされました。\n日時：${res.date.replace(/-/g, "/")} (${dowCancel}) ${res.time}`;
-          try {
-            await fetch("https://bcahztzetpfuklipjmxx.functions.supabase.co/dynamic-service", {
-              method: "POST", 
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ mode: "cancel", name: res.name, date: res.date, time: res.time, customerUserId: customerUserId, customMessage: cancelMessage })
-            });
-          } catch (e) { console.error("通知エラー:", e); }
-          alert("予約をキャンセルしました。");
+          await fetch("https://bcahztzetpfuklipjmxx.functions.supabase.co/dynamic-service", {
+            method: "POST", 
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ mode: "cancel", name: res.name, date: res.date, time: res.time, customerUserId: customerUserId })
+          });
+          alert("キャンセルしました。");
           window.location.href = "https://liff.line.me/2008611644-EZd5nkl0";
         }
       };
