@@ -371,7 +371,13 @@ function showCompleteScreen() {
       @keyframes fill { 100% { box-shadow: inset 0px 0px 0px 40px #4caf50; } }
     </style>
   `;
-  document.getElementById("closeBtn").onclick = () => { liff.closeWindow(); };
+  document.getElementById("closeBtn").onclick = () => {
+    if (window.liff && liff.isInClient()) {
+      liff.closeWindow(); // LINE内なら閉じる
+    } else {
+      window.location.href = "https://liff.line.me/2008611644-EZd5nkl0"; // ブラウザならトップへ戻す
+    }
+  };
 }
 
 async function checkExistingReservation() {
