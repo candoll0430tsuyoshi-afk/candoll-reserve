@@ -46,7 +46,7 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 });
 
-// ★分を「約◯時間◯分」に変換（30分単位切り上げ）
+// ★分を「約◯時間◯分」に変換
 function formatDurationText(totalMin) {
   if (totalMin === 0) return "";
   const roundedMin = Math.ceil(totalMin / 15) * 15; 
@@ -58,7 +58,7 @@ function formatDurationText(totalMin) {
   return text;
 }
 
-// ★目安時間の表示更新（ボタンの左横に表示）
+// ★目安時間の表示更新
 function updateTotalDurationDisplay() {
   const menus = Array.from(document.querySelectorAll(".menu-select")).map(s => s.value).filter(v => v !== "");
   const total = menus.map(m => MENU_DATA[m] || 0).reduce((a, b) => a + b, 0);
@@ -82,7 +82,7 @@ function updateTotalDurationDisplay() {
   }
 }
 
-// ===== メニュー読み込み（重複防止・強化版） =====
+// ===== メニュー読み込み =====
 async function loadMenus() {
   if (!supabaseClient) return;
   const { data, error } = await supabaseClient.from("menus").select("name, duration");
@@ -131,11 +131,8 @@ function renderMenuOptions(selectElement, data, categories) {
     const filtered = data.filter(m => {
       const hasPlus = m.name.includes("＋") || m.name.includes("+");
       const hasKeyword = categories[catName].some(k => m.name.includes(k));
-      if (catName === "組み合わせ") {
-        return hasPlus;
-      } else {
-        return hasKeyword && !hasPlus;
-      }
+      if (catName === "組み合わせ") return hasPlus;
+      else return hasKeyword && !hasPlus;
     });
 
     if (filtered.length > 0) {
@@ -238,12 +235,10 @@ async function updateTimeOptions() {
   timeSelect.innerHTML = '<option value="">選択</option>';
 
   const menus = Array.from(document.querySelectorAll(".menu-select")).map(s => s.value).filter(v => v !== "");
-
   if (menus.length === 0) {
     gridContainer.innerHTML = "<p style='grid-column:1/-1; text-align:center; padding:20px; color:#86868b; font-size:14px;'>先にメニューを選択してください</p>";
     return;
   }
-
   if (!date) return;
 
   const required = menus.map(m => MENU_DATA[m] || 0).reduce((a, b) => a + b, 0);
@@ -311,7 +306,6 @@ document.getElementById("reserveForm").onsubmit = async e => {
 
   const required = menus.map(m => MENU_DATA[m] || 0).reduce((a, b) => a + b, 0);
   const prettyDuration = formatDurationText(required); 
-  
   const d = new Date(dateValue.replace(/-/g, "/"));
   const week = ["日", "月", "火", "水", "木", "金", "土"];
   const dow = week[d.getDay()];
@@ -322,22 +316,22 @@ document.getElementById("reserveForm").onsubmit = async e => {
   document.getElementById("reserveForm").style.display = "none";
   document.getElementById("confirm-screen").style.display = "block";
 
-  // OKボタン
+  // 送信ボタン
   document.getElementById("okBtn").onclick = async () => {
     const btn = document.getElementById("okBtn");
-    if (btn.disabled) return; 
+    if (btn.disabled) return;
     btn.disabled = true;
     btn.innerText = "送信中...";
 
     try {
-      // LIFF初期化完了を待機し、IDを再取得
+      // 送信直前にLIFFの初期化状態を再確認（customerUserIdがnullになるのを防ぐ）
       await miniappReady;
 
       const [sh, sm] = time.split(":").map(Number);
       const endD = new Date(2000, 0, 1, sh, sm + required);
       const end_time = `${String(endD.getHours()).padStart(2, "0")}:${String(endD.getMinutes()).padStart(2, "0")}`;
 
-      // 1. Supabaseへ保存
+      // 1. 保存
       const { error } = await supabaseClient.from("reservations").insert([{ 
         name, menus: menus.join(", "), date: dateValue, time, end_time, customer_user_id: customerUserId 
       }]);
@@ -350,13 +344,7 @@ document.getElementById("reserveForm").onsubmit = async e => {
         method: "POST", 
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
-          mode: "reserve",
-          name: name, 
-          menus: menus.join(", "), 
-          date: dateValue, 
-          time: time, 
-          customerUserId: customerUserId, // ここがnullでないことを確認
-          customMessage: messageText 
+          mode: "reserve", name, menus: menus.join(", "), date: dateValue, time, customerUserId, customMessage: messageText 
         })
       });
 
@@ -413,13 +401,13 @@ async function checkExistingReservation() {
     const dayOfWeek = ["日", "月", "火", "水", "木", "金", "土"][dateObj.getDay()];
     const notice = document.createElement("div");
     notice.className = "sticky-reservation-notice-top";
-    notice.innerHTML = `<div class="notice-content"><span class="notice-title">次回の予約情報</span><span class="notice-datetime">${res.date.replace(/-/g, "/")}(${dayOfWeek}) ${res.time}</span></div><button onclick=\"goToCancelLink()\" class=\"notice-cancel-btn-red\">キャンセル</button>`;
+    notice.innerHTML = `<div class=\"notice-content\"><span class=\"notice-title\">次回の予約情報</span><span class=\"notice-datetime\">${res.date.replace(/-/g, \"/\")}(${dayOfWeek}) ${res.time}</span></div><button onclick=\"goToCancelLink()\" class=\"notice-cancel-btn-red\">キャンセル</button>`;
     document.body.appendChild(notice);
     document.body.style.paddingTop = "60px";
   }
 }
 
-function goToCancelLink() { window.location.href = "https://liff.line.me/2008611644-EZd5nkl0?action=cancel"; }
+function goToCancelLink() { window.location.href = "https://liff.me/2008611644-EZd5nkl0?action=cancel"; }
 
 window.addEventListener("load", async () => {
   const urlParams = new URLSearchParams(window.location.search);
