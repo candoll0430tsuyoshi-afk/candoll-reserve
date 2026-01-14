@@ -338,50 +338,34 @@ document.getElementById("reserveForm").onsubmit = async e => {
 // OKボタンを押した時の処理
   document.getElementById("okBtn").onclick = async () => {
     const btn = document.getElementById("okBtn");
-    if (btn.disabled) return; // 二重送信防止
+    if (btn.disabled) return;
     btn.disabled = true;
     btn.innerText = "送信中...";
 
     try {
-      // 終了時間を計算（通知に必要）
       const [sh, sm] = time.split(":").map(Number);
       const endD = new Date(2000, 0, 1, sh, sm + required);
       const end_time = `${String(endD.getHours()).padStart(2, "0")}:${String(endD.getMinutes()).padStart(2, "0")}`;
 
-      // 1. Supabaseへ予約を保存
+      // 1. Supabase保存
       const { error } = await supabaseClient.from("reservations").insert([{ 
-        name, 
-        menus: menus.join(", "), 
-        date: dateValue, 
-        time, 
-        end_time,
-        customer_user_id: customerUserId 
+        name, menus: menus.join(", "), date: dateValue, time, end_time, customer_user_id: customerUserId 
       }]);
+      if (error) throw error;
 
-      if (error) throw error; // 保存に失敗したらここで止める
-
-      // 2. LINE通知を送信（ここが script.js と同じ成功パターン）
+      // 2. LINE通知（これが script.js と同じ内容です）
       const messageText = `【ご予約内容】\n名前：${name} 様\n日時：${formattedDate} (${dow}) ${time}\n${prettyDuration}\nメニュー：${menus.join(", ")}\n\nご予約のキャンセルはこちらから\nhttps://liff.line.me/2008611644-EZd5nkl0?action=cancel`;
 
       await fetch("https://bcahztzetpfuklipjmxx.functions.supabase.co/dynamic-service", {
         method: "POST", 
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          mode: "reserve",
-          name: name, 
-          menus: menus.join(", "), 
-          date: dateValue, 
-          time: time, 
-          customerUserId: customerUserId,
-          customMessage: messageText 
-        })
+        body: JSON.stringify({ mode: "reserve", name, menus: menus.join(", "), date: dateValue, time, customerUserId, customMessage: messageText })
       });
 
-      // 3. 完了画面へ
       showCompleteScreen();
     } catch (e) {
-      console.error("予約エラー:", e);
-      alert("予約に失敗しました。もう一度お試しください。");
+      console.error(e);
+      alert("予約に失敗しました。");
       btn.disabled = false;
       btn.innerText = "OK";
     }
