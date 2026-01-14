@@ -215,6 +215,8 @@ function updateDateOptions() {
 
     const chip = document.createElement("div");
     chip.className = `date-chip ${dayClass}`;
+
+    if (!isHoliday) chip.classList.add("menu-not-selected");
     
     chip.innerHTML = `
       <span class="month-label">${parseInt(m)}月</span>
