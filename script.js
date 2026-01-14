@@ -216,8 +216,18 @@ function updateDateOptions() {
       ${isHoliday ? '<span class="status-text">定休日</span>' : ''}
     `;
 
-    if (!isHoliday) {
+if (!isHoliday) {
       chip.onclick = () => {
+        // ★追加：メニューが一つも選ばれていないかチェック
+        const selectedMenus = Array.from(document.querySelectorAll(".menu-select"))
+                                   .map(s => s.value)
+                                   .filter(v => v !== "");
+
+        if (selectedMenus.length === 0) {
+          alert("先にメニューを選択してください。");
+          return; // 日付選択を無効化して終了
+        }
+
         dateSelect.value = value;
         document.querySelectorAll(".date-chip").forEach(c => c.classList.remove("selected"));
         chip.classList.add("selected");
