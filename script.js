@@ -177,7 +177,7 @@ function updateDateOptions() {
   today.setHours(0,0,0,0);
 
   for (let i = 1; i < 31; i++) {
-    const d = new Date(today);
+    const d = new Date(today.getTime());
     d.setDate(today.getDate() + i);
     const y = d.getFullYear();
     const m = ("0" + (d.getMonth() + 1)).slice(-2);
@@ -208,9 +208,8 @@ function updateDateOptions() {
 
     const chip = document.createElement("div");
     chip.className = `date-chip ${dayClass}`;
-    const statusText = isHoliday ? `<span style="font-size:9px; display:block; margin-top:2px;">定休日</span>` : '';
     
-chip.innerHTML = `
+    chip.innerHTML = `
       <span class="month-label">${parseInt(m)}月</span>
       <span class="date-number">${parseInt(day)}</span>
       <span class="dow-label">(${dow})</span>
@@ -416,7 +415,7 @@ async function checkExistingReservation() {
     .gte("date", today)
     .order("date", { ascending: true })
     .order("time", { ascending: true })
-    .setHeader("Cache-Control", "no-cache") // .header を .setHeader に修正
+    .header("Cache-Control", "no-cache") 
     .limit(1);
 
   if (data && data.length > 0) {
@@ -468,13 +467,17 @@ window.addEventListener("load", async () => {
       .limit(1);
 
     if (data && data.length > 0) {
-const res = data[0];
+      const res = data[0];
       const dCancel = new Date(res.date.replace(/-/g, "/"));
       const dowCancel = ["日", "月", "火", "水", "木", "金", "土"][dCancel.getDay()];
       document.getElementById("cancel-info").innerHTML = `<b>お名前</b>：${res.name}<br><b>日時</b>：${res.date.replace(/-/g, "/")} (${dowCancel}) ${res.time}`;     
-document.getElementById("executeCancelBtn").onclick = async () => {
+      document.getElementById("executeCancelBtn").onclick = async () => {
         // ★確認：script(2).jsの「確認アラート」をそのまま使う
         if (!confirm("本当にキャンセルしてもよろしいですか？")) return;
+
+        const btn = document.getElementById("executeCancelBtn");
+        btn.disabled = true;
+        btn.innerText = "キャンセル中...";
 
         const dForCancelMsg = new Date(res.date.replace(/-/g, "/"));
         const dowForCancelMsg = ["日", "月", "火", "水", "木", "金", "土"][dForCancelMsg.getDay()];
@@ -511,6 +514,8 @@ document.getElementById("executeCancelBtn").onclick = async () => {
           liff.closeWindow();
         } else {
           alert("キャンセルに失敗しました。");
+          btn.disabled = false;
+          btn.innerText = "予約をキャンセルする";
         }
       };
     } else {
