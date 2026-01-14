@@ -242,27 +242,19 @@ async function updateTimeOptions() {
   gridContainer.innerHTML = ""; 
   timeSelect.innerHTML = '<option value="">選択</option>';
 
-  // ★ 1. まず menus を取得する（ここを一番上に持ってくる）
+  // 1. ここで宣言（1回目）
   const menus = Array.from(document.querySelectorAll(".menu-select")).map(s => s.value).filter(v => v !== "");
 
-  // ★ 2. メニューが選ばれていない時のメッセージを出す
+  // 2. 未選択チェック
   if (menus.length === 0) {
     gridContainer.innerHTML = "<p style='grid-column:1/-1; text-align:center; padding:20px; color:#86868b; font-size:14px;'>先にメニューを選択してください</p>";
     return;
   }
 
-  // ★ 3. 日付が選ばれていない時はここで終わる
+  // 3. 日付未選択チェック
   if (!date) return;
-  
-  gridContainer.innerHTML = ""; 
-  timeSelect.innerHTML = '<option value="">選択</option>';
-  if (!date) return;
-  if (menus.length === 0) {
-    gridContainer.innerHTML = "<p style='grid-column:1/-1; text-align:center; padding:20px; color:#86868b;'>先にメニューを選択してください</p>";
-    return;
-  }
 
-  const menus = Array.from(document.querySelectorAll(".menu-select")).map(s => s.value).filter(v => v !== "");
+  // 4. ここにあった「const menus = ...」は削除しました（エラーの原因のため）
   const required = menus.map(m => MENU_DATA[m] || 0).reduce((a, b) => a + b, 0);
 
   const { data } = await supabaseClient.from("reservations").select("time,end_time").eq("date", date);
