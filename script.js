@@ -62,7 +62,14 @@ function formatDurationText(totalMin) {
 function updateTotalDurationDisplay() {
   const menus = Array.from(document.querySelectorAll(".menu-select")).map(s => s.value).filter(v => v !== "");
   const total = menus.map(m => MENU_DATA[m] || 0).reduce((a, b) => a + b, 0);
-  
+  const dateChips = document.querySelectorAll(".date-chip:not(.holiday)");
+  if (total > 0) {
+    // メニューが選ばれたら薄さを解除
+    dateChips.forEach(chip => chip.classList.remove("menu-not-selected"));
+  } else {
+    // メニューが空なら薄くする
+    dateChips.forEach(chip => chip.classList.add("menu-not-selected"));
+  }
   let displayElement = document.getElementById("durationDisplay");
   if (!displayElement) {
     displayElement = document.createElement("span");
