@@ -436,29 +436,51 @@ window.addEventListener("load", async () => {
     document.getElementById("reserveForm").style.display = "none";
     document.querySelector(".greeting").style.display = "none";
     document.getElementById("cancel-screen").style.display = "block";
+
     await miniappReady; 
     if (!customerUserId) return;
+
     const todayForCancel = new Date().toISOString().split('T')[0];
-    const { data } = await supabaseClient.from("reservations").select("id, name, date, time").eq("customer_user_id", customerUserId).gte("date", todayForCancel).order("date", { ascending: true }).limit(1);
+    const { data } = await supabaseClient.from("reservations")
+      .select("id, name, date, time")
+      .eq("customer_user_id", customerUserId)
+      .gte("date", todayForCancel)
+      .order("date", { ascending: true })
+      .limit(1);
+
     if (data && data.length > 0) {
       const res = data[0];
       const dCancel = new Date(res.date.replace(/-/g, "/"));
       const dowCancel = ["日", "月", "火", "水", "木", "金", "土"][dCancel.getDay()];
       document.getElementById("cancel-info").innerHTML = `<b>お名前</b>：${res.name}<br><b>日時</b>：${res.date.replace(/-/g, "/")} (${dowCancel}) ${res.time}`;     
+      
       document.getElementById("executeCancelBtn").onclick = async () => {
         if (!confirm("本当にキャンセルしてもよろしいですか？")) return;
+
         const { error } = await supabaseClient.from("reservations").delete().eq("id", res.id);
+        
         if (!error) {
           const topNotice = document.querySelector(".sticky-reservation-notice-top");
-          if (topNotice) { topNotice.remove(); document.body.style.paddingTop = "0px"; }
-          const cancelMessage = `【予約キャンセル】\n${res.name} 様の予約がキャンセルされました。\n日時：${res.date.replace(/-/g, "/")} (${dowCancel}) ${res.time}`;
+          if (topNotice) {
+            topNotice.remove();
+            document.body.style.paddingTop = "0px";
+          }
+          const cancelMessage = `【予約キャンセル】\n${res.name} 様\n日時：${res.date.replace(/-/g, "/")} (${dowCancel}) ${res.time}`;
           try {
             await fetch("https://bcahztzetpfuklipjmxx.functions.supabase.co/dynamic-service", {
               method: "POST", 
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ mode: "cancel", name: res.name, date: res.date, time: res.time, customerUserId: customerUserId, customMessage: cancelMessage })
+              body: JSON.stringify({ 
+                mode: "cancel", 
+                name: res.name,
+                date: res.date,
+                time: res.time,
+                customerUserId: customerUserId,
+                customMessage: cancelMessage 
+              })
             });
           } catch (e) { console.error("通知エラー:", e); }
+
           alert("予約をキャンセルしました。");
           window.location.href = "https://liff.line.me/2008611644-EZd5nkl0";
         }
