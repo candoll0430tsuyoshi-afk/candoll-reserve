@@ -359,20 +359,21 @@ document.getElementById("reserveForm").onsubmit = async e => {
 
       if (error) throw error;
 
-      // 2. LINE通知送信
+// 2. LINE通知送信（成功率を高める修正版）
       await fetch("https://bcahztzetpfuklipjmxx.functions.supabase.co/dynamic-service", {
         method: "POST", 
         headers: { "Content-Type": "application/json" },
+        // bodyの中身をより確実に、変数名と値を一致させます
         body: JSON.stringify({ 
           mode: "reserve",
-          name, 
+          name: String(name), 
           menus: menus.join(", "), 
-          date: dateValue, 
-          time, 
-          customerUserId,
-          customMessage: messageText 
+          date: String(dateValue), 
+          time: String(time), 
+          customerUserId: String(customerUserId),
+          customMessage: String(messageText) 
         })
-      });
+      }).catch(err => console.error("通知送信そのものでエラー:", err));
 
       showCompleteScreen(); // ここでアニメーション付きの完了画面が出る
     } catch (e) {
