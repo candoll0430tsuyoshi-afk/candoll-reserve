@@ -505,8 +505,9 @@ document.getElementById("executeCancelBtn").onclick = async () => {
             });
           } catch (e) { console.error("通知エラー:", e); }
 
-          alert("予約をキャンセルしました。");
-          liff.closeWindow();
+alert("予約をキャンセルしました。");
+          // 画面を閉じずに、予約一覧画面（最初の画面）に戻す
+          window.location.href = "https://liff.line.me/2008611644-EZd5nkl0";
         } else {
           alert("キャンセルに失敗しました。");
         }
