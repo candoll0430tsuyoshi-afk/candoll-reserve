@@ -207,7 +207,9 @@ function updateDateOptions() {
     }
 
     const chip = document.createElement("div");
-    chip.className = `date-chip ${dayClass}`;
+const menusSelected = Array.from(document.querySelectorAll(".menu-select")).map(s => s.value).filter(v => v !== "");
+    const menuNotSelectedClass = menusSelected.length === 0 ? " disabled-by-menu" : "";
+    chip.className = `date-chip ${dayClass}${menuNotSelectedClass}`;
     const statusText = isHoliday ? `<span style="font-size:9px; display:block; margin-top:2px;">定休日</span>` : '';
     
 chip.innerHTML = `
