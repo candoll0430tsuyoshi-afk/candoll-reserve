@@ -339,19 +339,19 @@ document.getElementById("reserveForm").onsubmit = async e => {
 
       if (error) throw error;
 
-      await fetch("https://bcahztzetpfuklipjmxx.functions.supabase.co/dynamic-service", {
-        method: "POST", 
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          mode: "reserve",
-          name, 
-          menus: menus.join(", "), 
-          date: dateValue, 
-          time, 
-          customerUserId,
-          customMessage: messageText 
-        })
-      });
+// 254行目からの fetch 部分を書き換え
+await fetch("https://bcahztzetpfuklipjmxx.functions.supabase.co/dynamic-service", {
+  method: "POST", 
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ 
+    mode: "reserve",
+    name: name, // 明示的に書く
+    userId: customerUserId, // ★もし関数側が "userId" を待っていたらこれで直ります
+    customerUserId: customerUserId, // 両方送っておけば確実
+    message: messageText, // ★もし関数側が "message" を待っていたら
+    customMessage: messageText 
+  })
+});
       showCompleteScreen();
     } catch (e) {
       alert("予約に失敗しました。");
