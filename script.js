@@ -342,8 +342,7 @@ document.getElementById("reserveForm").onsubmit = async e => {
 await fetch("https://bcahztzetpfuklipjmxx.functions.supabase.co/dynamic-service", {
   method: "POST", 
   headers: { "Content-Type": "application/json" },
-// script.js の 258行目付近
-body: JSON.stringify({ 
+  body: JSON.stringify({ 
   mode: "reserve",
   name: name, 
   menus: menus.join(", "), // ← ここが Edge Function の 18行目の 'menus' に対応
