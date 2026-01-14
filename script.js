@@ -472,7 +472,6 @@ window.addEventListener("load", async () => {
       const dowCancel = ["日", "月", "火", "水", "木", "金", "土"][dCancel.getDay()];
       document.getElementById("cancel-info").innerHTML = `<b>お名前</b>：${res.name}<br><b>日時</b>：${res.date.replace(/-/g, "/")} (${dowCancel}) ${res.time}`;     
 
-      // ★ここから下の onclick を、二重にならないよう正しく記述します
       document.getElementById("executeCancelBtn").onclick = async () => {
         if (!confirm("本当にキャンセルしてもよろしいですか？")) return;
 
@@ -480,15 +479,18 @@ window.addEventListener("load", async () => {
         btn.disabled = true;
         btn.innerText = "キャンセル処理中...";
 
+        // 削除実行
         const { error } = await supabaseClient.from("reservations").delete().eq("id", res.id);
         
         if (!error) {
+          // バナーを消す
           const topNotice = document.querySelector(".sticky-reservation-notice-top");
           if (topNotice) {
             topNotice.remove();
             document.body.style.paddingTop = "0px";
           }
 
+          // 通知送信（制限中でもエラーで止まらないようにする）
           try {
             const dForCancelMsg = new Date(res.date.replace(/-/g, "/"));
             const dowForCancelMsg = ["日", "月", "火", "水", "木", "金", "土"][dForCancelMsg.getDay()];
@@ -497,21 +499,13 @@ window.addEventListener("load", async () => {
             await fetch("https://bcahztzetpfuklipjmxx.functions.supabase.co/dynamic-service", {
               method: "POST", 
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ 
-                mode: "cancel", 
-                name: res.name,
-                date: res.date,
-                time: res.time,
-                customerUserId: customerUserId,
-                customMessage: cancelMessage 
-              })
+              body: JSON.stringify({ mode: "cancel", name: res.name, date: res.date, time: res.time, customerUserId: customerUserId, customMessage: cancelMessage })
             });
           } catch (e) {
-            console.warn("通知エラーですが削除は成功しています");
+            console.warn("通知エラー:", e);
           }
 
-          const container = document.querySelector(".container");
-          container.innerHTML = `// 5. ★予約成功時と同じアニメーション付き完了画面を表示
+          // ★完了画面とアニメーション（ここを整理しました）
           const container = document.querySelector(".container");
           container.innerHTML = `
             <div style="padding: 60px 20px; text-align: center;">
@@ -534,18 +528,6 @@ window.addEventListener("load", async () => {
               @keyframes scale { 0%, 100% { transform: none; } 50% { transform: scale3d(1.1, 1.1, 1); } }
               @keyframes fill-red { 100% { box-shadow: inset 0px 0px 0px 40px #ff3b30; } }
             </style>
-          `;
-            <div style="padding: 60px 20px; text-align: center;">
-              <div class="checkmark-wrapper">
-                <svg class="checkmark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52">
-                  <circle class="checkmark__circle" cx="26" cy="26" r="25" fill="none" style="stroke: #ff3b30;"/>
-                  <path class="checkmark__check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8" style="stroke: #fff;"/>
-                </svg>
-              </div>
-              <h2 style="font-size:22px; margin-top:25px; font-weight:600;">キャンセルを完了しました</h2>
-              <p style="color:#86868b; font-size:15px; line-height:1.6;">またのご利用をお待ちしております。</p>
-              <button id="finalCloseBtn" style="margin-top:40px; padding:16px; width:100%; border-radius:14px; background:#000; color:#fff; border:none; font-size:17px; font-weight:600; cursor:pointer;">閉じる</button>
-            </div>
           `;
 
           document.getElementById("finalCloseBtn").onclick = () => {
