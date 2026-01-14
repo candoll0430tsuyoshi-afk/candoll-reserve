@@ -322,7 +322,7 @@ document.getElementById("reserveForm").onsubmit = async e => {
   document.getElementById("reserveForm").style.display = "none";
   document.getElementById("confirm-screen").style.display = "block";
 
-  // OKボタンを押した時の処理
+  // OKボタン
   document.getElementById("okBtn").onclick = async () => {
     const btn = document.getElementById("okBtn");
     if (btn.disabled) return; 
@@ -330,23 +330,20 @@ document.getElementById("reserveForm").onsubmit = async e => {
     btn.innerText = "送信中...";
 
     try {
+      // LIFF初期化完了を待機し、IDを再取得
+      await miniappReady;
+
       const [sh, sm] = time.split(":").map(Number);
       const endD = new Date(2000, 0, 1, sh, sm + required);
       const end_time = `${String(endD.getHours()).padStart(2, "0")}:${String(endD.getMinutes()).padStart(2, "0")}`;
 
-      // 1. Supabaseへ予約を保存
+      // 1. Supabaseへ保存
       const { error } = await supabaseClient.from("reservations").insert([{ 
-        name, 
-        menus: menus.join(", "), 
-        date: dateValue, 
-        time, 
-        end_time,
-        customer_user_id: customerUserId 
+        name, menus: menus.join(", "), date: dateValue, time, end_time, customer_user_id: customerUserId 
       }]);
-
       if (error) throw error;
 
-      // 2. LINE通知を送信
+      // 2. 通知
       const messageText = `【ご予約内容】\n名前：${name} 様\n日時：${formattedDate} (${dow}) ${time}\n${prettyDuration}\nメニュー：${menus.join(", ")}\n\nご予約のキャンセルはこちらから\nhttps://liff.me/2008611644-EZd5nkl0?action=cancel`;
 
       await fetch("https://bcahztzetpfuklipjmxx.functions.supabase.co/dynamic-service", {
@@ -358,7 +355,7 @@ document.getElementById("reserveForm").onsubmit = async e => {
           menus: menus.join(", "), 
           date: dateValue, 
           time: time, 
-          customerUserId: customerUserId,
+          customerUserId: customerUserId, // ここがnullでないことを確認
           customMessage: messageText 
         })
       });
@@ -385,12 +382,7 @@ function showCompleteScreen() {
   const container = document.querySelector(".container");
   container.innerHTML = `
     <div style="padding: 60px 20px; text-align: center;">
-      <div class="checkmark-wrapper">
-        <svg class="checkmark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52">
-          <circle class="checkmark__circle" cx="26" cy="26" r="25" fill="none"/>
-          <path class="checkmark__check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/>
-        </svg>
-      </div>
+      <div class="checkmark-wrapper"><svg class="checkmark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52"><circle class="checkmark__circle" cx="26" cy="26" r="25" fill="none"/><path class="checkmark__check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/></svg></div>
       <h2 style="font-size:22px; margin-top:25px; font-weight:600;">予約を承りました</h2>
       <p style="color:#86868b; font-size:15px; line-height:1.6;">ご来店お待ちしております。</p>
       <button id="closeBtn" style="margin-top:40px; padding:16px; width:100%; border-radius:14px; background:#000; color:#fff; border:none; font-size:17px; font-weight:600; cursor:pointer;">閉じる</button>
@@ -419,12 +411,9 @@ async function checkExistingReservation() {
     const res = data[0];
     const dateObj = new Date(res.date.replace(/-/g, "/"));
     const dayOfWeek = ["日", "月", "火", "水", "木", "金", "土"][dateObj.getDay()];
-    const formattedDate = res.date.replace(/-/g, "/");
-    const oldNotice = document.querySelector(".sticky-reservation-notice-top");
-    if (oldNotice) oldNotice.remove();
     const notice = document.createElement("div");
     notice.className = "sticky-reservation-notice-top";
-    notice.innerHTML = `<div class="notice-content"><span class="notice-title">次回の予約情報</span><span class="notice-datetime">${formattedDate}(${dayOfWeek}) ${res.time}</span></div><button onclick=\"goToCancelLink()\" class=\"notice-cancel-btn-red\">キャンセル</button>`;
+    notice.innerHTML = `<div class="notice-content"><span class="notice-title">次回の予約情報</span><span class="notice-datetime">${res.date.replace(/-/g, "/")}(${dayOfWeek}) ${res.time}</span></div><button onclick=\"goToCancelLink()\" class=\"notice-cancel-btn-red\">キャンセル</button>`;
     document.body.appendChild(notice);
     document.body.style.paddingTop = "60px";
   }
@@ -451,8 +440,6 @@ window.addEventListener("load", async () => {
         if (!confirm("本当にキャンセルしてもよろしいですか？")) return;
         const { error } = await supabaseClient.from("reservations").delete().eq("id", res.id);
         if (!error) {
-          const topNotice = document.querySelector(".sticky-reservation-notice-top");
-          if (topNotice) { topNotice.remove(); document.body.style.paddingTop = "0px"; }
           const cancelMessage = `【予約キャンセル】\n${res.name} 様の予約がキャンセルされました。\n日時：${res.date.replace(/-/g, "/")} (${dowCancel}) ${res.time}`;
           try {
             await fetch("https://bcahztzetpfuklipjmxx.functions.supabase.co/dynamic-service", {
@@ -461,8 +448,8 @@ window.addEventListener("load", async () => {
               body: JSON.stringify({ mode: "cancel", name: res.name, date: res.date, time: res.time, customerUserId: customerUserId, customMessage: cancelMessage })
             });
           } catch (e) { console.error("通知エラー:", e); }
-          alert("予約をキャンセルしました。");
-          window.location.href = "https://liff.line.me/2008611644-EZd5nkl0";
+          alert("キャンセルしました。");
+          window.location.href = "https://liff.me/2008611644-EZd5nkl0";
         }
       };
     }
