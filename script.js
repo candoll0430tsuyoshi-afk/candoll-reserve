@@ -414,6 +414,7 @@ async function checkExistingReservation() {
     .gte("date", today)
     .order("date", { ascending: true })
     .order("time", { ascending: true })
+    .setHeader("Cache-Control", "no-cache") // .header を .setHeader に修正
     .limit(1);
 
   if (data && data.length > 0) {
