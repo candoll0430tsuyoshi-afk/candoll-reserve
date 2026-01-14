@@ -466,9 +466,10 @@ window.addEventListener("load", async () => {
       .limit(1);
 
     if (data && data.length > 0) {
-      const res = data[0];
-      document.getElementById("cancel-info").innerHTML = `<b>お名前</b>：${res.name}<br><b>日時</b>：${res.date.replace(/-/g, "/")} ${res.time}`;
-      
+const res = data[0];
+      const dCancel = new Date(res.date.replace(/-/g, "/"));
+      const dowCancel = ["日", "月", "火", "水", "木", "金", "土"][dCancel.getDay()];
+      document.getElementById("cancel-info").innerHTML = `<b>お名前</b>：${res.name}<br><b>日時</b>：${res.date.replace(/-/g, "/")} (${dowCancel}) ${res.time}`;     
 document.getElementById("executeCancelBtn").onclick = async () => {
         // ★確認：script(2).jsの「確認アラート」をそのまま使う
         if (!confirm("本当にキャンセルしてもよろしいですか？")) return;
