@@ -511,7 +511,30 @@ window.addEventListener("load", async () => {
           }
 
           const container = document.querySelector(".container");
+          container.innerHTML = `// 5. ★予約成功時と同じアニメーション付き完了画面を表示
+          const container = document.querySelector(".container");
           container.innerHTML = `
+            <div style="padding: 60px 20px; text-align: center;">
+              <div class="checkmark-wrapper">
+                <svg class="checkmark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52">
+                  <circle class="checkmark__circle" cx="26" cy="26" r="25" fill="none" style="stroke: #ff3b30;"/>
+                  <path class="checkmark__check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8" style="stroke: #fff;"/>
+                </svg>
+              </div>
+              <h2 style="font-size:22px; margin-top:25px; font-weight:600;">キャンセルを完了しました</h2>
+              <p style="color:#86868b; font-size:15px; line-height:1.6;">またのご利用をお待ちしております。</p>
+              <button id="finalCloseBtn" style="margin-top:40px; padding:16px; width:100%; border-radius:14px; background:#000; color:#fff; border:none; font-size:17px; font-weight:600; cursor:pointer;">閉じる</button>
+            </div>
+            <style>
+              .checkmark-wrapper { display: flex; justify-content: center; }
+              .checkmark { width: 80px; height: 80px; border-radius: 50%; stroke-width: 2; stroke: #fff; animation: fill-red .4s ease-in-out .4s forwards, scale .3s ease-in-out .9s both; }
+              .checkmark__circle { stroke-dasharray: 166; stroke-dashoffset: 166; stroke-width: 2; stroke: #ff3b30; fill: none; animation: stroke 0.6s forwards; }
+              .checkmark__check { transform-origin: 50% 50%; stroke-dasharray: 48; stroke-dashoffset: 48; animation: stroke 0.3s forwards 0.8s; }
+              @keyframes stroke { 100% { stroke-dashoffset: 0; } }
+              @keyframes scale { 0%, 100% { transform: none; } 50% { transform: scale3d(1.1, 1.1, 1); } }
+              @keyframes fill-red { 100% { box-shadow: inset 0px 0px 0px 40px #ff3b30; } }
+            </style>
+          `;
             <div style="padding: 60px 20px; text-align: center;">
               <div class="checkmark-wrapper">
                 <svg class="checkmark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52">
