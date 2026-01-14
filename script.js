@@ -474,27 +474,31 @@ window.addEventListener("load", async () => {
         // ★確認：script(2).jsの「確認アラート」をそのまま使う
         if (!confirm("本当にキャンセルしてもよろしいですか？")) return;
 
+document.getElementById("executeCancelBtn").onclick = async () => {
+        // 1. 確認
+        if (!confirm("本当にキャンセルしてもよろしいですか？")) return;
+
         const btn = document.getElementById("executeCancelBtn");
         btn.disabled = true;
-        btn.innerText = "キャンセル中...";
+        btn.innerText = "キャンセル処理中...";
 
-        const dForCancelMsg = new Date(res.date.replace(/-/g, "/"));
-        const dowForCancelMsg = ["日", "月", "火", "水", "木", "金", "土"][dForCancelMsg.getDay()];
-        const cancelMessage = `【予約キャンセル】\n${res.name} 様の予約がキャンセルされました。\n日時：${res.date.replace(/-/g, "/")} (${dowForCancelMsg}) ${res.time}`;
-
+        // 2. Supabaseから削除
         const { error } = await supabaseClient.from("reservations").delete().eq("id", res.id);
         
         if (!error) {
-          // 1. まず現在のバナーを消す
+          // 3. バナーを消去
           const topNotice = document.querySelector(".sticky-reservation-notice-top");
           if (topNotice) {
             topNotice.remove();
             document.body.style.paddingTop = "0px";
           }
-          // 2. 他に予約があるか再確認して、あれば新しいバナーを出す
-          await checkExistingReservation();
+
+          // 4. 通知送信（失敗しても無視して完了画面へ進む）
           try {
-            // ★追加：キャンセル通知をLINEに送る
+            const dForCancelMsg = new Date(res.date.replace(/-/g, "/"));
+            const dowForCancelMsg = ["日", "月", "火", "水", "木", "金", "土"][dForCancelMsg.getDay()];
+            const cancelMessage = `【予約キャンセル】\n${res.name} 様の予約がキャンセルされました。\n日時：${res.date.replace(/-/g, "/")} (${dowForCancelMsg}) ${res.time}`;
+
             await fetch("https://bcahztzetpfuklipjmxx.functions.supabase.co/dynamic-service", {
               method: "POST", 
               headers: { "Content-Type": "application/json" },
@@ -507,19 +511,36 @@ window.addEventListener("load", async () => {
                 customMessage: cancelMessage 
               })
             });
-          } catch (e) { console.error("通知エラー:", e); }
+          } catch (e) {
+            console.warn("通知は送れませんでしたが、削除は完了しています");
+          }
 
-          alert("予約をキャンセルしました。");
-          liff.closeWindow();
+          // 5. ★予約成功時と同じアニメーション付き完了画面を表示
+          const container = document.querySelector(".container");
+          container.innerHTML = `
+            <div style="padding: 60px 20px; text-align: center;">
+              <div class="checkmark-wrapper">
+                <svg class="checkmark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52">
+                  <circle class="checkmark__circle" cx="26" cy="26" r="25" fill="none" style="stroke: #ff3b30;"/>
+                  <path class="checkmark__check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8" style="stroke: #fff;"/>
+                </svg>
+              </div>
+              <h2 style="font-size:22px; margin-top:25px; font-weight:600;">キャンセルを完了しました</h2>
+              <p style="color:#86868b; font-size:15px; line-height:1.6;">またのご利用をお待ちしております。</p>
+              <button id="finalCloseBtn" style="margin-top:40px; padding:16px; width:100%; border-radius:14px; background:#000; color:#fff; border:none; font-size:17px; font-weight:600; cursor:pointer;">閉じる</button>
+            </div>
+          `;
+
+          // 閉じるボタンの挙動設定
+          document.getElementById("finalCloseBtn").onclick = () => {
+            if (window.liff && liff.isInClient()) liff.closeWindow();
+            else window.location.href = "https://candoll.vercel.app/";
+          };
+
         } else {
-          alert("キャンセルに失敗しました。");
+          // 削除失敗時
+          alert("キャンセルに失敗しました。電波の良い所で再度お試しください。");
           btn.disabled = false;
           btn.innerText = "予約をキャンセルする";
         }
       };
-    } else {
-      document.getElementById("cancel-info").innerText = "有効な予約が見つかりませんでした。";
-      document.getElementById("executeCancelBtn").style.display = "none";
-    }
-  }
-});
