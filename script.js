@@ -42,6 +42,7 @@ document.addEventListener("DOMContentLoaded", () => {
       newSelect.classList.add("placeholder-color");
       setupSelectColorChange(newSelect);
       container.appendChild(newWrapper);
+      updateTotalDurationDisplay();
     }
   };
 });
