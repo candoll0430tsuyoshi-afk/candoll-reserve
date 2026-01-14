@@ -117,6 +117,7 @@ function setupSelectColorChange(selectElement) {
     }
     updateTotalDurationDisplay(); 
     updateTimeOptions();
+    updateDateOptions();
   });
 }
 
