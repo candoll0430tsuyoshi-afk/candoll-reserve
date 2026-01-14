@@ -449,6 +449,7 @@ function goToCancelLink() {
   window.location.href = cancelUrl;
 }
 // ===== キャンセル処理 =====
+// ===== キャンセル処理 =====
 window.addEventListener("load", async () => {
   const urlParams = new URLSearchParams(window.location.search);
   if (urlParams.get('action') === 'cancel') {
@@ -470,30 +471,24 @@ window.addEventListener("load", async () => {
       const dCancel = new Date(res.date.replace(/-/g, "/"));
       const dowCancel = ["日", "月", "火", "水", "木", "金", "土"][dCancel.getDay()];
       document.getElementById("cancel-info").innerHTML = `<b>お名前</b>：${res.name}<br><b>日時</b>：${res.date.replace(/-/g, "/")} (${dowCancel}) ${res.time}`;     
-      document.getElementById("executeCancelBtn").onclick = async () => {
-        // ★確認：script(2).jsの「確認アラート」をそのまま使う
-        if (!confirm("本当にキャンセルしてもよろしいですか？")) return;
 
-document.getElementById("executeCancelBtn").onclick = async () => {
-        // 1. 確認
+      // ★ここから下の onclick を、二重にならないよう正しく記述します
+      document.getElementById("executeCancelBtn").onclick = async () => {
         if (!confirm("本当にキャンセルしてもよろしいですか？")) return;
 
         const btn = document.getElementById("executeCancelBtn");
         btn.disabled = true;
         btn.innerText = "キャンセル処理中...";
 
-        // 2. Supabaseから削除
         const { error } = await supabaseClient.from("reservations").delete().eq("id", res.id);
         
         if (!error) {
-          // 3. バナーを消去
           const topNotice = document.querySelector(".sticky-reservation-notice-top");
           if (topNotice) {
             topNotice.remove();
             document.body.style.paddingTop = "0px";
           }
 
-          // 4. 通知送信（失敗しても無視して完了画面へ進む）
           try {
             const dForCancelMsg = new Date(res.date.replace(/-/g, "/"));
             const dowForCancelMsg = ["日", "月", "火", "水", "木", "金", "土"][dForCancelMsg.getDay()];
@@ -512,10 +507,9 @@ document.getElementById("executeCancelBtn").onclick = async () => {
               })
             });
           } catch (e) {
-            console.warn("通知は送れませんでしたが、削除は完了しています");
+            console.warn("通知エラーですが削除は成功しています");
           }
 
-          // 5. ★予約成功時と同じアニメーション付き完了画面を表示
           const container = document.querySelector(".container");
           container.innerHTML = `
             <div style="padding: 60px 20px; text-align: center;">
@@ -531,16 +525,20 @@ document.getElementById("executeCancelBtn").onclick = async () => {
             </div>
           `;
 
-          // 閉じるボタンの挙動設定
           document.getElementById("finalCloseBtn").onclick = () => {
             if (window.liff && liff.isInClient()) liff.closeWindow();
             else window.location.href = "https://candoll.vercel.app/";
           };
 
         } else {
-          // 削除失敗時
-          alert("キャンセルに失敗しました。電波の良い所で再度お試しください。");
+          alert("キャンセルに失敗しました。");
           btn.disabled = false;
           btn.innerText = "予約をキャンセルする";
         }
       };
+    } else {
+      document.getElementById("cancel-info").innerText = "有効な予約が見つかりませんでした。";
+      document.getElementById("executeCancelBtn").style.display = "none";
+    }
+  }
+});
