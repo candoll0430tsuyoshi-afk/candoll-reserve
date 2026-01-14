@@ -474,7 +474,9 @@ document.getElementById("executeCancelBtn").onclick = async () => {
         // ★確認：script(2).jsの「確認アラート」をそのまま使う
         if (!confirm("本当にキャンセルしてもよろしいですか？")) return;
 
-        const cancelMessage = `【予約キャンセル】\n${res.name} 様の予約がキャンセルされました。\n日時：${res.date.replace(/-/g, "/")} ${res.time}`;
+        const dForCancelMsg = new Date(res.date.replace(/-/g, "/"));
+        const dowForCancelMsg = ["日", "月", "火", "水", "木", "金", "土"][dForCancelMsg.getDay()];
+        const cancelMessage = `【予約キャンセル】\n${res.name} 様の予約がキャンセルされました。\n日時：${res.date.replace(/-/g, "/")} (${dowForCancelMsg}) ${res.time}`;
 
         const { error } = await supabaseClient.from("reservations").delete().eq("id", res.id);
         
