@@ -125,6 +125,12 @@ label, h2 {
             font-weight: 300; /* 細めに統一 */
         }
         .date-chip:active { transform: scale(0.95); }
+        /* メニュー未選択時のスタイル */
+.date-chip.menu-not-selected {
+    opacity: 0.4; /* 薄くする */
+    filter: grayscale(100%); /* 白黒にする（任意） */
+    cursor: not-allowed;
+}
 
         /* 月表示：左上に固定 */
         .month-label {
