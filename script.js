@@ -552,9 +552,9 @@ window.addEventListener("load", async () => {
             </style>
           `;
 
-          document.getElementById("finalCloseBtn").onclick = () => {
-            if (window.liff && liff.isInClient()) liff.closeWindow();
-            else window.location.href = "https://candoll.vercel.app/";
+document.getElementById("finalCloseBtn").onclick = () => {
+            // キャッシュを破棄してページを強制リロードするURLに飛ばします
+            window.location.href = "https://candoll.vercel.app/?rev=" + Date.now();
           };
 
         } else {
