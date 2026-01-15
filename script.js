@@ -436,7 +436,7 @@ async function checkExistingReservation() {
     .gte("date", today)
     .order("date", { ascending: true })
     .order("time", { ascending: true })
-    .not("id", "eq", "cb_" + Date.now())
+    .setHeader("Cache-Control", "no-cache")
     .limit(1);
 
   if (data && data.length > 0) {
@@ -485,7 +485,6 @@ window.addEventListener("load", async () => {
     const { data } = await supabaseClient.from("reservations")
       .select("*")
       .eq("customer_user_id", customerUserId)
-      .not("id", "eq", "temp_" + Date.now())
       .order("created_at", { ascending: false })
       .limit(1);
 
