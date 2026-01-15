@@ -485,6 +485,7 @@ window.addEventListener("load", async () => {
     const { data } = await supabaseClient.from("reservations")
       .select("*")
       .eq("customer_user_id", customerUserId)
+      .not("id", "eq", "temp_" + Date.now())
       .order("created_at", { ascending: false })
       .limit(1);
 
