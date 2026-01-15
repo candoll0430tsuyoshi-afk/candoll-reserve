@@ -29,7 +29,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
   loadMenus();
   loadHolidays().then(updateDateOptions);
-  miniappReady.then(checkExistingReservation);
+  miniappReady.then(() => {
+  setTimeout(checkExistingReservation, 1000);
+});
   
   document.getElementById("addMenu").onclick = () => {
     const container = document.getElementById("menuContainer");
