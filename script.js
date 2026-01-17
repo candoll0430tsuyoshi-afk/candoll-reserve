@@ -505,7 +505,7 @@ window.addEventListener("load", async () => {
         btn.innerText = "キャンセル処理中...";
 
         // 削除実行
-        const { error } = await supabaseClient.from("reservations").delete().eq("id", res.id);
+        const { error } = await supabaseClient.from("reservations").delete().eq("id", res.id);.eq("customer_user_id", customerUserId);
         
         if (!error) {
           // バナーを消す
