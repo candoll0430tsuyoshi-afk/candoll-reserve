@@ -521,7 +521,16 @@ window.addEventListener("load", async () => {
             await fetch("https://bcahztzetpfuklipjmxx.functions.supabase.co/dynamic-service", {
               method: "POST", 
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ mode: "cancel", name: res.name, date: res.date, time: res.time, customerUserId: customerUserId, customMessage: cancelMessage })
+
+body: JSON.stringify({ 
+  mode: "cancel", 
+  name: res.name, 
+  menus: res.menus, 
+  date: res.date, 
+  time: res.time, 
+  customerUserId: customerUserId, 
+  customMessage: cancelMessage 
+})
             });
           } catch (e) {
             console.warn("通知エラー:", e);
