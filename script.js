@@ -25,11 +25,8 @@ const miniappReady = (async () => {
 document.addEventListener("DOMContentLoaded", () => {
   const supabaseUrl = "https://bcahztzetpfuklipjmxx.supabase.co";
   const supabaseKey = "sb_publishable_rPyAIzNttEK3P8nsnBllYA_FTF-kxJQ";
-  supabaseClient = supabase.createClient(supabaseUrl, supabaseKey, {
-  global: {
-    headers: { 'x-customer-id': customerUserId }
-  }
-});
+supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
+  
   loadMenus();
   loadHolidays().then(updateDateOptions);
   miniappReady.then(() => {
