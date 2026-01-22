@@ -15,17 +15,28 @@ const miniappReady = (async () => {
     if (liff.isInClient()) {
       runtime = "miniapp";
       if (!liff.isLoggedIn()) { liff.login(); return; }
-      const profile = await liff.getProfile();
+const profile = await liff.getProfile();
       customerUserId = profile.userId;
+      // IDがわかったので、Supabaseに教える
+      if (window.updateSupabaseHeader) window.updateSupabaseHeader(customerUserId);
     }
+    
   } catch (e) { console.error("LIFFエラー:", e); }
 })();
 
 // ===== 初期化処理 =====
 document.addEventListener("DOMContentLoaded", () => {
+// 【修正後：ここを貼り付けてください】
   const supabaseUrl = "https://bcahztzetpfuklipjmxx.supabase.co";
   const supabaseKey = "sb_publishable_rPyAIzNttEK3P8nsnBllYA_FTF-kxJQ";
-supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
+
+  // 最初はIDなしで作成し、後からIDをセットするための関数を定義
+  supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
+  window.updateSupabaseHeader = (userId) => {
+    supabaseClient = supabase.createClient(supabaseUrl, supabaseKey, {
+      global: { headers: { 'x-customer-id': userId } }
+    });
+  };
   
   loadMenus();
   loadHolidays().then(updateDateOptions);
