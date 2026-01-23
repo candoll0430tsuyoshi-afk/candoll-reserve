@@ -26,47 +26,34 @@ const miniappReady = (async () => {
   }
 })();
 
+
 // ===== 初期化処理 =====
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
   const supabaseUrl = "https://bcahztzetpfuklipjmxx.supabase.co";
   const supabaseKey = "sb_publishable_rPyAIzNttEK3P8nsnBllYA_FTF-kxJQ";
 
-  // PCブラウザでも即座にクライアントを作成する
+  // 【最重要】PCブラウザでも即座にSupabaseを使えるようにここに出す
   supabaseClient = supabase.createClient(supabaseUrl, supabaseKey, {
     global: { headers: { 'x-customer-id': customerUserId || "web-user" } }
   });
 
-  // その後でデータの読み込みを開始
-  loadMenus();
-  loadHolidays().then(updateDateOptions);
-  checkExistingReservation();
-    });
-  // ★ブラウザでも動くように初期化
-  supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
-  loadMenus();
-  loadHolidays().then(updateDateOptions);
-  
-  miniappReady.then(() => {
-    if (customerUserId) {
-      checkExistingReservation();
-    }
+  // メニューや休日データの読み込みを開始
+  await Promise.all([
+    loadMenus(),
+    loadHolidays().then(updateDateOptions),
+    checkExistingReservation()
+  ]);
+
+  // モーダル閉じる（共通）
+  document.querySelectorAll(".close-btn").forEach(btn => {
+    btn.onclick = () => {
+      document.getElementById("reservationModal").style.display = "none";
+      document.getElementById("cancelModal").style.display = "none";
+    };
   });
-  
-  document.getElementById("addMenu").onclick = () => {
-    const container = document.getElementById("menuContainer");
-    const firstWrapper = container.querySelector(".select-wrapper");
-    if (firstWrapper) {
-      const newWrapper = firstWrapper.cloneNode(true);
-      const newSelect = newWrapper.querySelector("select");
-      newSelect.value = ""; 
-      newSelect.classList.remove("selected-color");
-      newSelect.classList.add("placeholder-color");
-      setupSelectColorChange(newSelect);
-      container.appendChild(newWrapper);
-      updateTotalDurationDisplay();
-    }
-  };
 });
+
+
 
 // ★分を「約◯時間◯分」に変換（15分単位切り上げ）
 function formatDurationText(totalMin) {
