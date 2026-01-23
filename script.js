@@ -353,7 +353,7 @@ document.getElementById("reserveForm").onsubmit = async e => {
     btn.disabled = true;
     btn.innerText = "送信中...";
 
-    try {
+try {
       const [sh, sm] = time.split(":").map(Number);
       const endD = new Date(2000, 0, 1, sh, sm + required);
       const end_time = `${String(endD.getHours()).padStart(2, "0")}:${String(endD.getMinutes()).padStart(2, "0")}`;
@@ -371,25 +371,26 @@ document.getElementById("reserveForm").onsubmit = async e => {
 
       if (error) throw error;
 
-
-await fetch("https://bcahztzetpfuklipjmxx.functions.supabase.co/dynamic-service", {
-  method: "POST", 
-  headers: { 
-  "Content-Type": "application/json",
-  "Authorization": `Bearer ${supabaseKey}`,
-  "x-customer-id": customerUserId
-},
-  body: JSON.stringify({ 
-  mode: "reserve",
-  name: name, 
-  menus: menus.join(", "),
-  date: dateValue, 
-  time: time, 
-  customerUserId: customerUserId,
-  customMessage: messageText 
-})
-});
       showCompleteScreen();
+
+      fetch("https://bcahztzetpfuklipjmxx.functions.supabase.co/dynamic-service", {
+        method: "POST", 
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${supabaseKey}`,
+          "x-customer-id": customerUserId
+        },
+        body: JSON.stringify({ 
+          mode: "reserve",
+          name: name, 
+          menus: menus.join(", "),
+          date: dateValue, 
+          time: time, 
+          customerUserId: customerUserId,
+          customMessage: messageText 
+        })
+      }).catch(e => console.error(e));
+
     } catch (e) {
       alert("予約に失敗しました。");
       btn.disabled = false;
