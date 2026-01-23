@@ -40,7 +40,7 @@ document.addEventListener("DOMContentLoaded", () => {
   loadMenus();
   loadHolidays().then(updateDateOptions);
   checkExistingReservation();
-  
+    });
   // ★ブラウザでも動くように初期化
   supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
   loadMenus();
