@@ -31,14 +31,16 @@ document.addEventListener("DOMContentLoaded", () => {
   const supabaseUrl = "https://bcahztzetpfuklipjmxx.supabase.co";
   const supabaseKey = "sb_publishable_rPyAIzNttEK3P8nsnBllYA_FTF-kxJQ";
 
-  window.updateSupabaseHeader = (userId) => {
-    supabaseClient = supabase.createClient(supabaseUrl, supabaseKey, {
-      global: { headers: { 'x-customer-id': userId } }
-    });
-    loadMenus();
-    loadHolidays().then(updateDateOptions);
-    checkExistingReservation(); 
-  };
+  // PCブラウザでも即座にクライアントを作成する
+  supabaseClient = supabase.createClient(supabaseUrl, supabaseKey, {
+    global: { headers: { 'x-customer-id': customerUserId || "web-user" } }
+  });
+
+  // その後でデータの読み込みを開始
+  loadMenus();
+  loadHolidays().then(updateDateOptions);
+  checkExistingReservation();
+});
   
   // ★ブラウザでも動くように初期化
   supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
