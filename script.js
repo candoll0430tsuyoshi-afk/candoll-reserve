@@ -19,7 +19,6 @@ const miniappReady = (async () => {
       }
       const profile = await liff.getProfile();
       customerUserId = profile.userId;
-      // IDがわかったので、Supabaseに教える
       if (window.updateSupabaseHeader) window.updateSupabaseHeader(customerUserId);
     }
   } catch (e) { 
@@ -43,8 +42,8 @@ document.addEventListener("DOMContentLoaded", () => {
   
   // ★ブラウザでも動くように初期化
   supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
-  loadMenus(); // ★ブラウザでもメニューを読み込む
-  loadHolidays().then(updateDateOptions); // ★ブラウザでも日付を表示
+  loadMenus();
+  loadHolidays().then(updateDateOptions);
   
   miniappReady.then(() => {
     if (customerUserId) {
@@ -68,7 +67,7 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 });
 
-// ★分を「約◯時間◯分」に変換（30分単位切り上げ）
+// ★分を「約◯時間◯分」に変換（15分単位切り上げ）
 function formatDurationText(totalMin) {
   if (totalMin === 0) return "";
   const roundedMin = Math.ceil(totalMin / 15) * 15; 
@@ -80,16 +79,14 @@ function formatDurationText(totalMin) {
   return text;
 }
 
-// ★目安時間の表示更新（ボタンの左横に表示）
+// ★目安時間の表示更新
 function updateTotalDurationDisplay() {
   const menus = Array.from(document.querySelectorAll(".menu-select")).map(s => s.value).filter(v => v !== "");
   const total = menus.map(m => MENU_DATA[m] || 0).reduce((a, b) => a + b, 0);
   const dateChips = document.querySelectorAll(".date-chip:not(.holiday)");
   if (total > 0) {
-    // メニューが選ばれたら薄さを解除
     dateChips.forEach(chip => chip.classList.remove("menu-not-selected"));
   } else {
-    // メニューが空なら薄くする
     dateChips.forEach(chip => chip.classList.add("menu-not-selected"));
   }
   let displayElement = document.getElementById("durationDisplay");
@@ -111,7 +108,7 @@ function updateTotalDurationDisplay() {
   }
 }
 
-// ===== メニュー読み込み（重複防止・強化版） =====
+// ===== メニュー読み込み =====
 async function loadMenus() {
   if (!supabaseClient) return;
   const { data, error } = await supabaseClient.from("menus").select("name, duration");
@@ -160,16 +157,12 @@ function renderMenuOptions(selectElement, data, categories) {
     group.label = catName;
     
     const filtered = data.filter(m => {
-      // 名前の中に全角「＋」か半角「+」が入っているか判定
       const hasPlus = m.name.includes("＋") || m.name.includes("+");
-      // そのグループのキーワードが含まれているか判定
       const hasKeyword = categories[catName].some(k => m.name.includes(k));
 
       if (catName === "組み合わせ") {
-        // 「組み合わせ」グループには、プラス記号があるものだけを入れる
         return hasPlus;
       } else {
-        // それ以外のグループには、キーワードが含まれていて、かつプラス記号が「絶対に入っていない」ものだけを入れる
         return hasKeyword && !hasPlus;
       }
     });
@@ -253,14 +246,13 @@ function updateDateOptions() {
 
     if (!isHoliday) {
       chip.onclick = () => {
-        // ★追加：メニューが一つも選ばれていないかチェック
         const selectedMenus = Array.from(document.querySelectorAll(".menu-select"))
                                    .map(s => s.value)
                                    .filter(v => v !== "");
 
         if (selectedMenus.length === 0) {
           alert("先にメニューを選択してください。");
-          return; // 日付選択を無効化して終了
+          return;
         }
 
         dateSelect.value = value;
@@ -342,7 +334,6 @@ document.getElementById("reserveForm").onsubmit = async e => {
     return;
   }
   
-  // ★1：確認画面へ行くときに追従バナーを隠す
   const footer = document.querySelector(".sticky-footer");
   if (footer) footer.style.display = "none";
 
@@ -385,13 +376,12 @@ document.getElementById("reserveForm").onsubmit = async e => {
 
       showCompleteScreen();
 
-      // ★ブラウザでもLINEでも動くように条件分岐
       if (customerUserId) {
         fetch("https://bcahztzetpfuklipjmxx.functions.supabase.co/dynamic-service", {
           method: "POST", 
           headers: { 
             "Content-Type": "application/json",
-            "Authorization": `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJjYWh6dHpldHBmdWtsaXBqbXh4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzU0NTQ3ODUsImV4cCI6MjA1MTAzMDc4NX0.DGPTLz5FDHZm9C9ljZdFuXnJaXYGz8mWU_vFBHm9aGI`,
+            "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJjYWh6dHpldHBmdWtsaXBqbXh4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzU0NTQ3ODUsImV4cCI6MjA1MTAzMDc4NX0.DGPTLz5FDHZm9C9ljZdFuXnJaXYGz8mWU_vFBHm9aGI",
             "x-customer-id": customerUserId
           },
           body: JSON.stringify({ 
@@ -415,7 +405,6 @@ document.getElementById("reserveForm").onsubmit = async e => {
 };
 
 document.getElementById("cancelBtn").onclick = () => {
-  // ★2：戻るボタンを押したときに追従バナーを再表示
   const footer = document.querySelector(".sticky-footer");
   if (footer) footer.style.display = "block";
 
@@ -454,9 +443,7 @@ function showCompleteScreen() {
   };
 }
 
-// すでに予約があるかチェックし、画面上部に追従バナーを表示する
 async function checkExistingReservation() {
-  // customerUserIdがない場合はLIFFの初期化を待つために何もしない
   if (!customerUserId) return;
 
   const today = new Date().toISOString().split('T')[0];
@@ -476,7 +463,6 @@ async function checkExistingReservation() {
     const dayOfWeek = ["日", "月", "火", "水", "木", "金", "土"][dateObj.getDay()];
     const formattedDate = res.date.replace(/-/g, "/");
 
-    // 既存のバナーがあれば削除
     const oldNotice = document.querySelector(".sticky-reservation-notice-top");
     if (oldNotice) oldNotice.remove();
 
@@ -491,13 +477,10 @@ async function checkExistingReservation() {
     `;
     
     document.body.appendChild(notice);
-    
-    // バナーの高さ分、コンテンツを下にずらす
     document.body.style.paddingTop = "60px";
   }
 }
 
-// キャンセルリンク(LINEトークと同じURL)へ飛ばす
 function goToCancelLink() {
   const cancelUrl = "https://liff.line.me/2008611644-EZd5nkl0?action=cancel";
   window.location.href = cancelUrl;
@@ -535,18 +518,15 @@ window.addEventListener("load", async () => {
         btn.disabled = true;
         btn.innerText = "キャンセル処理中...";
 
-        // 削除実行
         const { error } = await supabaseClient.from("reservations").delete().eq("id", res.id).eq("customer_user_id", customerUserId);
         
         if (!error) {
-          // バナーを消す
           const topNotice = document.querySelector(".sticky-reservation-notice-top");
           if (topNotice) {
             topNotice.remove();
             document.body.style.paddingTop = "0px";
           }
 
-          // 通知送信
           try {
             const dForCancelMsg = new Date(res.date.replace(/-/g, "/"));
             const dowForCancelMsg = ["日", "月", "火", "水", "木", "金", "土"][dForCancelMsg.getDay()];
@@ -572,7 +552,7 @@ window.addEventListener("load", async () => {
           } catch (e) {
             console.warn("通知エラー:", e);
           }
-});
+
           const container = document.querySelector(".container");
           container.innerHTML = `
             <div style="padding: 60px 20px; text-align: center;">
@@ -584,4 +564,32 @@ window.addEventListener("load", async () => {
               </div>
               <h2 style="font-size:22px; margin-top:25px; font-weight:600;">キャンセルを完了しました</h2>
               <p style="color:#86868b; font-size:15px; line-height:1.6;">またのご利用をお待ちしております。</p>
-              <button id="finalCloseBtn" style="margin-top:40px; padding:16px; width:100%; border-radius:14px; background:#
+              <button id="finalCloseBtn" style="margin-top:40px; padding:16px; width:100%; border-radius:14px; background:#000; color:#fff; border:none; font-size:17px; font-weight:600; cursor:pointer;">閉じる</button>
+            </div>
+            <style>
+              .checkmark-wrapper { display: flex; justify-content: center; }
+              .checkmark { width: 80px; height: 80px; border-radius: 50%; stroke-width: 2; stroke: #fff; animation: fill-red .4s ease-in-out .4s forwards, scale .3s ease-in-out .9s both; }
+              .checkmark__circle { stroke-dasharray: 166; stroke-dashoffset: 166; stroke-width: 2; stroke: #ff3b30; fill: none; animation: stroke 0.6s forwards; }
+              .checkmark__check { transform-origin: 50% 50%; stroke-dasharray: 48; stroke-dashoffset: 48; animation: stroke 0.3s forwards 0.8s; }
+              @keyframes stroke { 100% { stroke-dashoffset: 0; } }
+              @keyframes scale { 0%, 100% { transform: none; } 50% { transform: scale3d(1.1, 1.1, 1); } }
+              @keyframes fill-red { 100% { box-shadow: inset 0px 0px 0px 40px #ff3b30; } }
+            </style>
+          `;
+
+          document.getElementById("finalCloseBtn").onclick = () => {
+            window.location.href = "https://candoll.vercel.app/?rev=" + Date.now();
+          };
+
+        } else {
+          alert("キャンセルに失敗しました。");
+          btn.disabled = false;
+          btn.innerText = "予約をキャンセルする";
+        }
+      };
+    } else {
+      document.getElementById("cancel-info").innerText = "有効な予約が見つかりませんでした。";
+      document.getElementById("executeCancelBtn").style.display = "none";
+    }
+  }
+});
