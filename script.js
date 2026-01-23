@@ -393,17 +393,17 @@ if (error) throw error;
             customMessage: messageText 
           })
         });
-        console.log("通知送信完了");
       } catch (e) {
         console.error("通知送信エラー:", e);
       }
 
-      // すべて終わってから完了画面を表示
+      // すべて終わってから画面を切り替える
       showCompleteScreen();
 
     } catch (e) {
       console.error("予約エラー:", e);
       alert("予約に失敗しました。");
+      const btn = document.getElementById("okBtn");
       btn.disabled = false;
       btn.innerText = "OK";
     }
