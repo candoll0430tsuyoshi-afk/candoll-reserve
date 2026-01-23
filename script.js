@@ -572,7 +572,7 @@ window.addEventListener("load", async () => {
           } catch (e) {
             console.warn("通知エラー:", e);
           }
-
+});
           const container = document.querySelector(".container");
           container.innerHTML = `
             <div style="padding: 60px 20px; text-align: center;">
