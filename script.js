@@ -26,7 +26,6 @@ const profile = await liff.getProfile();
 
 // ===== 初期化処理 =====
 document.addEventListener("DOMContentLoaded", () => {
-// 【修正後：ここを貼り付けてください】
 const supabaseUrl = "https://bcahztzetpfuklipjmxx.supabase.co";
   const supabaseKey = "sb_publishable_rPyAIzNttEK3P8nsnBllYA_FTF-kxJQ";
 
@@ -41,8 +40,8 @@ const supabaseUrl = "https://bcahztzetpfuklipjmxx.supabase.co";
   
   supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
   miniappReady.then(() => {
-  setTimeout(checkExistingReservation, 1000);
-});
+    setTimeout(checkExistingReservation, 1000);
+  });
   
   document.getElementById("addMenu").onclick = () => {
     const container = document.getElementById("menuContainer");
@@ -452,7 +451,6 @@ async function checkExistingReservation() {
     .gte("date", today)
     .order("date", { ascending: true })
     .order("time", { ascending: true })
-    .setHeader("Cache-Control", "no-cache")
     .limit(1);
 
   if (data && data.length > 0) {
@@ -486,7 +484,6 @@ function goToCancelLink() {
   const cancelUrl = "https://liff.line.me/2008611644-EZd5nkl0?action=cancel";
   window.location.href = cancelUrl;
 }
-// ===== キャンセル処理 =====
 // ===== キャンセル処理 =====
 window.addEventListener("load", async () => {
   const urlParams = new URLSearchParams(window.location.search);
@@ -528,13 +525,13 @@ window.addEventListener("load", async () => {
             document.body.style.paddingTop = "0px";
           }
 
-          // 通知送信（制限中でもエラーで止まらないようにする）
+          // 通知送信
           try {
             const dForCancelMsg = new Date(res.date.replace(/-/g, "/"));
             const dowForCancelMsg = ["日", "月", "火", "水", "木", "金", "土"][dForCancelMsg.getDay()];
             const cancelMessage = `【予約キャンセル】\n${res.name} 様の予約がキャンセルされました。\n日時：${res.date.replace(/-/g, "/")} (${dowForCancelMsg}) ${res.time}`;
 
-await fetch("https://bcahztzetpfuklipjmxx.functions.supabase.co/dynamic-service", {
+            await fetch("https://bcahztzetpfuklipjmxx.functions.supabase.co/dynamic-service", {
               method: "POST", 
               headers: { 
                 "Content-Type": "application/json",
@@ -555,7 +552,6 @@ await fetch("https://bcahztzetpfuklipjmxx.functions.supabase.co/dynamic-service"
             console.warn("通知エラー:", e);
           }
 
-          // ★完了画面とアニメーション（ここを整理しました）
           const container = document.querySelector(".container");
           container.innerHTML = `
             <div style="padding: 60px 20px; text-align: center;">
@@ -580,8 +576,7 @@ await fetch("https://bcahztzetpfuklipjmxx.functions.supabase.co/dynamic-service"
             </style>
           `;
 
-document.getElementById("finalCloseBtn").onclick = () => {
-            // キャッシュを破棄してページを強制リロードするURLに飛ばします
+          document.getElementById("finalCloseBtn").onclick = () => {
             window.location.href = "https://candoll.vercel.app/?rev=" + Date.now();
           };
 
