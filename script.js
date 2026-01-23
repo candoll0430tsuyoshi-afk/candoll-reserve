@@ -438,17 +438,19 @@ function showCompleteScreen() {
 }
 
 async function checkExistingReservation() {
-  if (!customerUserId) return;
+  // ★重要：LINEのユーザーIDがない（PCブラウザなど）場合は、バナーを出さずに終了する
+  if (!customerUserId || customerUserId === "web-user" || customerUserId === "anonymous") {
+    return;
+  }
 
   const today = new Date().toISOString().split('T')[0];
 
   const { data, error } = await supabaseClient
     .from("reservations")
     .select("id, date, time")
-    .eq("customer_user_id", customerUserId)
+    .eq("customer_user_id", customerUserId) // 自分のLINE IDだけで検索
     .gte("date", today)
     .order("date", { ascending: true })
-    .order("time", { ascending: true })
     .limit(1);
 
   if (data && data.length > 0) {
