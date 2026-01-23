@@ -26,6 +26,7 @@ const profile = await liff.getProfile();
 
 // ===== 初期化処理 =====
 document.addEventListener("DOMContentLoaded", () => {
+// 【修正後：ここを貼り付けてください】
 const supabaseUrl = "https://bcahztzetpfuklipjmxx.supabase.co";
   const supabaseKey = "sb_publishable_rPyAIzNttEK3P8nsnBllYA_FTF-kxJQ";
 
@@ -487,9 +488,11 @@ function goToCancelLink() {
 // ===== キャンセル処理 =====
 window.addEventListener("load", async () => {
   const urlParams = new URLSearchParams(window.location.search);
+  const supabaseKey = "sb_publishable_rPyAIzNttEK3P8nsnBllYA_FTF-kxJQ";
+
   if (urlParams.get('action') === 'cancel') {
     document.getElementById("reserveForm").style.display = "none";
-    document.querySelector(".greeting").style.display = "none";
+    if(document.querySelector(".greeting")) document.querySelector(".greeting").style.display = "none";
     document.getElementById("cancel-screen").style.display = "block";
 
     await miniappReady; 
