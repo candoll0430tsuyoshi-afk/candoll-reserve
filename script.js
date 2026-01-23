@@ -376,25 +376,34 @@ document.getElementById("reserveForm").onsubmit = async e => {
 
       showCompleteScreen();
 
-      if (customerUserId) {
-        fetch("https://bcahztzetpfuklipjmxx.functions.supabase.co/dynamic-service", {
-          method: "POST", 
-          headers: { 
-            "Content-Type": "application/json",
-            "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJjYWh6dHpldHBmdWtsaXBqbXh4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzU0NTQ3ODUsImV4cCI6MjA1MTAzMDc4NX0.DGPTLz5FDHZm9C9ljZdFuXnJaXYGz8mWU_vFBHm9aGI",
-            "x-customer-id": customerUserId
-          },
-          body: JSON.stringify({ 
-            mode: "reserve",
-            name: name, 
-            menus: menus.join(", "),
-            date: dateValue, 
-            time: time, 
-            customerUserId: customerUserId,
-            customMessage: messageText 
-          })
-        }).catch(e => console.error(e));
-      }
+      // ★ブラウザでもLINEでも必ず通知を送信
+      fetch("https://bcahztzetpfuklipjmxx.functions.supabase.co/dynamic-service", {
+        method: "POST", 
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJjYWh6dHpldHBmdWtsaXBqbXh4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzU0NTQ3ODUsImV4cCI6MjA1MTAzMDc4NX0.DGPTLz5FDHZm9C9ljZdFuXnJaXYGz8mWU_vFBHm9aGI",
+          "x-customer-id": customerUserId || "web-user"
+        },
+        body: JSON.stringify({ 
+          mode: "reserve",
+          name: name, 
+          menus: menus.join(", "),
+          date: dateValue, 
+          time: time, 
+          customerUserId: customerUserId || "web-user",
+          customMessage: messageText 
+        })
+      })
+      .then(response => {
+        console.log("通知送信ステータス:", response.status);
+        return response.json();
+      })
+      .then(data => {
+        console.log("通知送信成功:", data);
+      })
+      .catch(e => {
+        console.error("通知送信エラー:", e);
+      });
 
     } catch (e) {
       alert("予約に失敗しました。");
@@ -527,17 +536,18 @@ window.addEventListener("load", async () => {
             document.body.style.paddingTop = "0px";
           }
 
+          // 通知送信（必ず実行）
           try {
             const dForCancelMsg = new Date(res.date.replace(/-/g, "/"));
             const dowForCancelMsg = ["日", "月", "火", "水", "木", "金", "土"][dForCancelMsg.getDay()];
             const cancelMessage = `【予約キャンセル】\n${res.name} 様の予約がキャンセルされました。\n日時：${res.date.replace(/-/g, "/")} (${dowForCancelMsg}) ${res.time}`;
 
-            await fetch("https://bcahztzetpfuklipjmxx.functions.supabase.co/dynamic-service", {
+            const response = await fetch("https://bcahztzetpfuklipjmxx.functions.supabase.co/dynamic-service", {
               method: "POST", 
               headers: { 
                 "Content-Type": "application/json",
                 "Authorization": `Bearer ${supabaseKey}`,
-                "x-customer-id": customerUserId
+                "x-customer-id": customerUserId || "web-user"
               },
               body: JSON.stringify({ 
                 mode: "cancel", 
@@ -545,12 +555,16 @@ window.addEventListener("load", async () => {
                 menus: res.menus, 
                 date: res.date, 
                 time: res.time, 
-                customerUserId: customerUserId, 
+                customerUserId: customerUserId || "web-user", 
                 customMessage: cancelMessage 
               })
             });
+            
+            console.log("キャンセル通知送信ステータス:", response.status);
+            const responseData = await response.json();
+            console.log("キャンセル通知送信成功:", responseData);
           } catch (e) {
-            console.warn("通知エラー:", e);
+            console.error("通知エラー:", e);
           }
 
           const container = document.querySelector(".container");
