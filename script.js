@@ -534,19 +534,22 @@ window.addEventListener("load", async () => {
             const dowForCancelMsg = ["日", "月", "火", "水", "木", "金", "土"][dForCancelMsg.getDay()];
             const cancelMessage = `【予約キャンセル】\n${res.name} 様の予約がキャンセルされました。\n日時：${res.date.replace(/-/g, "/")} (${dowForCancelMsg}) ${res.time}`;
 
-            await fetch("https://bcahztzetpfuklipjmxx.functions.supabase.co/dynamic-service", {
+await fetch("https://bcahztzetpfuklipjmxx.functions.supabase.co/dynamic-service", {
               method: "POST", 
-              headers: { "Content-Type": "application/json" },
-
-body: JSON.stringify({ 
-  mode: "cancel", 
-  name: res.name, 
-  menus: res.menus, 
-  date: res.date, 
-  time: res.time, 
-  customerUserId: customerUserId, 
-  customMessage: cancelMessage 
-})
+              headers: { 
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${supabaseKey}`,
+                "x-customer-id": customerUserId
+              },
+              body: JSON.stringify({ 
+                mode: "cancel", 
+                name: res.name, 
+                menus: res.menus, 
+                date: res.date, 
+                time: res.time, 
+                customerUserId: customerUserId, 
+                customMessage: cancelMessage 
+              })
             });
           } catch (e) {
             console.warn("通知エラー:", e);
