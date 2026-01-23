@@ -1,4 +1,4 @@
-// ===== グローバル設定 ===
+「// ===== グローバル設定 ===
 let supabaseClient = null;
 let runtime = "web"; 
 let customerUserId = null;
@@ -372,40 +372,37 @@ document.getElementById("reserveForm").onsubmit = async e => {
         customer_user_id: customerUserId 
       }]);
 
-      if (error) throw error;
+if (error) throw error;
 
+      // 通知の送信が終わるまで待機 (await)
+      try {
+        await fetch("https://bcahztzetpfuklipjmxx.functions.supabase.co/dynamic-service", {
+          method: "POST", 
+          headers: { 
+            "Content-Type": "application/json",
+            "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJjYWh6dHpldHBmdWtsaXBqbXh4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzU0NTQ3ODUsImV4cCI6MjA1MTAzMDc4NX0.DGPTLz5FDHZm9C9ljZdFuXnJaXYGz8mWU_vFBHm9aGI",
+            "x-customer-id": customerUserId || "web-user"
+          },
+          body: JSON.stringify({ 
+            mode: "reserve",
+            name: name, 
+            menus: menus.join(", "),
+            date: dateValue, 
+            time: time, 
+            customerUserId: customerUserId || "web-user",
+            customMessage: messageText 
+          })
+        });
+        console.log("通知送信完了");
+      } catch (e) {
+        console.error("通知送信エラー:", e);
+      }
+
+      // すべて終わってから完了画面を表示
       showCompleteScreen();
 
-      // ★ブラウザでもLINEでも必ず通知を送信
-      fetch("https://bcahztzetpfuklipjmxx.functions.supabase.co/dynamic-service", {
-        method: "POST", 
-        headers: { 
-          "Content-Type": "application/json",
-          "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJjYWh6dHpldHBmdWtsaXBqbXh4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzU0NTQ3ODUsImV4cCI6MjA1MTAzMDc4NX0.DGPTLz5FDHZm9C9ljZdFuXnJaXYGz8mWU_vFBHm9aGI",
-          "x-customer-id": customerUserId || "web-user"
-        },
-        body: JSON.stringify({ 
-          mode: "reserve",
-          name: name, 
-          menus: menus.join(", "),
-          date: dateValue, 
-          time: time, 
-          customerUserId: customerUserId || "web-user",
-          customMessage: messageText 
-        })
-      })
-      .then(response => {
-        console.log("通知送信ステータス:", response.status);
-        return response.json();
-      })
-      .then(data => {
-        console.log("通知送信成功:", data);
-      })
-      .catch(e => {
-        console.error("通知送信エラー:", e);
-      });
-
     } catch (e) {
+      console.error("予約エラー:", e);
       alert("予約に失敗しました。");
       btn.disabled = false;
       btn.innerText = "OK";
