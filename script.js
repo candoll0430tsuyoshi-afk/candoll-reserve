@@ -7,27 +7,29 @@ let HOLIDAYS = [];
 let OFF_TIMES = [];
 let SPECIAL_OPENS = [];
 
-
 // LINE LIFF 初期化
 const miniappReady = (async () => {
   try {
     await liff.init({ liffId: "2008611644-EZd5nkl0" }); 
     if (liff.isInClient()) {
       runtime = "miniapp";
-      if (!liff.isLoggedIn()) { liff.login(); return; }
-const profile = await liff.getProfile();
+      if (!liff.isLoggedIn()) { 
+        liff.login(); 
+        return; 
+      }
+      const profile = await liff.getProfile();
       customerUserId = profile.userId;
       // IDがわかったので、Supabaseに教える
       if (window.updateSupabaseHeader) window.updateSupabaseHeader(customerUserId);
     }
-    
-  } catch (e) { console.error("LIFFエラー:", e); }
+  } catch (e) { 
+    console.error("LIFFエラー:", e); 
+  }
 })();
 
 // ===== 初期化処理 =====
 document.addEventListener("DOMContentLoaded", () => {
-// 【修正後：ここを貼り付けてください】
-const supabaseUrl = "https://bcahztzetpfuklipjmxx.supabase.co";
+  const supabaseUrl = "https://bcahztzetpfuklipjmxx.supabase.co";
   const supabaseKey = "sb_publishable_rPyAIzNttEK3P8nsnBllYA_FTF-kxJQ";
 
   window.updateSupabaseHeader = (userId) => {
@@ -39,9 +41,15 @@ const supabaseUrl = "https://bcahztzetpfuklipjmxx.supabase.co";
     checkExistingReservation(); 
   };
   
+  // ★ブラウザでも動くように初期化
   supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
+  loadMenus(); // ★ブラウザでもメニューを読み込む
+  loadHolidays().then(updateDateOptions); // ★ブラウザでも日付を表示
+  
   miniappReady.then(() => {
-    setTimeout(checkExistingReservation, 1000);
+    if (customerUserId) {
+      checkExistingReservation();
+    }
   });
   
   document.getElementById("addMenu").onclick = () => {
@@ -107,7 +115,10 @@ function updateTotalDurationDisplay() {
 async function loadMenus() {
   if (!supabaseClient) return;
   const { data, error } = await supabaseClient.from("menus").select("name, duration");
-  if (error) return;
+  if (error) {
+    console.error("メニュー読み込みエラー:", error);
+    return;
+  }
 
   MENU_DATA = {};
   data.forEach(m => { MENU_DATA[m.name] = m.duration; });
@@ -158,7 +169,7 @@ function renderMenuOptions(selectElement, data, categories) {
         // 「組み合わせ」グループには、プラス記号があるものだけを入れる
         return hasPlus;
       } else {
-        // それ以外のグループには、キーワードが含まれていて、かつプラス記号が【絶対に入っていない】ものだけを入れる
+        // それ以外のグループには、キーワードが含まれていて、かつプラス記号が「絶対に入っていない」ものだけを入れる
         return hasKeyword && !hasPlus;
       }
     });
@@ -174,6 +185,7 @@ function renderMenuOptions(selectElement, data, categories) {
     }
   });
 }
+
 // ===== 休日・日付ロジック =====
 async function loadHolidays() {
   const [resHolidays, resOff, resSpec] = await Promise.all([
@@ -239,7 +251,7 @@ function updateDateOptions() {
       ${isHoliday ? '<span class="status-text">定休日</span>' : ''}
     `;
 
-if (!isHoliday) {
+    if (!isHoliday) {
       chip.onclick = () => {
         // ★追加：メニューが一つも選ばれていないかチェック
         const selectedMenus = Array.from(document.querySelectorAll(".menu-select"))
@@ -353,7 +365,7 @@ document.getElementById("reserveForm").onsubmit = async e => {
     btn.disabled = true;
     btn.innerText = "送信中...";
 
-try {
+    try {
       const [sh, sm] = time.split(":").map(Number);
       const endD = new Date(2000, 0, 1, sh, sm + required);
       const end_time = `${String(endD.getHours()).padStart(2, "0")}:${String(endD.getMinutes()).padStart(2, "0")}`;
@@ -373,23 +385,26 @@ try {
 
       showCompleteScreen();
 
-      fetch("https://bcahztzetpfuklipjmxx.functions.supabase.co/dynamic-service", {
-        method: "POST", 
-        headers: { 
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${supabaseKey}`,
-          "x-customer-id": customerUserId
-        },
-        body: JSON.stringify({ 
-          mode: "reserve",
-          name: name, 
-          menus: menus.join(", "),
-          date: dateValue, 
-          time: time, 
-          customerUserId: customerUserId,
-          customMessage: messageText 
-        })
-      }).catch(e => console.error(e));
+      // ★ブラウザでもLINEでも動くように条件分岐
+      if (customerUserId) {
+        fetch("https://bcahztzetpfuklipjmxx.functions.supabase.co/dynamic-service", {
+          method: "POST", 
+          headers: { 
+            "Content-Type": "application/json",
+            "Authorization": `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJjYWh6dHpldHBmdWtsaXBqbXh4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzU0NTQ3ODUsImV4cCI6MjA1MTAzMDc4NX0.DGPTLz5FDHZm9C9ljZdFuXnJaXYGz8mWU_vFBHm9aGI`,
+            "x-customer-id": customerUserId
+          },
+          body: JSON.stringify({ 
+            mode: "reserve",
+            name: name, 
+            menus: menus.join(", "),
+            date: dateValue, 
+            time: time, 
+            customerUserId: customerUserId,
+            customMessage: messageText 
+          })
+        }).catch(e => console.error(e));
+      }
 
     } catch (e) {
       alert("予約に失敗しました。");
@@ -438,6 +453,7 @@ function showCompleteScreen() {
     else window.location.href = "https://candoll.vercel.app/";
   };
 }
+
 // すでに予約があるかチェックし、画面上部に追従バナーを表示する
 async function checkExistingReservation() {
   // customerUserIdがない場合はLIFFの初期化を待つために何もしない
@@ -480,15 +496,17 @@ async function checkExistingReservation() {
     document.body.style.paddingTop = "60px";
   }
 }
-// キャンセルリンク（LINEトークと同じURL）へ飛ばす
+
+// キャンセルリンク(LINEトークと同じURL)へ飛ばす
 function goToCancelLink() {
   const cancelUrl = "https://liff.line.me/2008611644-EZd5nkl0?action=cancel";
   window.location.href = cancelUrl;
 }
+
 // ===== キャンセル処理 =====
 window.addEventListener("load", async () => {
   const urlParams = new URLSearchParams(window.location.search);
-  const supabaseKey = "sb_publishable_rPyAIzNttEK3P8nsnBllYA_FTF-kxJQ";
+  const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJjYWh6dHpldHBmdWtsaXBqbXh4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzU0NTQ3ODUsImV4cCI6MjA1MTAzMDc4NX0.DGPTLz5FDHZm9C9ljZdFuXnJaXYGz8mWU_vFBHm9aGI";
 
   if (urlParams.get('action') === 'cancel') {
     document.getElementById("reserveForm").style.display = "none";
@@ -511,7 +529,7 @@ window.addEventListener("load", async () => {
       document.getElementById("cancel-info").innerHTML = `<b>お名前</b>：${res.name}<br><b>日時</b>：${res.date.replace(/-/g, "/")} (${dowCancel}) ${res.time}`;     
 
       document.getElementById("executeCancelBtn").onclick = async () => {
-        if (!confirm("本当にキャンセルしてもよろしいですか？")) return;
+        if (!confirm("本当にキャンセルしてもよろしいですか?")) return;
 
         const btn = document.getElementById("executeCancelBtn");
         btn.disabled = true;
@@ -566,32 +584,4 @@ window.addEventListener("load", async () => {
               </div>
               <h2 style="font-size:22px; margin-top:25px; font-weight:600;">キャンセルを完了しました</h2>
               <p style="color:#86868b; font-size:15px; line-height:1.6;">またのご利用をお待ちしております。</p>
-              <button id="finalCloseBtn" style="margin-top:40px; padding:16px; width:100%; border-radius:14px; background:#000; color:#fff; border:none; font-size:17px; font-weight:600; cursor:pointer;">閉じる</button>
-            </div>
-            <style>
-              .checkmark-wrapper { display: flex; justify-content: center; }
-              .checkmark { width: 80px; height: 80px; border-radius: 50%; stroke-width: 2; stroke: #fff; animation: fill-red .4s ease-in-out .4s forwards, scale .3s ease-in-out .9s both; }
-              .checkmark__circle { stroke-dasharray: 166; stroke-dashoffset: 166; stroke-width: 2; stroke: #ff3b30; fill: none; animation: stroke 0.6s forwards; }
-              .checkmark__check { transform-origin: 50% 50%; stroke-dasharray: 48; stroke-dashoffset: 48; animation: stroke 0.3s forwards 0.8s; }
-              @keyframes stroke { 100% { stroke-dashoffset: 0; } }
-              @keyframes scale { 0%, 100% { transform: none; } 50% { transform: scale3d(1.1, 1.1, 1); } }
-              @keyframes fill-red { 100% { box-shadow: inset 0px 0px 0px 40px #ff3b30; } }
-            </style>
-          `;
-
-          document.getElementById("finalCloseBtn").onclick = () => {
-            window.location.href = "https://candoll.vercel.app/?rev=" + Date.now();
-          };
-
-        } else {
-          alert("キャンセルに失敗しました。");
-          btn.disabled = false;
-          btn.innerText = "予約をキャンセルする";
-        }
-      };
-    } else {
-      document.getElementById("cancel-info").innerText = "有効な予約が見つかりませんでした。";
-      document.getElementById("executeCancelBtn").style.display = "none";
-    }
-  }
-});
+              <button id="finalCloseBtn" style="margin-top:40px; padding:16px; width:100%; border-radius:14px; background:#
