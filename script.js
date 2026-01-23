@@ -32,27 +32,31 @@ document.addEventListener("DOMContentLoaded", async () => {
   const supabaseUrl = "https://bcahztzetpfuklipjmxx.supabase.co";
   const supabaseKey = "sb_publishable_rPyAIzNttEK3P8nsnBllYA_FTF-kxJQ";
 
-  // 1. Supabaseクライアントを即座に作成（PC/LINE共通）
-  supabaseClient = supabase.createClient(supabaseUrl, supabaseKey, {
-    global: { headers: { 'x-customer-id': customerUserId || "anonymous" } }
-  });
-
-  // 2. メニューや休日などの基本データを読み込む（これはログインを待たなくて良い）
-  await Promise.all([
-    loadMenus(),
-    loadHolidays().then(updateDateOptions)
-  ]);
-
-  // 3. LINEログイン（miniappReady）の完了を待つ
+  // LINEログイン(miniappReady)が終わるまで待機
   await miniappReady;
 
-  // 4. ログイン完了後、最新のIDでクライアントを再設定（ヘッダーにIDを載せるため）
+  // 1. クライアント作成はここで「1回だけ」行う
+  // customerUserId があればそれを、なければ PC用ID(web-user) を使用
   supabaseClient = supabase.createClient(supabaseUrl, supabaseKey, {
-    global: { headers: { 'x-customer-id': customerUserId || "web-user" } }
+    global: { 
+      headers: { 'x-customer-id': customerUserId || "web-user" } 
+    }
   });
 
-  // 5. LINEユーザーであれば、ここで既存予約（バナー）をチェック
-  checkExistingReservation();
+  // 2. データを読み込む
+  try {
+    await Promise.all([
+      loadMenus(),
+      loadHolidays().then(updateDateOptions)
+    ]);
+    
+    // 3. LINEユーザーのみバナーを表示
+    if (customerUserId && customerUserId !== "web-user") {
+      checkExistingReservation();
+    }
+  } catch (err) {
+    console.error("データ取得エラー:", err);
+  }
 
   // モーダル閉じる（共通）
   document.querySelectorAll(".close-btn").forEach(btn => {
