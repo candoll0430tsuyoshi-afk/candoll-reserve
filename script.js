@@ -27,19 +27,19 @@ const profile = await liff.getProfile();
 // ===== 初期化処理 =====
 document.addEventListener("DOMContentLoaded", () => {
 // 【修正後：ここを貼り付けてください】
-  const supabaseUrl = "https://bcahztzetpfuklipjmxx.supabase.co";
+const supabaseUrl = "https://bcahztzetpfuklipjmxx.supabase.co";
   const supabaseKey = "sb_publishable_rPyAIzNttEK3P8nsnBllYA_FTF-kxJQ";
 
-  // 最初はIDなしで作成し、後からIDをセットするための関数を定義
-  supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
   window.updateSupabaseHeader = (userId) => {
     supabaseClient = supabase.createClient(supabaseUrl, supabaseKey, {
       global: { headers: { 'x-customer-id': userId } }
     });
+    loadMenus();
+    loadHolidays().then(updateDateOptions);
+    checkExistingReservation(); 
   };
   
-  loadMenus();
-  loadHolidays().then(updateDateOptions);
+  supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
   miniappReady.then(() => {
   setTimeout(checkExistingReservation, 1000);
 });
@@ -374,7 +374,11 @@ document.getElementById("reserveForm").onsubmit = async e => {
 
 await fetch("https://bcahztzetpfuklipjmxx.functions.supabase.co/dynamic-service", {
   method: "POST", 
-  headers: { "Content-Type": "application/json" },
+  headers: { 
+  "Content-Type": "application/json",
+  "Authorization": `Bearer ${supabaseKey}`,
+  "x-customer-id": customerUserId
+},
   body: JSON.stringify({ 
   mode: "reserve",
   name: name, 
