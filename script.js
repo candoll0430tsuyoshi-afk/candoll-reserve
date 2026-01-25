@@ -382,7 +382,6 @@ if (error) throw error;
           method: "POST", 
           headers: { 
             "Content-Type": "application/json",
-            "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJjYWh6dHpldHBmdWtsaXBqbXh4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzU0NTQ3ODUsImV4cCI6MjA1MTAzMDc4NX0.DGPTLz5FDHZm9C9ljZdFuXnJaXYGz8mWU_vFBHm9aGI",
             "x-customer-id": customerUserId || "web-user"
           },
           body: JSON.stringify({ 
@@ -499,7 +498,6 @@ function goToCancelLink() {
 // ===== キャンセル処理 =====
 window.addEventListener("load", async () => {
   const urlParams = new URLSearchParams(window.location.search);
-  const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJjYWh6dHpldHBmdWtsaXBqbXh4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzU0NTQ3ODUsImV4cCI6MjA1MTAzMDc4NX0.DGPTLz5FDHZm9C9ljZdFuXnJaXYGz8mWU_vFBHm9aGI";
 
   if (urlParams.get('action') === 'cancel') {
     document.getElementById("reserveForm").style.display = "none";
@@ -547,7 +545,6 @@ window.addEventListener("load", async () => {
               method: "POST", 
               headers: { 
                 "Content-Type": "application/json",
-                "Authorization": `Bearer ${supabaseKey}`,
                 "x-customer-id": customerUserId || "web-user"
               },
               body: JSON.stringify({ 
