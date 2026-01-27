@@ -15,15 +15,27 @@ document.addEventListener("DOMContentLoaded", () => {
     if (loginBtn) {
         loginBtn.onclick = async () => {
             const passInput = document.getElementById('admin-pass').value;
+<<<<<<< HEAD
             const success = await fetchData(passInput); 
             if (success) {
                 localStorage.setItem('admin_password', passInput);
+=======
+            // サーバー(admin-service)に「このパスワード合ってる？」と聞きに行く
+            const success = await fetchData(passInput); 
+            
+            if (success) {
+                localStorage.setItem('admin_password', passInput); // パスワードを一時保存
+>>>>>>> fe92bc677d2bd746637aa8e36fc8863cda0085bd
                 initAdmin();
             } else {
                 alert("パスワードが違います");
             }
         };
     }
+<<<<<<< HEAD
+=======
+    // すでにログイン済みの場合
+>>>>>>> fe92bc677d2bd746637aa8e36fc8863cda0085bd
     if (localStorage.getItem('admin_password')) { initAdmin(); }
 });
 
@@ -35,10 +47,53 @@ async function initAdmin() {
     setInterval(updateNowLine, 60000); 
 }
 
+<<<<<<< HEAD
 // 2. データ取得 (パスワード付き)
 async function fetchData(pass = null) {
     const password = pass || localStorage.getItem('admin_password');
     if (!password) return false;
+=======
+async function fetchData(pass = null) {
+    // 引数にパスワードがなければ、保存されているものを使う
+    const password = pass || localStorage.getItem('admin_password');
+    if (!password) return false;
+
+    try {
+        const response = await fetch("https://bcahztzetpfuklipjmxx.supabase.co/functions/v1/admin-service", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ 
+                mode: "list", 
+                password: password 
+            })
+        });
+
+        const result = await response.json();
+
+        // パスワードが間違っていた場合
+        if (result.error === "AuthError") {
+            localStorage.removeItem('admin_password'); // 間違ったパスワードを消去
+            return false;
+        }
+
+        // サーバーから届いたデータをそれぞれの変数にセット
+        reservations = result.reservations || [];
+        holidays = result.holidays || [];
+        specialOpens = result.special_open || [];
+        
+        // メニューの所要時間をセット
+        if (result.menus) {
+            result.menus.forEach(m => {
+                MENU_DURATION[m.name] = m.duration;
+            });
+        }
+        return true;
+    } catch (e) {
+        console.error("データ取得エラー:", e);
+        return false;
+    }
+}
+>>>>>>> fe92bc677d2bd746637aa8e36fc8863cda0085bd
 
     try {
         const response = await fetch("https://bcahztzetpfuklipjmxx.supabase.co/functions/v1/admin-service", {
