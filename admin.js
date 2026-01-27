@@ -1,6 +1,5 @@
 const SUPABASE_URL = "https://bcahztzetpfuklipjmxx.supabase.co";
 const SUPABASE_KEY = "sb_publishable_rPyAIzNttEK3P8nsnBllYA_FTF-kxJQ";
-const ADMIN_PASSWORD = "candoll2026";
 const adminClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 let baseDate = new Date();
@@ -13,14 +12,21 @@ let MENU_DURATION = {};
 document.addEventListener("DOMContentLoaded", () => {
     const loginBtn = document.getElementById('login-btn');
     if (loginBtn) {
-        loginBtn.onclick = () => {
-            if (document.getElementById('admin-pass').value === ADMIN_PASSWORD) {
-                localStorage.setItem('admin_auth_status', 'true');
+        loginBtn.onclick = async () => {
+            const passInput = document.getElementById('admin-pass').value;
+            // サーバー(admin-service)に「このパスワード合ってる？」と聞きに行く
+            const success = await fetchData(passInput); 
+            
+            if (success) {
+                localStorage.setItem('admin_password', passInput); // パスワードを一時保存
                 initAdmin();
-            } else { alert("パスワードが違います"); }
+            } else {
+                alert("パスワードが違います");
+            }
         };
     }
-    if (localStorage.getItem('admin_auth_status') === 'true') { initAdmin(); }
+    // すでにログイン済みの場合
+    if (localStorage.getItem('admin_password')) { initAdmin(); }
 });
 
 async function initAdmin() {
