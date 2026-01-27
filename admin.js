@@ -37,21 +37,44 @@ async function initAdmin() {
     setInterval(updateNowLine, 60000); 
 }
 
-async function fetchData() {
-    const [res, off, hol, spec, mData] = await Promise.all([
-        adminClient.from('reservations').select('*'),
-        adminClient.from('off_times').select('*'),
-        adminClient.from('holidays').select('*'),
-        adminClient.from('special_open').select('*'),
-        adminClient.from('menus').select('name, duration')
-    ]);
-    reservations = res.data || [];
-    offTimes = off.data || [];
-    holidays = hol.data || [];
-    specialOpens = spec.data || [];
-    if (mData.data) {
-        MENU_DURATION = {};
-        mData.data.forEach(m => { MENU_DURATION[m.name] = m.duration; });
+async function fetchData(pass = null) {
+    // 引数にパスワードがなければ、保存されているものを使う
+    const password = pass || localStorage.getItem('admin_password');
+    if (!password) return false;
+
+    try {
+        const response = await fetch("https://bcahztzetpfuklipjmxx.supabase.co/functions/v1/admin-service", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ 
+                mode: "list", 
+                password: password 
+            })
+        });
+
+        const result = await response.json();
+
+        // パスワードが間違っていた場合
+        if (result.error === "AuthError") {
+            localStorage.removeItem('admin_password'); // 間違ったパスワードを消去
+            return false;
+        }
+
+        // サーバーから届いたデータをそれぞれの変数にセット
+        reservations = result.reservations || [];
+        holidays = result.holidays || [];
+        specialOpens = result.special_open || [];
+        
+        // メニューの所要時間をセット
+        if (result.menus) {
+            result.menus.forEach(m => {
+                MENU_DURATION[m.name] = m.duration;
+            });
+        }
+        return true;
+    } catch (e) {
+        console.error("データ取得エラー:", e);
+        return false;
     }
 }
 
