@@ -266,7 +266,23 @@ function updateDateOptions() {
     chipContainer.appendChild(chip);
   }
 }
+const addMenuBtn = document.getElementById("addMenuBtn");
+if (addMenuBtn) {
+  addMenuBtn.onclick = () => {
+    const container = document.getElementById("menuContainer");
+    const currentSelects = container.querySelectorAll(".menu-select");
+    
+    if (currentSelects.length >= 3) {
+      alert("メニューは最大3つまで選択可能です。");
+      return;
+    }
 
+    const newSelect = currentSelects[0].cloneNode(true);
+    newSelect.value = ""; // 選択をリセット
+    newSelect.onchange = updateTimeOptions; // 追加分も時間に連動
+    container.appendChild(newSelect);
+  };
+}
 // ===== 時間表示ロジック =====
 async function updateTimeOptions() {
   const date = document.getElementById("date").value;
