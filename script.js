@@ -278,24 +278,34 @@ if (addMenu) {
       return;
     }
 
-    
+    // 1. コピーを作成
     const newSelect = currentSelects[0].cloneNode(true);
     newSelect.value = ""; 
 
-    
-    newSelect.style.margin = "0";      
-    newSelect.style.marginTop = "10px"; 
-    
-    
+    // 2. 余白を「完全に一定」にする（10pxで統一）
+    // CSSの干渉を防ぐため、1つ目も含めてマージンを強制固定します
+    currentSelects[0].style.marginBottom = "10px"; 
+    newSelect.style.marginBottom = "10px";
+    newSelect.style.marginTop = "0px";
+
+    // 3. メニュー変更時の命令（時間枠とテキスト表示の両方を更新）
     newSelect.onchange = () => {
-      console.log("追加メニューが変更されました"); 
+      // 予約枠（〇や×）を更新
       updateTimeOptions(); 
+      
+      // 画面上の「所要時間：〇分」という文字も更新
+      if (typeof updateDurationText === "function") {
+        updateDurationText(); 
+      }
     };
 
     container.appendChild(newSelect);
 
-    
+    // 追加した瞬間に計算を走らせる
     updateTimeOptions();
+    if (typeof updateDurationText === "function") {
+      updateDurationText();
+    }
   };
 }
 // ===== 時間表示ロジック =====
