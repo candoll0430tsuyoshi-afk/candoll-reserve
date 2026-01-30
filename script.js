@@ -295,20 +295,46 @@ async function updateTimeOptions() {
     const end = `${String(endD.getHours()).padStart(2,"0")}:${String(endD.getMinutes()).padStart(2,"0")}`;
     
     let isDisabled = (end > "19:00");
-    const isOffTime = OFF_TIMES.some(o => o.date === date && o.time === start);
-    if (isOffTime) isDisabled = true;
 
-    for (const r of reserved) {
-      const toMin = t => { const [h,m] = t.split(":").map(Number); return h*60+m; };
-      if (toMin(start) < toMin(r.end) && toMin(r.start) < toMin(end)) { isDisabled = true; break; }
+    // 時間を数値（分）に変換する関数
+    const toMin = t => {
+      if (!t) return 0;
+      const [h, m] = t.split(":").map(Number);
+      return h * 60 + m;
+    };
+
+    const slotStart = toMin(start);
+    const slotEnd = toMin(end);
+
+    // 1. 管理画面の「予約不可(OFF_TIMES)」との重なりをチェック
+    const isOffTimeOverlap = OFF_TIMES.some(o => {
+      if (o.date !== date) return false;
+      const offStart = toMin(o.time);
+      const offEnd = offStart + 30; // 30分枠として扱う
+      return (slotStart < offEnd && offStart < slotEnd);
+    });
+    if (isOffTimeOverlap) isDisabled = true;
+
+    // 2. 既存の予約(reserved)との重なりをチェック
+    if (!isDisabled) {
+      for (const r of reserved) {
+        const resStart = toMin(r.start);
+        const resEnd = toMin(r.end);
+        if (slotStart < resEnd && resStart < slotEnd) {
+          isDisabled = true;
+          break;
+        }
+      }
     }
 
+    // ドロップダウンへの追加
     const op = document.createElement("option");
     op.value = start;
     op.textContent = start;
     op.disabled = isDisabled;
     timeSelect.appendChild(op);
 
+    // グリッドボタンの作成
     const slot = document.createElement("div");
     slot.className = "time-slot" + (isDisabled ? " disabled" : "");
     slot.textContent = start;
@@ -320,8 +346,8 @@ async function updateTimeOptions() {
       };
     }
     gridContainer.appendChild(slot);
-  });
-}
+  }); // slots.forEach の閉じ
+} // updateTimeOptions の閉じ
 
 // ===== 予約送信 =====
 document.getElementById("reserveForm").onsubmit = async e => {
