@@ -266,7 +266,7 @@ function updateDateOptions() {
     chipContainer.appendChild(chip);
   }
 }
-// --- メニュー追加ボタンと再計算・余白の修正 ---
+
 const addMenu = document.getElementById("addMenu");
 if (addMenu) {
   addMenu.onclick = () => {
@@ -278,21 +278,23 @@ if (addMenu) {
       return;
     }
 
-    // 1. 最初のセレクトボックスをコピー
+    
     const newSelect = currentSelects[0].cloneNode(true);
     newSelect.value = ""; 
 
-    // 2. 【重要】新しいメニューにも「再計算機能」をしっかり付ける
+    
+    newSelect.style.margin = "0";      
+    newSelect.style.marginTop = "10px"; 
+    
+    
     newSelect.onchange = () => {
-      updateTimeOptions();
+      console.log("追加メニューが変更されました"); 
+      updateTimeOptions(); 
     };
 
-    // 3. 余白を一定にするためのスタイル調整
-    newSelect.style.marginTop = "10px"; // 1個目との間に10pxの隙間を作る
-    
     container.appendChild(newSelect);
 
-    // 追加した瞬間に一度計算を走らせる
+    
     updateTimeOptions();
   };
 }
