@@ -352,13 +352,14 @@ document.getElementById("reserveForm").onsubmit = async e => {
   document.getElementById("reserveForm").style.display = "none";
   document.getElementById("confirm-screen").style.display = "block";
 
-  document.getElementById("okBtn").onclick = async () => {
+document.getElementById("okBtn").onclick = async () => {
     const btn = document.getElementById("okBtn");
     if (btn.disabled) return;
     btn.disabled = true;
     btn.innerText = "送信中...";
-try {
-      // データベースの off_times テーブルを直接見に行って、今この瞬間の空き状況を確認
+
+    try {
+      // 1. 最終チェック：最新の空き状況を確認
       const { data: latestOff, error: offError } = await supabaseClient
         .from("off_times")
         .select("id")
@@ -367,19 +368,48 @@ try {
 
       if (offError) throw offError;
 
-      // もしデータが存在すれば、誰かが先に予約したか、店主が不可にしたということ
       if (latestOff && latestOff.length > 0) {
-        alert("申し訳ありません！タッチの差でこの時間は予約不可となりました。別の日時を選択してください。");
-        location.reload(); // 画面を更新して最新の状態に戻す
+        alert("この時間は予約不可となりました。別の日時を選択してください。");
+        location.reload();
         return;
       }
+
+      // 2. チェックOKなら、ここから本来の予約処理を実行
+      const { data, error } = await supabaseClient
+        .from("reservations")
+        .insert([{
+          customer_name: document.getElementById("name").value,
+          customer_phone: document.getElementById("phone").value,
+          menu_id: selectedMenuId,
+          menu_name: MENU_DATA[selectedMenuId].name,
+          date: selectedDate,
+          time: selectedTime,
+          user_id: customerUserId || "web-user"
+        }])
+        .select();
+
+      if (error) throw error;
+
+      // 3. 通知を送る
+      await fetch("https://bcahztzetpfuklipjmxx.functions.supabase.co/dynamic-service", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          mode: "notify_new",
+          res: data[0]
+        })
+      });
+
+      // 4. 完了画面へ
+      showCompleteScreen();
+
     } catch (e) {
-      console.error("最終チェックエラー:", e);
-      alert("通信エラーが発生しました。もう一度お試しください。");
+      console.error("エラー詳細:", e);
+      alert("通信エラーが発生しました。電波の良い場所で再度お試しください。");
       btn.disabled = false;
       btn.innerText = "OK";
-      return;
     }
+  };
     try {
       const [sh, sm] = time.split(":").map(Number);
       const endD = new Date(2000, 0, 1, sh, sm + required);
