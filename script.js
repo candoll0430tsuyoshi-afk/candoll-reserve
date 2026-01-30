@@ -370,7 +370,7 @@ document.getElementById("reserveForm").onsubmit = async e => {
       if (offError) throw offError;
 
       if (latestOff && latestOff.length > 0) {
-        alert("申し訳ありません！タッチの差でこの時間は予約不可となりました。");
+        alert("申し訳ございません。もう一度最初からやり直してください。");
         location.reload();
         return;
       }
