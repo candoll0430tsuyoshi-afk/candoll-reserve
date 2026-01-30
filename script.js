@@ -266,9 +266,10 @@ function updateDateOptions() {
     chipContainer.appendChild(chip);
   }
 }
-const addMenuBtn = document.getElementById("addMenuBtn");
-if (addMenuBtn) {
-  addMenuBtn.onclick = () => {
+// 「Btn」を取って、HTMLの id="addMenu" と合わせました
+const addMenu = document.getElementById("addMenu");
+if (addMenu) {
+  addMenu.onclick = () => {
     const container = document.getElementById("menuContainer");
     const currentSelects = container.querySelectorAll(".menu-select");
     
