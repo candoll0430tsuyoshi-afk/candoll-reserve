@@ -357,7 +357,29 @@ document.getElementById("reserveForm").onsubmit = async e => {
     if (btn.disabled) return;
     btn.disabled = true;
     btn.innerText = "送信中...";
+try {
+      // データベースの off_times テーブルを直接見に行って、今この瞬間の空き状況を確認
+      const { data: latestOff, error: offError } = await supabaseClient
+        .from("off_times")
+        .select("id")
+        .eq("date", selectedDate)
+        .eq("time", selectedTime);
 
+      if (offError) throw offError;
+
+      // もしデータが存在すれば、誰かが先に予約したか、店主が不可にしたということ
+      if (latestOff && latestOff.length > 0) {
+        alert("申し訳ありません！タッチの差でこの時間は予約不可となりました。別の日時を選択してください。");
+        location.reload(); // 画面を更新して最新の状態に戻す
+        return;
+      }
+    } catch (e) {
+      console.error("最終チェックエラー:", e);
+      alert("通信エラーが発生しました。もう一度お試しください。");
+      btn.disabled = false;
+      btn.innerText = "OK";
+      return;
+    }
     try {
       const [sh, sm] = time.split(":").map(Number);
       const endD = new Date(2000, 0, 1, sh, sm + required);
