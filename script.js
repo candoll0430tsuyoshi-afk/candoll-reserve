@@ -352,83 +352,49 @@ document.getElementById("reserveForm").onsubmit = async e => {
   document.getElementById("reserveForm").style.display = "none";
   document.getElementById("confirm-screen").style.display = "block";
 
-document.getElementById("okBtn").onclick = async () => {
+  // OKボタンを押した時の処理
+  document.getElementById("okBtn").onclick = async () => {
     const btn = document.getElementById("okBtn");
     if (btn.disabled) return;
     btn.disabled = true;
     btn.innerText = "送信中...";
 
     try {
-      // 1. 最終チェック：最新の空き状況を確認
+      // 1. 最終チェック：最新の空き状況を確認 (off_timesテーブル)
       const { data: latestOff, error: offError } = await supabaseClient
         .from("off_times")
         .select("id")
-        .eq("date", selectedDate)
-        .eq("time", selectedTime);
+        .eq("date", dateValue)
+        .eq("time", time);
 
       if (offError) throw offError;
 
       if (latestOff && latestOff.length > 0) {
-        alert("この時間は予約不可となりました。別の日時を選択してください。");
+        alert("申し訳ありません！タッチの差でこの時間は予約不可となりました。");
         location.reload();
         return;
       }
 
-      // 2. チェックOKなら、ここから本来の予約処理を実行
-      const { data, error } = await supabaseClient
-        .from("reservations")
-        .insert([{
-          customer_name: document.getElementById("name").value,
-          customer_phone: document.getElementById("phone").value,
-          menu_id: selectedMenuId,
-          menu_name: MENU_DATA[selectedMenuId].name,
-          date: selectedDate,
-          time: selectedTime,
-          user_id: customerUserId || "web-user"
-        }])
-        .select();
-
-      if (error) throw error;
-
-      // 3. 通知を送る
-      await fetch("https://bcahztzetpfuklipjmxx.functions.supabase.co/dynamic-service", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          mode: "notify_new",
-          res: data[0]
-        })
-      });
-
-      // 4. 完了画面へ
-      showCompleteScreen();
-
-    } catch (e) {
-      console.error("エラー詳細:", e);
-      alert("通信エラーが発生しました。電波の良い場所で再度お試しください。");
-      btn.disabled = false;
-      btn.innerText = "OK";
-    }
-  };
-    try {
+      // 2. 終了時間の計算
       const [sh, sm] = time.split(":").map(Number);
       const endD = new Date(2000, 0, 1, sh, sm + required);
       const end_time = `${String(endD.getHours()).padStart(2, "0")}:${String(endD.getMinutes()).padStart(2, "0")}`;
 
-      const messageText = `【ご予約内容】\n名前：${name} 様\n日時：${formattedDate} (${dow}) ${time}\n${prettyDuration}\nメニュー：${menus.join(", ")}\n\nご予約のキャンセルはこちらから\nhttps://liff.line.me/2008611644-EZd5nkl0?action=cancel`;
-
-      const { error } = await supabaseClient.from("reservations").insert([{ 
+      // 3. 予約データを保存
+      const { data, error } = await supabaseClient.from("reservations").insert([{ 
         name, 
         menus: menus.join(", "), 
         date: dateValue, 
         time, 
         end_time,
         customer_user_id: customerUserId 
-      }]);
+      }]).select();
 
-if (error) throw error;
+      if (error) throw error;
 
-      // 通知の送信が終わるまで待機 (await)
+      // 4. LINE通知を飛ばす
+      const messageText = `【ご予約内容】\n名前：${name} 様\n日時：${formattedDate} (${dow}) ${time}\n${prettyDuration}\nメニュー：${menus.join(", ")}\n\nご予約のキャンセルはこちらから\nhttps://liff.line.me/2008611644-EZd5nkl0?action=cancel`;
+
       try {
         await fetch("https://bcahztzetpfuklipjmxx.functions.supabase.co/dynamic-service", {
           method: "POST", 
@@ -450,13 +416,12 @@ if (error) throw error;
         console.error("通知送信エラー:", e);
       }
 
-      // すべて終わってから画面を切り替える
+      // 5. 完了画面へ
       showCompleteScreen();
 
     } catch (e) {
       console.error("予約エラー:", e);
-      alert("予約に失敗しました。");
-      const btn = document.getElementById("okBtn");
+      alert("通信エラーが発生しました。");
       btn.disabled = false;
       btn.innerText = "OK";
     }
