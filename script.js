@@ -267,7 +267,6 @@ function updateDateOptions() {
   }
 }
 
-// --- メニュー追加ボタン・余白・施術時間の完全修正版 ---
 const addMenu = document.getElementById("addMenu");
 if (addMenu) {
   addMenu.onclick = () => {
@@ -281,20 +280,34 @@ if (addMenu) {
 
     // 1. コピーを作成
     const newSelect = currentSelects[0].cloneNode(true);
-    newSelect.value = ""; 
-
-    // 2. 余白を「10px」で完全に統一する
-    currentSelects.forEach(s => {
-      s.style.marginTop = "0px";
+    newSelect.value = "";
+    
+    // 2. セレクトボックス間の余白とスタイルを統一
+    // 既存のセレクトボックスも含めてマージンをリセット
+    const allCurrent = container.querySelectorAll(".menu-select");
+    allCurrent.forEach(s => {
       s.style.marginBottom = "10px";
+      s.style.marginTop = "0px";
+      s.style.display = "block"; // 縦に並べる
+      s.style.width = "100%";   // 幅を揃える
     });
-    newSelect.style.marginTop = "0px";
+    
     newSelect.style.marginBottom = "10px";
+    newSelect.style.marginTop = "0px";
+    newSelect.style.display = "block";
+    newSelect.style.width = "100%";
 
-    // 3. 【重要】新しいメニューが変わった時に、枠(〇×)と文字(時間表示)の両方を更新
-    newSelect.onchange = () => {
-      // 予約可能枠(〇×)の計算
-      updateTimeOptions(); 
+    // 3. イベントリスナーの設定
+    // setupSelectColorChange を使うことで色変更と時間更新(updateTotalDurationDisplay)を同時に行う
+    setupSelectColorChange(newSelect);
+
+    container.appendChild(newSelect);
+
+    // 追加した直後にも表示を更新
+    updateTotalDurationDisplay();
+    updateTimeOptions();
+  };
+}
       
       // ★ここがポイント：全てのメニューを合計して「施術時間」を書き換える
       let total = 0;
