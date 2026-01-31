@@ -272,11 +272,26 @@ function setupTouchEvents(div, exactRes, date, time) {
     };
 }
 window.saveChanges = async function(id) {
-    const dur = document.getElementById('new-duration').value, password = localStorage.getItem('admin_password');
+    const dur = document.getElementById('new-duration').value;
+    const password = localStorage.getItem('admin_password');
+    
+    // --- 終了時間を再計算するロジックを追加 ---
+    const timeInput = document.getElementById('res-time').value; // モーダル内の開始時間
+    const [h, m] = timeInput.split(':').map(Number);
+    const endDate = new Date(2000, 0, 1, h, m + Number(dur));
+    const end_time = `${String(endDate.getHours()).padStart(2, '0')}:${String(endDate.getMinutes()).padStart(2, '0')}`;
+    // ---------------------------------------
+
     await fetch("https://bcahztzetpfuklipjmxx.supabase.co/functions/v1/admin-service", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ mode: "edit", id: Number(id), manual_duration: Number(dur),end_time: end_time, password: password })
+        body: JSON.stringify({ 
+            mode: "edit", 
+            id: Number(id), 
+            manual_duration: Number(dur), 
+            end_time: end_time, // ★これを送る
+            password: password 
+        })
     });
     closeModal(); await fetchData(); render();
 };
