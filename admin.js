@@ -160,15 +160,16 @@ function renderSlot(col, date, time, isClosed) {
 
 async function toggleOffTime(date, time) {
     const password = localStorage.getItem('admin_password');
-    // 現在の状態を確認 (offTimesはグローバル変数にある前提)
+    // 現在の状態を確認 (offTimes変数が定義されている必要があります)
     const isOff = offTimes.some(o => o.date === date && o.time === time);
     
-    // モード名をサーバーの仕様 (add_off / delete_off) に合わせる
-    const mode = isOff ? "delete_off" : "add_off";
+    // 【重要】サーバーが認識する正しい名前
+    // 追加時は "off"、削除時は "delete_off" 
+    const mode = isOff ? "delete_off" : "off";
 
-    // --- 29分設定の計算（前後への干渉を防ぐ） ---
+    // --- 29分設定の計算（11:30の枠などを消さないための工夫） ---
     const [h, m] = time.split(':').map(Number);
-    const endD = new Date(2000, 0, 1, h, m + 29); 
+    const endD = new Date(2000, 0, 1, h, m + 29); // 30ではなく29
     const end_time = `${String(endD.getHours()).padStart(2,'0')}:${String(endD.getMinutes()).padStart(2,'0')}`;
 
     try {
@@ -179,7 +180,7 @@ async function toggleOffTime(date, time) {
                 mode: mode, 
                 date: date, 
                 time: time, 
-                end_time: end_time, // 29分間として保存
+                end_time: end_time, // 29分として送信
                 password: password 
             })
         });
@@ -189,7 +190,7 @@ async function toggleOffTime(date, time) {
             throw new Error(`サーバーエラー: ${response.status} ${errorBody}`);
         }
 
-        // 成功したらデータを最新にして画面を更新
+        // 成功したらデータを最新にして画面を再描画
         await fetchData(); 
         render();
     } catch (err) {
