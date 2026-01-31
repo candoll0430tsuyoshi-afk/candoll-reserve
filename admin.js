@@ -160,22 +160,29 @@ function renderSlot(col, date, time, isClosed) {
 
 async function toggleOffTime(date, time) {
     const password = localStorage.getItem('admin_password');
-    // 元のコードの判定
+    // 現在の状態を確認。元のコード通り mode は "off_time" と "delete_off" を使用します
     const isOff = offTimes.some(o => o.date === date && o.time === time);
-    const mode = isOff ? "delete_off" : "off";
+    const mode = isOff ? "delete_off" : "off_time";
 
     // --- ここで29分設定に変更 ---
     const [h, m] = time.split(':').map(Number);
     const endD = new Date(2000, 0, 1, h, m + 29); // 30を29に変更
-    const end_time = `${String(endD.getHours()).padStart(2,'0')}:${String(endD.getMinutes()).padStart(2,'0')}`;
+    const end_t = `${String(endD.getHours()).padStart(2,'0')}:${String(endD.getMinutes()).padStart(2,'0')}`;
 
-    // 通信部分は元のコードのまま
+    // 送信データ。元のサーバーが受け取れる変数名(end_time)で送ります
     await fetch("https://bcahztzetpfuklipjmxx.supabase.co/functions/v1/admin-service", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ mode: mode, date: date, time: time, end_time: end_time, password: password })
+        body: JSON.stringify({ 
+            mode: mode, 
+            date: date, 
+            time: time, 
+            end_time: end_t, 
+            password: password 
+        })
     });
-    await fetchData(); render();
+    await fetchData(); 
+    render();
 }
 async function openSlotModal(date, time, res, isOff) {
     const body = document.getElementById('modal-body');
