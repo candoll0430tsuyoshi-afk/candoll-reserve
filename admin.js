@@ -75,20 +75,26 @@ function render() {
     const wrap = document.getElementById('days-wrapper');
     if (!wrap) return;
     wrap.innerHTML = '';
+    const isMobile = window.innerWidth < 600;
     wrap.style.display = "flex";
-    wrap.style.flexDirection = window.innerWidth < 600 ? "column" : "row";
+    wrap.style.flexDirection = isMobile ? "column" : "row";
     wrap.style.gap = "15px";
     
-    // 3日分の日付をバナーに表示
-    let navDates = '';
-    for (let i = 0; i < 3; i++) {
-        const d = new Date(baseDate);
-        d.setDate(d.getDate() + i);
-        const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-        const w = d.getDay();
-        navDates += `<span style="margin:0 10px; font-weight:bold;">${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')} (${['日','月','火','水','木','金','土'][w]})</span>`;
+    // バナーの日付表示
+    if (isMobile) {
+        // スマホは基準日のみ表示
+        document.getElementById('nav-current').innerText = baseDate.toLocaleDateString('ja-JP', { month: '2-digit', day: '2-digit', weekday: 'short' });
+    } else {
+        // PCは3日分を横並びで表示
+        let navDates = '';
+        for (let i = 0; i < 3; i++) {
+            const d = new Date(baseDate);
+            d.setDate(d.getDate() + i);
+            const w = d.getDay();
+            navDates += `<span style="display:inline-block; width:33%; text-align:center; font-weight:bold;">${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')} (${['日','月','火','水','木','金','土'][w]})</span>`;
+        }
+        document.getElementById('nav-current').innerHTML = navDates;
     }
-    document.getElementById('nav-current').innerHTML = navDates;
     
     for (let i = 0; i < 3; i++) {
         const d = new Date(baseDate);
@@ -100,9 +106,20 @@ function render() {
         col.style.flex = "1";
         const w = d.getDay();
         const isClosed = (w === 1 || w === 2 || holidays.some(h => h.date === dateStr)) && !specialOpens.some(s => s.date === dateStr);
-        col.innerHTML = `<div style="background:#f2f2f7; padding:8px; text-align:center; border-bottom:1px solid #ddd;">
-            <div onclick="toggleDay('${dateStr}', ${isClosed})" style="font-size:11px; text-decoration:underline; cursor:pointer; color:#007aff;">${isClosed ? '営業にする' : '休みにする'}</div>
-        </div>`;
+        
+        if (isMobile) {
+            // スマホは各カラムに日付を表示
+            col.innerHTML = `<div style="background:#f2f2f7; padding:12px; text-align:center; border-bottom:1px solid #ddd;">
+                <b style="font-size:16px;">${dateStr} (${['日','月','火','水','木','金','土'][w]})</b>
+                <div onclick="toggleDay('${dateStr}', ${isClosed})" style="font-size:11px; text-decoration:underline; cursor:pointer; color:#007aff;">${isClosed ? '営業にする' : '休みにする'}</div>
+            </div>`;
+        } else {
+            // PCは「営業にする/休みにする」ボタンのみ
+            col.innerHTML = `<div style="background:#f2f2f7; padding:8px; text-align:center; border-bottom:1px solid #ddd;">
+                <div onclick="toggleDay('${dateStr}', ${isClosed})" style="font-size:11px; text-decoration:underline; cursor:pointer; color:#007aff;">${isClosed ? '営業にする' : '休みにする'}</div>
+            </div>`;
+        }
+        
         for (let h = 10; h <= 18; h++) {
             ['00', '30'].forEach(m => { renderSlot(col, dateStr, `${String(h).padStart(2, '0')}:${m}`, isClosed); });
         }
