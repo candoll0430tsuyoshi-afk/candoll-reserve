@@ -295,6 +295,62 @@ async function toggleDay(date, isClosed) {
     });
     await fetchData(); render();
 }
+// --- ここから貼り付け ---
+async function addReservation() {
+    const name = document.getElementById('res-name').value;
+    const date = document.getElementById('res-date').value;
+    const time = document.getElementById('res-time').value;
+    const menuEls = document.querySelectorAll('.res-menu:checked');
+    const password = localStorage.getItem('admin_password');
+
+    if (!name || menuEls.length === 0) {
+        alert("名前とメニューを選択してください");
+        return;
+    }
+
+    const selectedMenus = Array.from(menuEls).map(el => el.value);
+    
+    // 所要時間の計算
+    let totalMin = 0;
+    selectedMenus.forEach(m => {
+        totalMin += (MENU_DURATION[m] || 30);
+    });
+
+    const [h, m] = time.split(':').map(Number);
+    const endD = new Date(2000, 0, 1, h, m + totalMin);
+    const end_time = `${String(endD.getHours()).padStart(2, '0')}:${String(endD.getMinutes()).padStart(2, '0')}`;
+
+    try {
+        const response = await fetch("https://bcahztzetpfuklipjmxx.supabase.co/functions/v1/admin-service", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                mode: "add",
+                name: name,
+                menus: selectedMenus.join(','),
+                date: date,
+                time: time,
+                end_time: end_time,
+                password: password
+            })
+        });
+
+        if (!response.ok) {
+            const errText = await response.text();
+            throw new Error(errText);
+        }
+
+        alert("予約を保存しました");
+        closeModal();
+        await fetchData();
+        render();
+
+    } catch (err) {
+        console.error("保存失敗:", err);
+        alert("保存に失敗しました。パスワードを確認してください。");
+    }
+}
+// --- ここまで貼り付け ---
 async function deleteRes(id) {
     if (!confirm("削除しますか？")) return;
     const password = localStorage.getItem('admin_password');
