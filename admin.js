@@ -158,19 +158,18 @@ function renderSlot(col, date, time, isClosed) {
     col.appendChild(div);
 }
 
-// 関数名はHTMLから呼ばれる toggleOffTime に統一
 async function toggleOffTime(date, time) {
     const password = localStorage.getItem('admin_password');
     // 現在の状態を確認
     const isOff = offTimes.some(o => o.date === date && o.time === time);
     
-    // 【重要】元々のサーバー設定に合わせたmodeの指定
-    // 追加時は "off"、削除時は "delete_off" を送る必要があります
-    const mode = isOff ? "delete_off" : "off";
+    // 【重要】サーバーの仕様に合わせた正しいモード名に修正
+    // 追加時は "off_time"、削除時は "delete_off"
+    const mode = isOff ? "delete_off" : "off_time";
 
-    // --- 29分設定の計算 ---
+    // --- 29分設定の計算（前後への干渉を防ぐ） ---
     const [h, m] = time.split(':').map(Number);
-    const endD = new Date(2000, 0, 1, h, m + 29); // 30ではなく29
+    const endD = new Date(2000, 0, 1, h, m + 29); 
     const end_time = `${String(endD.getHours()).padStart(2,'0')}:${String(endD.getMinutes()).padStart(2,'0')}`;
 
     try {
@@ -196,7 +195,7 @@ async function toggleOffTime(date, time) {
         render();
     } catch (err) {
         console.error("送信エラー:", err);
-        alert("設定の保存に失敗しました。パスワードが正しいか確認してください。");
+        alert("設定の保存に失敗しました。詳細: " + err.message);
     }
 }
 async function openSlotModal(date, time, res, isOff) {
