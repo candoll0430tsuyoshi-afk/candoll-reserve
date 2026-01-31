@@ -160,12 +160,11 @@ function renderSlot(col, date, time, isClosed) {
 
 async function toggleOffTime(date, time) {
     const password = localStorage.getItem('admin_password');
-    // 現在の状態を確認
+    // 現在の状態を確認 (offTimesはグローバル変数にある前提)
     const isOff = offTimes.some(o => o.date === date && o.time === time);
     
-    // 【重要】サーバーの仕様に合わせた正しいモード名に修正
-    // 追加時は "off_time"、削除時は "delete_off"
-    const mode = isOff ? "delete_off" : "off_time";
+    // モード名をサーバーの仕様 (add_off / delete_off) に合わせる
+    const mode = isOff ? "delete_off" : "add_off";
 
     // --- 29分設定の計算（前後への干渉を防ぐ） ---
     const [h, m] = time.split(':').map(Number);
@@ -180,17 +179,17 @@ async function toggleOffTime(date, time) {
                 mode: mode, 
                 date: date, 
                 time: time, 
-                end_time: end_time, 
+                end_time: end_time, // 29分間として保存
                 password: password 
             })
         });
 
         if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(`エラー: ${response.status} ${errorText}`);
+            const errorBody = await response.text();
+            throw new Error(`サーバーエラー: ${response.status} ${errorBody}`);
         }
 
-        // 成功したらデータを再読み込みして画面を更新
+        // 成功したらデータを最新にして画面を更新
         await fetchData(); 
         render();
     } catch (err) {
