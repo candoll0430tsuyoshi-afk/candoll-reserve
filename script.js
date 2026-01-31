@@ -284,7 +284,6 @@ if (addMenu) {
     newSelect.value = ""; 
 
     // 2. 余白を「10px」で完全に統一する
-    // 全てのセレクトボックスに対して、上マージンを消して下マージン10pxに統一します
     currentSelects.forEach(s => {
       s.style.marginTop = "0px";
       s.style.marginBottom = "10px";
@@ -292,12 +291,12 @@ if (addMenu) {
     newSelect.style.marginTop = "0px";
     newSelect.style.marginBottom = "10px";
 
-    // 3. メニュー変更時の命令（枠の更新 ＋ 施術時間の文字更新）
+    // 3. 【重要】新しいメニューが変わった時に、枠(〇×)と文字(時間表示)の両方を更新
     newSelect.onchange = () => {
-      // 予約枠（〇×）の更新
+      // 予約可能枠(〇×)の計算
       updateTimeOptions(); 
       
-      // 施術時間の表示（〇〇分）を全メニュー合計して更新
+      // ★ここがポイント：全てのメニューを合計して「施術時間」を書き換える
       let total = 0;
       const allSelects = document.querySelectorAll(".menu-select");
       allSelects.forEach(s => {
