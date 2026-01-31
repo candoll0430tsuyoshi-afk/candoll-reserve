@@ -151,47 +151,6 @@ function setupSelectColorChange(selectElement) {
   });
 }
 
-// メニュー追加ボタンのイベント設定（DOMContentLoaded後に実行）
-document.addEventListener("DOMContentLoaded", () => {
-  const addMenuBtn = document.getElementById("addMenu");
-  if (addMenuBtn) {
-    addMenuBtn.addEventListener("click", () => {
-      const menuContainer = document.getElementById("menuContainer");
-      if (!menuContainer) return;
-      
-      const newSelect = document.createElement("select");
-      newSelect.className = "menu-select placeholder-color";
-      newSelect.required = true;
-      
-      // メニューオプションをレンダリング
-      const categories = {
-        "組み合わせ": ["＋", "+"],
-        "カット": ["カット"],
-        "カラー": ["カラー", "ヘナ"],
-        "パーマ": ["パーマ"],
-        "ストレート": ["ストレート"],
-        "トリートメント": ["トリートメント"],
-        "メニュー未定": ["相談"]
-      };
-      
-      const menuData = Object.keys(MENU_DATA).map(name => ({ 
-        name: name, 
-        duration: MENU_DATA[name] 
-      }));
-      
-      renderMenuOptions(newSelect, menuData, categories);
-      
-      // ★重要: 新しく追加したセレクトにもイベントリスナーを設定
-      setupSelectColorChange(newSelect);
-      
-      menuContainer.appendChild(newSelect);
-      
-      // 施術時間を即座に更新（空欄が追加されただけなので変わらないが、一貫性のため）
-      updateTotalDurationDisplay();
-    });
-  }
-});
-
 function renderMenuOptions(selectElement, data, categories) {
   selectElement.innerHTML = '<option value="">メニューを選択</option>';
   
@@ -337,16 +296,8 @@ if (addMenu) {
       // 予約可能枠(〇×)の計算
       updateTimeOptions(); 
       
-      // ★ここがポイント：全てのメニューを合計して「施術時間」を書き換える
-      let total = 0;
-      const allSelects = document.querySelectorAll(".menu-select");
-      allSelects.forEach(s => {
-        total += (MENU_DATA[s.value] || 0);
-      });
-      const durationElement = document.getElementById("selected-duration");
-      if (durationElement) {
-        durationElement.textContent = `所要時間：約${total}分`;
-      }
+      // ★施術時間の表示を更新
+      updateTotalDurationDisplay();
     };
 
     container.appendChild(newSelect);
