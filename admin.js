@@ -80,20 +80,24 @@ function render() {
     wrap.style.flexDirection = isMobile ? "column" : "row";
     wrap.style.gap = "15px";
     
-    // バナーの日付表示
-    if (isMobile) {
-        // スマホは基準日のみ表示
-        document.getElementById('nav-current').innerText = baseDate.toLocaleDateString('ja-JP', { month: '2-digit', day: '2-digit', weekday: 'short' });
-    } else {
-        // PCは3日分を横並びで表示
-        let navDates = '';
+    const navCurrent = document.getElementById('nav-current');
+    
+    // PCの場合：3日分のヘッダーを横並びで表示
+    if (!isMobile) {
+        let navDates = '<div style="display:flex; width:100%; justify-content:space-around;">';
         for (let i = 0; i < 3; i++) {
             const d = new Date(baseDate);
             d.setDate(d.getDate() + i);
             const w = d.getDay();
-            navDates += `<span style="display:inline-block; width:33%; text-align:center; font-weight:bold;">${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')} (${['日','月','火','水','木','金','土'][w]})</span>`;
+            navDates += `<div style="flex:1; text-align:center;">${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')} (${['日','月','火','水','木','金','土'][w]})</div>`;
         }
-        document.getElementById('nav-current').innerHTML = navDates;
+        navDates += '</div>';
+        navCurrent.innerHTML = navDates;
+    } else {
+        // スマホは初期表示（1日目）
+        const d = new Date(baseDate);
+        const w = d.getDay();
+        navCurrent.innerHTML = `${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')} (${['日','月','火','水','木','金','土'][w]})`;
     }
     
     for (let i = 0; i < 3; i++) {
@@ -103,6 +107,8 @@ function render() {
         const col = document.createElement('div');
         col.className = 'day-column';
         col.id = `col-${dateStr}`;
+        col.dataset.index = i; // スマホ用のインデックス
+        col.dataset.date = dateStr; // スマホ用の日付
         col.style.flex = "1";
         const w = d.getDay();
         const isClosed = (w === 1 || w === 2 || holidays.some(h => h.date === dateStr)) && !specialOpens.some(s => s.date === dateStr);
@@ -125,7 +131,51 @@ function render() {
         }
         wrap.appendChild(col);
     }
+    
+    // スマホ用：スクロールで日付バナーを切り替え
+    if (isMobile) {
+        setupMobileScroll();
+    }
+    
     setTimeout(updateNowLine, 300); 
+}
+
+// スマホ用：スクロールで日付バナーを更新
+function setupMobileScroll() {
+    const wrap = document.getElementById('days-wrapper');
+    const navCurrent = document.getElementById('nav-current');
+    
+    let lastIndex = -1;
+    
+    const updateBanner = () => {
+        const columns = Array.from(wrap.querySelectorAll('.day-column'));
+        let currentIndex = 0;
+        let minDistance = Infinity;
+        
+        // 画面上部に最も近いカラムを見つける
+        columns.forEach((col, index) => {
+            const rect = col.getBoundingClientRect();
+            const distance = Math.abs(rect.top - 100); // ナビゲーションバーの高さを考慮
+            
+            if (distance < minDistance) {
+                minDistance = distance;
+                currentIndex = index;
+            }
+        });
+        
+        // 日付が変わった時だけバナーを更新
+        if (currentIndex !== lastIndex) {
+            lastIndex = currentIndex;
+            const d = new Date(baseDate);
+            d.setDate(d.getDate() + currentIndex);
+            const w = d.getDay();
+            navCurrent.innerHTML = `${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')} (${['日','月','火','水','木','金','土'][w]})`;
+        }
+    };
+    
+    // スクロールイベント
+    window.addEventListener('scroll', updateBanner);
+    wrap.addEventListener('scroll', updateBanner);
 }
 
 function renderSlot(col, date, time, isClosed) {
