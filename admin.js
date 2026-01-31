@@ -158,16 +158,31 @@ function renderSlot(col, date, time, isClosed) {
     col.appendChild(div);
 }
 
-// ★予約不可の切り替え（admin-serviceを通す）
-async function toggleOffTime(date, time, isOff) {
+async function toggleOff(date, time) {
     const password = localStorage.getItem('admin_password');
-    const mode = isOff ? "delOff" : "addOff"; 
+    const isOff = offTimes.some(o => o.date === date && o.time === time);
+    const mode = isOff ? "delete_off" : "add_off";
+
+    // --- ここを修正：29分設定に変更 ---
+    const [h, m] = time.split(':').map(Number);
+    // 元々は m + 30 だったのを m + 29 に変更します
+    const endD = new Date(2000, 0, 1, h, m + 29); 
+    const end_time = `${String(endD.getHours()).padStart(2,'0')}:${String(endD.getMinutes()).padStart(2,'0')}`;
+    // --------------------------------
+
     await fetch("https://bcahztzetpfuklipjmxx.supabase.co/functions/v1/admin-service", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ mode: mode, date: date, time: time, password: password })
+        body: JSON.stringify({ 
+            mode: mode, 
+            date: date, 
+            time: time, 
+            end_time: end_time, 
+            password: password 
+        })
     });
-    closeModal(); await fetchData(); render(); 
+    await fetchData(); 
+    render();
 }
 
 async function openSlotModal(date, time, res, isOff) {
