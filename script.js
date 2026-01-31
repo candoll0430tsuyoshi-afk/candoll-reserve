@@ -281,9 +281,9 @@ if (addMenu) {
 
     // 1. コピーを作成
     const newSelect = currentSelects[0].cloneNode(true);
-    newSelect.value = "";
-    
-    // 2. 余白を「10px」で統一
+    newSelect.value = ""; 
+
+    // 2. 余白を「10px」で完全に統一する
     currentSelects.forEach(s => {
       s.style.marginTop = "0px";
       s.style.marginBottom = "10px";
@@ -291,17 +291,10 @@ if (addMenu) {
     newSelect.style.marginTop = "0px";
     newSelect.style.marginBottom = "10px";
 
-    // 3. イベントリスナーの設定
-    // setupSelectColorChange を使うことで色変更と「合計時間の更新」を両方行います
-    setupSelectColorChange(newSelect);
-
-    container.appendChild(newSelect);
-
-    // 追加した直後にも表示を更新
-    updateTotalDurationDisplay();
-    updateTimeOptions();
-  };
-}
+    // 3. 【重要】新しいメニューが変わった時に、枠(〇×)と文字(時間表示)の両方を更新
+    newSelect.onchange = () => {
+      // 予約可能枠(〇×)の計算
+      updateTimeOptions(); 
       
       // ★ここがポイント：全てのメニューを合計して「施術時間」を書き換える
       let total = 0;
