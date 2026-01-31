@@ -395,7 +395,42 @@ async function updateTimeOptions() {
     gridContainer.appendChild(slot);
   }); // slots.forEach の閉じ
 } // updateTimeOptions の閉じ
+// 最新の予約状況（全日休み・個別休み・重複予約）をすべて確認する関数
+async function checkFinalAvailability(date, time) {
+  try {
+    // 1. 全日休みの確認 (holidaysテーブル)
+    const { data: holiday } = await supabaseClient
+      .from("holidays")
+      .select("id")
+      .eq("date", date)
+      .maybeSingle();
+    if (holiday) return false;
 
+    // 2. 個別休みの確認 (off_timesテーブル)
+    const { data: offTime } = await supabaseClient
+      .from("off_times")
+      .select("id")
+      .eq("date", date)
+      .eq("time", time)
+      .maybeSingle();
+    // データが存在すれば(length > 0)予約不可
+    if (offTime) return false;
+
+    // 3. 他の予約との重複確認 (reservationsテーブル)
+    const { data: reservation } = await supabaseClient
+      .from("reservations")
+      .select("id")
+      .eq("date", date)
+      .eq("time", time)
+      .maybeSingle();
+    if (reservation) return false;
+
+    return true; // すべて問題なければOK
+  } catch (err) {
+    console.error("Check Error:", err);
+    return false;
+  }
+}
 // ===== 予約送信 =====
 document.getElementById("reserveForm").onsubmit = async e => {
   e.preventDefault();
@@ -409,6 +444,15 @@ document.getElementById("reserveForm").onsubmit = async e => {
     return;
   }
   
+  // --- 【追加】確認画面に進む前の空き状況ダブルチェック ---
+  const isAvailable = await checkFinalAvailability(dateValue, time);
+  if (!isAvailable) {
+    alert("申し訳ございません。選択された日時は予約不可となったか、既に予約が入ってしまいました。別の日時を選択してください。");
+    location.reload();
+    return;
+  }
+  // --------------------------------------------------
+
   const footer = document.querySelector(".sticky-footer");
   if (footer) footer.style.display = "none";
 
@@ -433,20 +477,14 @@ document.getElementById("reserveForm").onsubmit = async e => {
     btn.innerText = "送信中...";
 
     try {
-      // 1. 最終チェック：最新の空き状況を確認 (off_timesテーブル)
-      const { data: latestOff, error: offError } = await supabaseClient
-        .from("off_times")
-        .select("id")
-        .eq("date", dateValue)
-        .eq("time", time);
-
-      if (offError) throw offError;
-
-      if (latestOff && latestOff.length > 0) {
-        alert("申し訳ございません。もう一度最初からやり直してください。");
+      // --- 【追加】送信直前の最終トリプルチェック ---
+      const finalCheck = await checkFinalAvailability(dateValue, time);
+      if (!finalCheck) {
+        alert("申し訳ございません。タッチの差で予約が埋まってしまいました。");
         location.reload();
         return;
       }
+      // --------------------------------------------
 
       // 2. 終了時間の計算
       const [sh, sm] = time.split(":").map(Number);
@@ -464,6 +502,8 @@ document.getElementById("reserveForm").onsubmit = async e => {
       }]).select();
 
       if (error) throw error;
+      
+      // 以降、成功時の処理（完了画面表示など）へ続く...
 
       // 4. LINE通知を飛ばす
       const messageText = `【ご予約内容】\n名前：${name} 様\n日時：${formattedDate} (${dow}) ${time}\n${prettyDuration}\nメニュー：${menus.join(", ")}\n\nご予約のキャンセルはこちらから\nhttps://liff.line.me/2008611644-EZd5nkl0?action=cancel`;
