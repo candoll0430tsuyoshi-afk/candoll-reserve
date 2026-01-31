@@ -270,7 +270,7 @@ function updateDateOptions() {
 // --- メニュー追加ボタン・余白・施術時間の完全修正版 ---
 const addMenu = document.getElementById("addMenu");
 if (addMenu) {
-  addMenu.onclick = () => {
+addMenu.onclick = async () => {
     const container = document.getElementById("menuContainer");
     const currentSelects = container.querySelectorAll(".menu-select");
     
