@@ -82,17 +82,35 @@ function render() {
     
     const navCurrent = document.getElementById('nav-current');
     
-    // PCの場合：3日分のヘッダーを横並びで表示
+    // PCの場合：ナビゲーションには何も表示せず、予約エリアの直前にヘッダーを追加
     if (!isMobile) {
-        let navDates = '<div style="display:flex; width:100%; justify-content:space-around;">';
+        navCurrent.innerHTML = '';  // ナビゲーションバナーを空に
+        
+        // 3日分のヘッダーを作成
+        const headerRow = document.createElement('div');
+        headerRow.style.display = "flex";
+        headerRow.style.gap = "15px";
+        headerRow.style.marginBottom = "10px";
+        headerRow.style.padding = "0 10px";
+        
         for (let i = 0; i < 3; i++) {
             const d = new Date(baseDate);
             d.setDate(d.getDate() + i);
             const w = d.getDay();
-            navDates += `<div style="flex:1; text-align:center;">${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')} (${['日','月','火','水','木','金','土'][w]})</div>`;
+            const headerCell = document.createElement('div');
+            headerCell.style.flex = "1";
+            headerCell.style.textAlign = "center";
+            headerCell.style.fontWeight = "bold";
+            headerCell.style.fontSize = "16px";
+            headerCell.style.padding = "10px";
+            headerCell.style.background = "#f2f2f7";
+            headerCell.style.borderRadius = "8px";
+            headerCell.innerHTML = `${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')} (${['日','月','火','水','木','金','土'][w]})`;
+            headerRow.appendChild(headerCell);
         }
-        navDates += '</div>';
-        navCurrent.innerHTML = navDates;
+        
+        // days-wrapperの直前に挿入
+        wrap.parentElement.insertBefore(headerRow, wrap);
     } else {
         // スマホは初期表示（1日目）
         const d = new Date(baseDate);
@@ -107,8 +125,8 @@ function render() {
         const col = document.createElement('div');
         col.className = 'day-column';
         col.id = `col-${dateStr}`;
-        col.dataset.index = i; // スマホ用のインデックス
-        col.dataset.date = dateStr; // スマホ用の日付
+        col.dataset.index = i;
+        col.dataset.date = dateStr;
         col.style.flex = "1";
         const w = d.getDay();
         const isClosed = (w === 1 || w === 2 || holidays.some(h => h.date === dateStr)) && !specialOpens.some(s => s.date === dateStr);
