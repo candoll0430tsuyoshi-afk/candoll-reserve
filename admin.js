@@ -296,14 +296,34 @@ window.saveChanges = async function(id) {
     closeModal(); await fetchData(); render();
 };
 async function addManual(date, time) {
-    const name = document.getElementById('manual-name').value, menus = document.getElementById('manual-menu').value, password = localStorage.getItem('admin_password');
+    const name = document.getElementById('manual-name').value;
+    const menus = document.getElementById('manual-menu').value;
+    const password = localStorage.getItem('admin_password');
+    
     if (!name) return alert("名前を入力してください");
+    
+    // ★ end_timeを計算（この部分を追加）
+    const duration = MENU_DURATION[menus] || 60;
+    const [h, m] = time.split(':').map(Number);
+    const endD = new Date(2000, 0, 1, h, m + duration);
+    const end_time = `${String(endD.getHours()).padStart(2, '0')}:${String(endD.getMinutes()).padStart(2, '0')}`;
+    
     await fetch("https://bcahztzetpfuklipjmxx.supabase.co/functions/v1/admin-service", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ mode: "add", name, date, time, menus, end_time, password: password })
+        body: JSON.stringify({ 
+            mode: "add", 
+            name, 
+            date, 
+            time, 
+            menus, 
+            end_time,  // ← これを追加
+            password: password 
+        })
     });
-    closeModal(); await fetchData(); render();
+    closeModal(); 
+    await fetchData(); 
+    render();
 }
 async function toggleDay(date, isClosed) {
     const password = localStorage.getItem('admin_password'), mode = isClosed ? "delHoliday" : "addHoliday";
