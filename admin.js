@@ -82,12 +82,17 @@ function render() {
     
     const navCurrent = document.getElementById('nav-current');
     
+    // 既存の日付ヘッダーを削除（重複防止）
+    const existingHeader = document.getElementById('date-header-row');
+    if (existingHeader) existingHeader.remove();
+    
     // PCの場合：ナビゲーションには何も表示せず、予約エリアの直前にヘッダーを追加
     if (!isMobile) {
         navCurrent.innerHTML = '';  // ナビゲーションバナーを空に
         
         // 3日分のヘッダーを作成
         const headerRow = document.createElement('div');
+        headerRow.id = 'date-header-row';  // IDを追加して削除できるように
         headerRow.style.display = "flex";
         headerRow.style.gap = "15px";
         headerRow.style.marginBottom = "10px";
