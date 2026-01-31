@@ -267,12 +267,10 @@ function updateDateOptions() {
   }
 }
 
-// --- メニュー追加・時間更新・予約実行の完全修正版 ---
-
-// 1. メニュー追加ボタンの処理
+// --- メニュー追加ボタン・余白・施術時間の完全修正版 ---
 const addMenu = document.getElementById("addMenu");
 if (addMenu) {
-  addMenu.onclick = async () => {
+  addMenu.onclick = () => {
     const container = document.getElementById("menuContainer");
     const currentSelects = container.querySelectorAll(".menu-select");
     
@@ -281,9 +279,11 @@ if (addMenu) {
       return;
     }
 
+    // 1. コピーを作成
     const newSelect = currentSelects[0].cloneNode(true);
     newSelect.value = ""; 
 
+    // 2. 余白を「10px」で完全に統一する
     currentSelects.forEach(s => {
       s.style.marginTop = "0px";
       s.style.marginBottom = "10px";
@@ -291,32 +291,44 @@ if (addMenu) {
     newSelect.style.marginTop = "0px";
     newSelect.style.marginBottom = "10px";
 
+    // 3. 【重要】新しいメニューが変わった時に、枠(〇×)と文字(時間表示)の両方を更新
     newSelect.onchange = () => {
+      // 予約可能枠(〇×)の計算
       updateTimeOptions(); 
-      if (typeof updateTotalDurationDisplay === "function") updateTotalDurationDisplay();
+      
+      // ★ここがポイント：全てのメニューを合計して「施術時間」を書き換える
+      let total = 0;
+      const allSelects = document.querySelectorAll(".menu-select");
+      allSelects.forEach(s => {
+        total += (MENU_DATA[s.value] || 0);
+      });
+      const durationElement = document.getElementById("selected-duration");
+      if (durationElement) {
+        durationElement.textContent = `所要時間：約${total}分`;
+      }
     };
 
     container.appendChild(newSelect);
-    await updateTimeOptions();
+
+    // 追加した直後にも一度計算を走らせる
+    updateTimeOptions();
   };
 }
-
-// 2. 予約可能時間の計算ロジック
+// ===== 時間表示ロジック =====
 async function updateTimeOptions() {
-  const dateEl = document.getElementById("date");
+  const date = document.getElementById("date").value;
   const timeSelect = document.getElementById("time");
   const gridContainer = document.getElementById("timeGrid");
-  if (!dateEl || !timeSelect || !gridContainer) return;
-
-  const dateValue = dateEl.value;
+  if (!timeSelect || !gridContainer) return;
+  
   gridContainer.innerHTML = ""; 
   timeSelect.innerHTML = '<option value="">選択</option>';
-  if (!dateValue) return;
+  if (!date) return;
 
   const menus = Array.from(document.querySelectorAll(".menu-select")).map(s => s.value).filter(v => v !== "");
   const required = menus.map(m => MENU_DATA[m] || 0).reduce((a, b) => a + b, 0);
 
-  const { data } = await supabaseClient.from("reservations").select("time,end_time").eq("date", dateValue);
+  const { data } = await supabaseClient.from("reservations").select("time,end_time").eq("date", date);
   const reserved = (data || []).map(r => ({ 
     start: (r.time || "").trim(), 
     end: (r.end_time || "").trim() 
@@ -330,6 +342,8 @@ async function updateTimeOptions() {
     const end = `${String(endD.getHours()).padStart(2,"0")}:${String(endD.getMinutes()).padStart(2,"0")}`;
     
     let isDisabled = (end > "19:00");
+
+    // 時間を数値（分）に変換する関数
     const toMin = t => {
       if (!t) return 0;
       const [h, m] = t.split(":").map(Number);
@@ -339,14 +353,16 @@ async function updateTimeOptions() {
     const slotStart = toMin(start);
     const slotEnd = toMin(end);
 
+    // 1. 管理画面の「予約不可(OFF_TIMES)」との重なりをチェック
     const isOffTimeOverlap = OFF_TIMES.some(o => {
-      if (o.date !== dateValue) return false;
+      if (o.date !== date) return false;
       const offStart = toMin(o.time);
-      const offEnd = offStart + 30;
+      const offEnd = offStart + 30; // 30分枠として扱う
       return (slotStart < offEnd && offStart < slotEnd);
     });
     if (isOffTimeOverlap) isDisabled = true;
 
+    // 2. 既存の予約(reserved)との重なりをチェック
     if (!isDisabled) {
       for (const r of reserved) {
         const resStart = toMin(r.start);
@@ -358,12 +374,14 @@ async function updateTimeOptions() {
       }
     }
 
+    // ドロップダウンへの追加
     const op = document.createElement("option");
     op.value = start;
     op.textContent = start;
     op.disabled = isDisabled;
     timeSelect.appendChild(op);
 
+    // グリッドボタンの作成
     const slot = document.createElement("div");
     slot.className = "time-slot" + (isDisabled ? " disabled" : "");
     slot.textContent = start;
@@ -375,98 +393,113 @@ async function updateTimeOptions() {
       };
     }
     gridContainer.appendChild(slot);
-  });
-}
+  }); // slots.forEach の閉じ
+} // updateTimeOptions の閉じ
 
-// 3. OKボタン（予約実行）
-const okBtn = document.getElementById("okBtn");
-if (okBtn) {
-  okBtn.onclick = async () => {
-    if (okBtn.disabled) return;
+// ===== 予約送信 =====
+document.getElementById("reserveForm").onsubmit = async e => {
+  e.preventDefault();
+  const name = document.getElementById("name").value;
+  const dateValue = document.getElementById("date").value;
+  const time = document.getElementById("time").value;
+  const menus = Array.from(document.querySelectorAll(".menu-select")).map(s => s.value).filter(v => v !== "");
 
-    const name = document.getElementById("name").value;
-    const dateValue = document.getElementById("date").value;
-    const time = document.getElementById("time").value;
-    const menus = Array.from(document.querySelectorAll(".menu-select")).map(s => s.value).filter(v => v !== "");
-    const required = menus.map(m => MENU_DATA[m] || 0).reduce((a, b) => a + b, 0);
+  if (!name || !dateValue || !time || menus.length === 0) {
+    alert("お名前、メニュー、日時をすべて選択してください。");
+    return;
+  }
+  
+  const footer = document.querySelector(".sticky-footer");
+  if (footer) footer.style.display = "none";
 
-    if (!name || !dateValue || !time || menus.length === 0) {
-      alert("名前、日付、メニュー、時間をすべて選択してください。");
-      return;
-    }
+  const required = menus.map(m => MENU_DATA[m] || 0).reduce((a, b) => a + b, 0);
+  const prettyDuration = formatDurationText(required); 
+  
+  const week = ["日", "月", "火", "水", "木", "金", "土"];
+  const d = new Date(dateValue.replace(/-/g, "/"));
+  const dow = week[d.getDay()];
+  const formattedDate = dateValue.replace(/-/g, "/");
 
-    okBtn.disabled = true;
-    okBtn.innerText = "送信中...";
+  document.querySelector(".greeting").style.display = "none";
+  document.getElementById("confirm-text").innerHTML = `<b>お名前</b>：${name}<br><b>メニュー</b>：${menus.join(", ")}<br><b>日時</b>：${formattedDate} (${dow}) ${time}<br><b>${prettyDuration}</b>`;
+  document.getElementById("reserveForm").style.display = "none";
+  document.getElementById("confirm-screen").style.display = "block";
+
+  // OKボタンを押した時の処理
+  document.getElementById("okBtn").onclick = async () => {
+    const btn = document.getElementById("okBtn");
+    if (btn.disabled) return;
+    btn.disabled = true;
+    btn.innerText = "送信中...";
 
     try {
-      // 重複チェック
-      const [{ data: latestRes }, { data: latestOff }] = await Promise.all([
-        supabaseClient.from("reservations").select("time, duration").eq("date", dateValue),
-        supabaseClient.from("off_times").select("time, duration").eq("date", dateValue)
-      ]);
+      // 1. 最終チェック：最新の空き状況を確認 (off_timesテーブル)
+      const { data: latestOff, error: offError } = await supabaseClient
+        .from("off_times")
+        .select("id")
+        .eq("date", dateValue)
+        .eq("time", time);
 
-      const timeToMin = (t) => {
-        const [h, m] = t.split(':').map(Number);
-        return h * 60 + m;
-      };
-      const myStart = timeToMin(time);
-      const myEnd = myStart + required;
+      if (offError) throw offError;
 
-      const checkOverlap = (list) => (list || []).some(item => {
-        const start = timeToMin(item.time);
-        const end = start + (item.duration || 0);
-        return (myStart < end && myEnd > start);
-      });
-
-      if (checkOverlap(latestRes) || checkOverlap(latestOff)) {
-        alert("申し訳ございません。直前に他の予約が入りました。");
+      if (latestOff && latestOff.length > 0) {
+        alert("申し訳ございません。もう一度最初からやり直してください。");
         location.reload();
         return;
       }
 
+      // 2. 終了時間の計算
       const [sh, sm] = time.split(":").map(Number);
       const endD = new Date(2000, 0, 1, sh, sm + required);
       const end_time = `${String(endD.getHours()).padStart(2, "0")}:${String(endD.getMinutes()).padStart(2, "0")}`;
 
-      // 予約保存
-      const { error: insError } = await supabaseClient.from("reservations").insert([{
-        name,
-        date: dateValue,
-        time,
+      // 3. 予約データを保存
+      const { data, error } = await supabaseClient.from("reservations").insert([{ 
+        name, 
+        menus: menus.join(", "), 
+        date: dateValue, 
+        time, 
         end_time,
-        duration: required,
-        menu: menus.join(", "),
-        customer_user_id: customerUserId || "web-user"
-      }]);
+        customer_user_id: customerUserId 
+      }]).select();
 
-      if (insError) throw insError;
+      if (error) throw error;
 
-      // LINE通知
+      // 4. LINE通知を飛ばす
+      const messageText = `【ご予約内容】\n名前：${name} 様\n日時：${formattedDate} (${dow}) ${time}\n${prettyDuration}\nメニュー：${menus.join(", ")}\n\nご予約のキャンセルはこちらから\nhttps://liff.line.me/2008611644-EZd5nkl0?action=cancel`;
+
       try {
-        const dowArr = ["日", "月", "火", "水", "木", "金", "土"];
-        const d = new Date(dateValue);
-        const dow = dowArr[d.getDay()];
-        const messageText = `【予約完了】\n${name}様\n日時：${dateValue}(${dow}) ${time}~\nメニュー：${menus.join(", ")}`;
-        
         await fetch("https://bcahztzetpfuklipjmxx.functions.supabase.co/dynamic-service", {
           method: "POST", 
-          headers: { "Content-Type": "application/json", "x-customer-id": customerUserId || "web-user" },
-          body: JSON.stringify({ mode: "reserve", name, menus: menus.join(", "), date: dateValue, time, customerUserId: customerUserId || "web-user", customMessage: messageText })
+          headers: { 
+            "Content-Type": "application/json",
+            "x-customer-id": customerUserId || "web-user"
+          },
+          body: JSON.stringify({ 
+            mode: "reserve",
+            name: name, 
+            menus: menus.join(", "),
+            date: dateValue, 
+            time: time, 
+            customerUserId: customerUserId || "web-user",
+            customMessage: messageText 
+          })
         });
       } catch (e) {
-        console.error("通知エラー:", e);
+        console.error("通知送信エラー:", e);
       }
 
+      // 5. 完了画面へ
       showCompleteScreen();
 
     } catch (e) {
-      console.error("エラー:", e);
+      console.error("予約エラー:", e);
       alert("通信エラーが発生しました。");
-      okBtn.disabled = false;
-      okBtn.innerText = "OK";
+      btn.disabled = false;
+      btn.innerText = "OK";
     }
   };
-}
+};
 
 document.getElementById("cancelBtn").onclick = () => {
   const footer = document.querySelector(".sticky-footer");
