@@ -313,14 +313,15 @@ async function addReservation() {
 
     const selectedMenus = Array.from(menuEls).map(el => el.value);
     
-    // ステップ1で読み込んだMENU_DURATIONを使って計算
+    // 読み込んだ MENU_DURATION を使って計算
     let totalMin = 0;
     selectedMenus.forEach(m => {
-        totalMin += (MENU_DURATION[m] || 30); // 念のため見つからない場合は30分
+        const d = MENU_DURATION[m] || 30; // データがなければ30分
+        totalMin += d;
     });
 
-    const [h, m] = time.split(':').map(Number);
-    const endD = new Date(2000, 0, 1, h, m + totalMin);
+    const [h, min] = time.split(':').map(Number);
+    const endD = new Date(2000, 0, 1, h, min + totalMin);
     const end_time = `${String(endD.getHours()).padStart(2, '0')}:${String(endD.getMinutes()).padStart(2, '0')}`;
 
     try {
@@ -333,7 +334,7 @@ async function addReservation() {
                 menus: selectedMenus.join(','),
                 date: date,
                 time: time,
-                end_time: end_time, // 計算した終了時間を送る
+                end_time: end_time, // ここで計算した値が入る
                 password: password
             })
         });
