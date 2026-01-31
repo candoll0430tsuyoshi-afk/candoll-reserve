@@ -160,29 +160,42 @@ function renderSlot(col, date, time, isClosed) {
 
 async function toggleOffTime(date, time) {
     const password = localStorage.getItem('admin_password');
-    // 現在の状態を確認。元のコード通り mode は "off_time" と "delete_off" を使用します
+    // 現在の状態を確認
     const isOff = offTimes.some(o => o.date === date && o.time === time);
-    const mode = isOff ? "delete_off" : "off_time";
+    
+    // サーバーのコード（admin-service）に合わせて正確に指定
+    const mode = isOff ? "delOff" : "addOff";
 
-    // --- ここで29分設定に変更 ---
+    // --- 29分設定の計算 ---
     const [h, m] = time.split(':').map(Number);
-    const endD = new Date(2000, 0, 1, h, m + 29); // 30を29に変更
-    const end_t = `${String(endD.getHours()).padStart(2,'0')}:${String(endD.getMinutes()).padStart(2,'0')}`;
+    const endD = new Date(2000, 0, 1, h, m + 29); // 30ではなく29
+    const end_time = `${String(endD.getHours()).padStart(2,'0')}:${String(endD.getMinutes()).padStart(2,'0')}`;
 
-    // 送信データ。元のサーバーが受け取れる変数名(end_time)で送ります
-    await fetch("https://bcahztzetpfuklipjmxx.supabase.co/functions/v1/admin-service", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-            mode: mode, 
-            date: date, 
-            time: time, 
-            end_time: end_t, 
-            password: password 
-        })
-    });
-    await fetchData(); 
-    render();
+    try {
+        const response = await fetch("https://bcahztzetpfuklipjmxx.supabase.co/functions/v1/admin-service", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ 
+                mode: mode, 
+                date: date, 
+                time: time, 
+                end_time: end_time, // 29分として送信
+                password: password 
+            })
+        });
+
+        if (!response.ok) {
+            const errorBody = await response.text();
+            throw new Error(errorBody);
+        }
+
+        // 成功したらリロードせずに画面更新
+        await fetchData(); 
+        render();
+    } catch (err) {
+        console.error("送信エラー:", err);
+        alert("設定の保存に失敗しました。詳細: " + err.message);
+    }
 }
 async function openSlotModal(date, time, res, isOff) {
     const body = document.getElementById('modal-body');
