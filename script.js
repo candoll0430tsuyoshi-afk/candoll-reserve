@@ -267,51 +267,51 @@ function updateDateOptions() {
   }
 }
 
-// --- メニュー追加ボタン・余白・施術時間の完全修正版 ---
+// --- メニュー追加ボタンの処理 ---
 const addMenu = document.getElementById("addMenu");
 if (addMenu) {
   addMenu.onclick = () => {
     const container = document.getElementById("menuContainer");
+    if (!container) return; // エラー防止の安全策
+
     const currentSelects = container.querySelectorAll(".menu-select");
     
+    // 1. 最大3つまでの制限
     if (currentSelects.length >= 3) {
       alert("メニューは最大3つまで選択可能です。");
       return;
     }
 
-    // 1. コピーを作成
+    // 2. 既存の1つ目をコピーして初期化
     const newSelect = currentSelects[0].cloneNode(true);
-    newSelect.value = ""; 
+    newSelect.value = "";
+    newSelect.classList.remove("selected-color");
+    newSelect.classList.add("placeholder-color");
 
-    // 2. 余白を「10px」で完全に統一する
-    currentSelects.forEach(s => {
-      s.style.marginTop = "0px";
-      s.style.marginBottom = "10px";
-    });
-    newSelect.style.marginTop = "0px";
-    newSelect.style.marginBottom = "10px";
-
-    // 3. 【重要】新しいメニューが変わった時に、枠(〇×)と文字(時間表示)の両方を更新
-    newSelect.onchange = () => {
-      // 予約可能枠(〇×)の計算
-      updateTimeOptions(); 
-      
-      // ★ここがポイント：全てのメニューを合計して「施術時間」を書き換える
-      let total = 0;
-      const allSelects = document.querySelectorAll(".menu-select");
-      allSelects.forEach(s => {
-        total += (MENU_DATA[s.value] || 0);
-      });
-      const durationElement = document.getElementById("selected-duration");
-      if (durationElement) {
-        durationElement.textContent = `所要時間：約${total}分`;
-      }
+    // 3. 行間（余白）を10pxで完全に統一
+    const applyUniformStyle = (el) => {
+      el.style.marginTop = "0px";
+      el.style.marginBottom = "10px"; // 1.2.3個目すべて同じ余白
+      el.style.display = "block";    // 縦に並ぶよう明示
+      el.style.width = "100%";       // 横幅を揃える
     };
 
+    // 既存のものも含めてすべてに適用（これでガタつきが消えます）
+    currentSelects.forEach(applyUniformStyle);
+    applyUniformStyle(newSelect);
+
+    // 4. イベントリスナーを設定
+    // script.js内の既存関数を呼び出し、合計時間の更新を有効にします
+    setupSelectColorChange(newSelect);
+
+    // コンテナに追加
     container.appendChild(newSelect);
 
-    // 追加した直後にも一度計算を走らせる
-    updateTimeOptions();
+    // 5. 追加した瞬間に表示を最新の状態にする
+    updateTotalDurationDisplay();
+    if (typeof updateTimeOptions === 'function') {
+      updateTimeOptions();
+    }
   };
 }
 // ===== 時間表示ロジック =====
