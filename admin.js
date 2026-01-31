@@ -275,9 +275,11 @@ window.saveChanges = async function(id) {
     const dur = document.getElementById('new-duration').value;
     const password = localStorage.getItem('admin_password');
 
-    // --- 追加：end_time を計算 ---
-    const timeInput = document.getElementById('res-time').value; // 開始時間
-    const [h, m] = timeInput.split(':').map(Number);
+    // --- 修正：既存の予約データから時間を取得 ---
+    const res = reservations.find(r => r.id == id);
+    if (!res) return alert("予約が見つかりません");
+    
+    const [h, m] = res.time.split(':').map(Number);
     const endD = new Date(2000, 0, 1, h, m + Number(dur));
     const end_time = `${String(endD.getHours()).padStart(2, '0')}:${String(endD.getMinutes()).padStart(2, '0')}`;
     // -------------------------
@@ -289,7 +291,7 @@ window.saveChanges = async function(id) {
             mode: "edit", 
             id: Number(id), 
             manual_duration: Number(dur), 
-            end_time: end_time, // ★ここを追加
+            end_time: end_time,
             password: password 
         })
     });
