@@ -39,17 +39,29 @@ async function initAdmin() {
 async function fetchData(pass = null) {
     const password = pass || localStorage.getItem('admin_password');
     if (!password) return false;
-    try {
+try {
         const response = await fetch("https://bcahztzetpfuklipjmxx.supabase.co/functions/v1/admin-service", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ mode: "list", password: password })
         });
-        const result = await response.json();
-        if (result.error === "AuthError") {
-            localStorage.removeItem('admin_password');
-            return false;
+        if (!response.ok) return false;
+        const data = await response.json();
+        
+        reservations = data.reservations || [];
+        holidays = data.holidays || [];
+        specialOpens = data.special_open || [];
+        offTimes = data.off_times || [];
+
+        // メニュー情報を読み込んで時間をセットする処理を追加
+        if (data.menus) {
+            MENU_DURATION = {};
+            data.menus.forEach(m => {
+                MENU_DURATION[m.name] = m.duration;
+            });
         }
+
+        return true;
         reservations = result.reservations || [];
         // ★ここを確実に同期させる
         offTimes = result.off_times || []; 
@@ -295,7 +307,6 @@ async function toggleDay(date, isClosed) {
     });
     await fetchData(); render();
 }
-// --- ここから貼り付け ---
 async function addReservation() {
     const name = document.getElementById('res-name').value;
     const date = document.getElementById('res-date').value;
@@ -310,10 +321,10 @@ async function addReservation() {
 
     const selectedMenus = Array.from(menuEls).map(el => el.value);
     
-    // 所要時間の計算
+    // ステップ1で読み込んだMENU_DURATIONを使って計算
     let totalMin = 0;
     selectedMenus.forEach(m => {
-        totalMin += (MENU_DURATION[m] || 30);
+        totalMin += (MENU_DURATION[m] || 30); // 念のため見つからない場合は30分
     });
 
     const [h, m] = time.split(':').map(Number);
@@ -330,15 +341,12 @@ async function addReservation() {
                 menus: selectedMenus.join(','),
                 date: date,
                 time: time,
-                end_time: end_time,
+                end_time: end_time, // 計算した終了時間を送る
                 password: password
             })
         });
 
-        if (!response.ok) {
-            const errText = await response.text();
-            throw new Error(errText);
-        }
+        if (!response.ok) throw new Error("保存失敗");
 
         alert("予約を保存しました");
         closeModal();
@@ -346,11 +354,9 @@ async function addReservation() {
         render();
 
     } catch (err) {
-        console.error("保存失敗:", err);
         alert("保存に失敗しました。パスワードを確認してください。");
     }
 }
-// --- ここまで貼り付け ---
 async function deleteRes(id) {
     if (!confirm("削除しますか？")) return;
     const password = localStorage.getItem('admin_password');
