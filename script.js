@@ -267,6 +267,7 @@ function updateDateOptions() {
   }
 }
 
+// --- メニュー追加ボタン・余白・施術時間の完全修正版 ---
 const addMenu = document.getElementById("addMenu");
 if (addMenu) {
   addMenu.onclick = () => {
@@ -282,30 +283,36 @@ if (addMenu) {
     const newSelect = currentSelects[0].cloneNode(true);
     newSelect.value = ""; 
 
-    // 2. 余白を「完全に一定」にする（10pxで統一）
-    // CSSの干渉を防ぐため、1つ目も含めてマージンを強制固定します
-    currentSelects[0].style.marginBottom = "10px"; 
-    newSelect.style.marginBottom = "10px";
+    // 2. 余白を「10px」で完全に統一する
+    // 全てのセレクトボックスに対して、上マージンを消して下マージン10pxに統一します
+    currentSelects.forEach(s => {
+      s.style.marginTop = "0px";
+      s.style.marginBottom = "10px";
+    });
     newSelect.style.marginTop = "0px";
+    newSelect.style.marginBottom = "10px";
 
-    // 3. メニュー変更時の命令（時間枠とテキスト表示の両方を更新）
+    // 3. メニュー変更時の命令（枠の更新 ＋ 施術時間の文字更新）
     newSelect.onchange = () => {
-      // 予約枠（〇や×）を更新
+      // 予約枠（〇×）の更新
       updateTimeOptions(); 
       
-      // 画面上の「所要時間：〇分」という文字も更新
-      if (typeof updateDurationText === "function") {
-        updateDurationText(); 
+      // 施術時間の表示（〇〇分）を全メニュー合計して更新
+      let total = 0;
+      const allSelects = document.querySelectorAll(".menu-select");
+      allSelects.forEach(s => {
+        total += (MENU_DATA[s.value] || 0);
+      });
+      const durationElement = document.getElementById("selected-duration");
+      if (durationElement) {
+        durationElement.textContent = `所要時間：約${total}分`;
       }
     };
 
     container.appendChild(newSelect);
 
-    // 追加した瞬間に計算を走らせる
+    // 追加した直後にも一度計算を走らせる
     updateTimeOptions();
-    if (typeof updateDurationText === "function") {
-      updateDurationText();
-    }
   };
 }
 // ===== 時間表示ロジック =====
