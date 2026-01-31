@@ -160,43 +160,22 @@ function renderSlot(col, date, time, isClosed) {
 
 async function toggleOffTime(date, time) {
     const password = localStorage.getItem('admin_password');
-    // 現在の状態を確認 (offTimes変数が定義されている必要があります)
+    // 元のコードの判定
     const isOff = offTimes.some(o => o.date === date && o.time === time);
-    
-    // 【重要】サーバーが認識する正しい名前
-    // 追加時は "off"、削除時は "delete_off" 
     const mode = isOff ? "delete_off" : "off";
 
-    // --- 29分設定の計算（11:30の枠などを消さないための工夫） ---
+    // --- ここで29分設定に変更 ---
     const [h, m] = time.split(':').map(Number);
-    const endD = new Date(2000, 0, 1, h, m + 29); // 30ではなく29
+    const endD = new Date(2000, 0, 1, h, m + 29); // 30を29に変更
     const end_time = `${String(endD.getHours()).padStart(2,'0')}:${String(endD.getMinutes()).padStart(2,'0')}`;
 
-    try {
-        const response = await fetch("https://bcahztzetpfuklipjmxx.supabase.co/functions/v1/admin-service", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ 
-                mode: mode, 
-                date: date, 
-                time: time, 
-                end_time: end_time, // 29分として送信
-                password: password 
-            })
-        });
-
-        if (!response.ok) {
-            const errorBody = await response.text();
-            throw new Error(`サーバーエラー: ${response.status} ${errorBody}`);
-        }
-
-        // 成功したらデータを最新にして画面を再描画
-        await fetchData(); 
-        render();
-    } catch (err) {
-        console.error("送信エラー:", err);
-        alert("設定の保存に失敗しました。詳細: " + err.message);
-    }
+    // 通信部分は元のコードのまま
+    await fetch("https://bcahztzetpfuklipjmxx.supabase.co/functions/v1/admin-service", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mode: mode, date: date, time: time, end_time: end_time, password: password })
+    });
+    await fetchData(); render();
 }
 async function openSlotModal(date, time, res, isOff) {
     const body = document.getElementById('modal-body');
