@@ -46,16 +46,15 @@ async function fetchData(pass = null) {
             body: JSON.stringify({ mode: "list", password: password })
         });
         if (!response.ok) return false;
-        
         const data = await response.json();
         
-        // データを変数に代入
+        // データを各変数に正しく格納
         reservations = data.reservations || [];
         holidays = data.holidays || [];
         specialOpens = data.special_open || [];
         offTimes = data.off_times || [];
 
-        // メニュー情報を読み込んで時間をセット（重要）
+        // Supabaseから受け取ったメニュー情報を MENU_DURATION に同期
         if (data.menus) {
             MENU_DURATION = {};
             data.menus.forEach(m => {
@@ -63,9 +62,7 @@ async function fetchData(pass = null) {
             });
         }
 
-        // 最後に1回だけ true を返す
-        return true;
-
+        return true; // ここで初めて終わる
     } catch (e) {
         console.error("Fetch error:", e);
         return false;
