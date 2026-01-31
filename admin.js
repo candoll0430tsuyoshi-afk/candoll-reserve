@@ -90,10 +90,10 @@ function render() {
         col.style.flex = "1";
         const w = d.getDay();
         const isClosed = (w === 1 || w === 2 || holidays.some(h => h.date === dateStr)) && !specialOpens.some(s => s.date === dateStr);
-        col.innerHTML = `<div style="background:#f2f2f7; padding:12px; text-align:center; border-bottom:1px solid #ddd;">
-            <b style="font-size:16px;">${dateStr} (${['日','月','火','水','木','金','土'][w]})</b>
-            <div onclick="toggleDay('${dateStr}', ${isClosed})" style="font-size:11px; text-decoration:underline; cursor:pointer; color:#007aff;">${isClosed ? '営業にする' : '休みにする'}</div>
-        </div>`;
+col.innerHTML = `<div style="background:linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding:12px; text-align:center; border-bottom:1px solid #ddd; border-radius:12px 12px 0 0;">
+    <b style="font-size:16px; color:white;">${dateStr} (${['日','月','火','水','木','金','土'][w]})</b>
+    <div onclick="toggleDay('${dateStr}', ${isClosed})" style="font-size:11px; text-decoration:underline; cursor:pointer; color:white; opacity:0.9;">${isClosed ? '営業にする' : '休みにする'}</div>
+</div>`;
         for (let h = 10; h <= 18; h++) {
             ['00', '30'].forEach(m => { renderSlot(col, dateStr, `${String(h).padStart(2, '0')}:${m}`, isClosed); });
         }
