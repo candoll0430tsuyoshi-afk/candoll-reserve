@@ -78,8 +78,18 @@ function render() {
     wrap.style.display = "flex";
     wrap.style.flexDirection = window.innerWidth < 600 ? "column" : "row";
     wrap.style.gap = "15px";
-    document.getElementById('nav-current').innerText = baseDate.toLocaleDateString('ja-JP', { month: '2-digit', day: '2-digit', weekday: 'short' });
-
+    
+    // 3日分の日付をバナーに表示
+    let navDates = '';
+    for (let i = 0; i < 3; i++) {
+        const d = new Date(baseDate);
+        d.setDate(d.getDate() + i);
+        const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        const w = d.getDay();
+        navDates += `<span style="margin:0 10px; font-weight:bold;">${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')} (${['日','月','火','水','木','金','土'][w]})</span>`;
+    }
+    document.getElementById('nav-current').innerHTML = navDates;
+    
     for (let i = 0; i < 3; i++) {
         const d = new Date(baseDate);
         d.setDate(d.getDate() + i);
@@ -90,10 +100,9 @@ function render() {
         col.style.flex = "1";
         const w = d.getDay();
         const isClosed = (w === 1 || w === 2 || holidays.some(h => h.date === dateStr)) && !specialOpens.some(s => s.date === dateStr);
-col.innerHTML = `<div style="background:linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding:12px; text-align:center; border-bottom:1px solid #ddd; border-radius:12px 12px 0 0; position:sticky; top:0; z-index:10;">
-    <b style="font-size:16px; color:white;">${dateStr} (${['日','月','火','水','木','金','土'][w]})</b>
-    <div onclick="toggleDay('${dateStr}', ${isClosed})" style="font-size:11px; text-decoration:underline; cursor:pointer; color:white; opacity:0.9;">${isClosed ? '営業にする' : '休みにする'}</div>
-</div>`;
+        col.innerHTML = `<div style="background:#f2f2f7; padding:8px; text-align:center; border-bottom:1px solid #ddd;">
+            <div onclick="toggleDay('${dateStr}', ${isClosed})" style="font-size:11px; text-decoration:underline; cursor:pointer; color:#007aff;">${isClosed ? '営業にする' : '休みにする'}</div>
+        </div>`;
         for (let h = 10; h <= 18; h++) {
             ['00', '30'].forEach(m => { renderSlot(col, dateStr, `${String(h).padStart(2, '0')}:${m}`, isClosed); });
         }
