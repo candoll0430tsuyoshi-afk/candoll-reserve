@@ -267,7 +267,9 @@ function updateDateOptions() {
   }
 }
 
-// --- メニュー追加ボタン・余白・施術時間の完全修正版 ---
+// --- メニュー追加・時間更新・予約実行の完全修正版 ---
+
+// 1. メニュー追加ボタンの処理
 const addMenu = document.getElementById("addMenu");
 if (addMenu) {
   addMenu.onclick = async () => {
@@ -279,11 +281,9 @@ if (addMenu) {
       return;
     }
 
-    // 1. コピーを作成
     const newSelect = currentSelects[0].cloneNode(true);
     newSelect.value = ""; 
 
-    // 2. 余白を「10px」で完全に統一する
     currentSelects.forEach(s => {
       s.style.marginTop = "0px";
       s.style.marginBottom = "10px";
@@ -291,7 +291,6 @@ if (addMenu) {
     newSelect.style.marginTop = "0px";
     newSelect.style.marginBottom = "10px";
 
-    // 3. メニューが変わった時の更新
     newSelect.onchange = () => {
       updateTimeOptions(); 
       if (typeof updateTotalDurationDisplay === "function") updateTotalDurationDisplay();
@@ -302,14 +301,14 @@ if (addMenu) {
   };
 }
 
-// ===== 時間表示ロジック =====
+// 2. 予約可能時間の計算ロジック
 async function updateTimeOptions() {
-  const dateInput = document.getElementById("date");
+  const dateEl = document.getElementById("date");
   const timeSelect = document.getElementById("time");
   const gridContainer = document.getElementById("timeGrid");
-  if (!dateInput || !timeSelect || !gridContainer) return;
+  if (!dateEl || !timeSelect || !gridContainer) return;
 
-  const dateValue = dateInput.value;
+  const dateValue = dateEl.value;
   gridContainer.innerHTML = ""; 
   timeSelect.innerHTML = '<option value="">選択</option>';
   if (!dateValue) return;
@@ -379,13 +378,12 @@ async function updateTimeOptions() {
   });
 }
 
-// OKボタンを押した時の最終処理
+// 3. OKボタン（予約実行）
 const okBtn = document.getElementById("okBtn");
 if (okBtn) {
   okBtn.onclick = async () => {
     if (okBtn.disabled) return;
 
-    // 入力値の取得
     const name = document.getElementById("name").value;
     const dateValue = document.getElementById("date").value;
     const time = document.getElementById("time").value;
@@ -393,7 +391,7 @@ if (okBtn) {
     const required = menus.map(m => MENU_DATA[m] || 0).reduce((a, b) => a + b, 0);
 
     if (!name || !dateValue || !time || menus.length === 0) {
-      alert("名前、日付、メニュー、時間を選択してください。");
+      alert("名前、日付、メニュー、時間をすべて選択してください。");
       return;
     }
 
@@ -401,7 +399,7 @@ if (okBtn) {
     okBtn.innerText = "送信中...";
 
     try {
-      // 1. 最新の重複チェック
+      // 重複チェック
       const [{ data: latestRes }, { data: latestOff }] = await Promise.all([
         supabaseClient.from("reservations").select("time, duration").eq("date", dateValue),
         supabaseClient.from("off_times").select("time, duration").eq("date", dateValue)
@@ -421,17 +419,16 @@ if (okBtn) {
       });
 
       if (checkOverlap(latestRes) || checkOverlap(latestOff)) {
-        alert("申し訳ございません。入力中に他の予約が入りました。もう一度お選びください。");
+        alert("申し訳ございません。直前に他の予約が入りました。");
         location.reload();
         return;
       }
 
-      // 2. 終了時間の算出
       const [sh, sm] = time.split(":").map(Number);
       const endD = new Date(2000, 0, 1, sh, sm + required);
       const end_time = `${String(endD.getHours()).padStart(2, "0")}:${String(endD.getMinutes()).padStart(2, "0")}`;
 
-      // 3. データベースへ保存
+      // 予約保存
       const { error: insError } = await supabaseClient.from("reservations").insert([{
         name,
         date: dateValue,
@@ -444,9 +441,11 @@ if (okBtn) {
 
       if (insError) throw insError;
 
-      // 4. LINE通知（関数が定義されている場合）
+      // LINE通知
       try {
-        const dow = new Date(dateValue).toLocaleDateString('ja-JP', { weekday: 'short' });
+        const dowArr = ["日", "月", "火", "水", "木", "金", "土"];
+        const d = new Date(dateValue);
+        const dow = dowArr[d.getDay()];
         const messageText = `【予約完了】\n${name}様\n日時：${dateValue}(${dow}) ${time}~\nメニュー：${menus.join(", ")}`;
         
         await fetch("https://bcahztzetpfuklipjmxx.functions.supabase.co/dynamic-service", {
@@ -455,15 +454,14 @@ if (okBtn) {
           body: JSON.stringify({ mode: "reserve", name, menus: menus.join(", "), date: dateValue, time, customerUserId: customerUserId || "web-user", customMessage: messageText })
         });
       } catch (e) {
-        console.error("通知送信エラー:", e);
+        console.error("通知エラー:", e);
       }
 
-      // 5. 完了画面表示
       showCompleteScreen();
 
     } catch (e) {
-      console.error("予約実行エラー:", e);
-      alert("エラーが発生しました。");
+      console.error("エラー:", e);
+      alert("通信エラーが発生しました。");
       okBtn.disabled = false;
       okBtn.innerText = "OK";
     }
