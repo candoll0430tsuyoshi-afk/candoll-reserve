@@ -388,36 +388,7 @@ async function updateTimeOptions() {
   }); // slots.forEach の閉じ
 } // updateTimeOptions の閉じ
 
-// ===== 予約送信 =====
-document.getElementById("reserveForm").onsubmit = async e => {
-  e.preventDefault();
-  const name = document.getElementById("name").value;
-  const dateValue = document.getElementById("date").value;
-  const time = document.getElementById("time").value;
-  const menus = Array.from(document.querySelectorAll(".menu-select")).map(s => s.value).filter(v => v !== "");
-
-  if (!name || !dateValue || !time || menus.length === 0) {
-    alert("お名前、メニュー、日時をすべて選択してください。");
-    return;
-  }
-  
-  const footer = document.querySelector(".sticky-footer");
-  if (footer) footer.style.display = "none";
-
-  const required = menus.map(m => MENU_DATA[m] || 0).reduce((a, b) => a + b, 0);
-  const prettyDuration = formatDurationText(required); 
-  
-  const week = ["日", "月", "火", "水", "木", "金", "土"];
-  const d = new Date(dateValue.replace(/-/g, "/"));
-  const dow = week[d.getDay()];
-  const formattedDate = dateValue.replace(/-/g, "/");
-
-  document.querySelector(".greeting").style.display = "none";
-  document.getElementById("confirm-text").innerHTML = `<b>お名前</b>：${name}<br><b>メニュー</b>：${menus.join(", ")}<br><b>日時</b>：${formattedDate} (${dow}) ${time}<br><b>${prettyDuration}</b>`;
-  document.getElementById("reserveForm").style.display = "none";
-  document.getElementById("confirm-screen").style.display = "block";
-
-  // OKボタンを押した時の処理
+// OKボタンを押した時の処理
   document.getElementById("okBtn").onclick = async () => {
     const btn = document.getElementById("okBtn");
     if (btn.disabled) return;
@@ -425,21 +396,61 @@ document.getElementById("reserveForm").onsubmit = async e => {
     btn.innerText = "送信中...";
 
     try {
-      // 1. 最終チェック：最新の空き状況を確認 (off_timesテーブル)
-      const { data: latestOff, error: offError } = await supabaseClient
-        .from("off_times")
-        .select("id")
-        .eq("date", dateValue)
-        .eq("time", time);
+      // --- ここから置き換え ---
+      // 1. 最新の「予約」と「休み」の両方を一気に取得
+      const [{ data: latestRes }, { data: latestOff }] = await Promise.all([
+        supabaseClient.from("reservations").select("time, duration").eq("date", dateValue),
+        supabaseClient.from("off_times").select("time, duration").eq("date", dateValue)
+      ]);
 
-      if (offError) throw offError;
+      const timeToMin = (t) => {
+        const [h, m] = t.split(':').map(Number);
+        return h * 60 + m;
+      };
+      const myStart = timeToMin(time);
+      const myEnd = myStart + required;
 
-      if (latestOff && latestOff.length > 0) {
-        alert("申し訳ございません。もう一度最初からやり直してください。");
+      // 重複判定関数（1分でも重なればtrue）
+      const checkOverlap = (list) => (list || []).some(item => {
+        const start = timeToMin(item.time);
+        const end = start + (item.duration || 0);
+        return (myStart < end && myEnd > start);
+      });
+
+      // 他の予約、または管理画面の休みと重なっていないか確認
+      if (checkOverlap(latestRes) || checkOverlap(latestOff)) {
+        alert("申し訳ございません。入力中に他の予約が入ったか、予約不可の時間になりました。もう一度最初からやり直してください。");
         location.reload();
         return;
       }
 
+      // 2. 終了時間の計算
+      const [sh, sm] = time.split(":").map(Number);
+      const endD = new Date(2000, 0, 1, sh, sm + required);
+      const end_time = `${String(endD.getHours()).padStart(2, "0")}:${String(endD.getMinutes()).padStart(2, "0")}`;
+
+      // 3. 予約実行
+      const { error: insError } = await supabaseClient.from("reservations").insert([{
+        name,
+        date: dateValue,
+        time,
+        end_time,
+        duration: required,
+        menu: menus.join(", "),
+        customer_user_id: customerUserId || "web-user"
+      }]);
+
+      if (insError) throw insError;
+      showCompleteScreen();
+      // --- ここまで置き換え ---
+
+    } catch (err) {
+      console.error(err);
+      alert("エラーが発生しました。");
+      btn.disabled = false;
+      btn.innerText = "OK";
+    }
+  };
       // 2. 終了時間の計算
       const [sh, sm] = time.split(":").map(Number);
       const endD = new Date(2000, 0, 1, sh, sm + required);
