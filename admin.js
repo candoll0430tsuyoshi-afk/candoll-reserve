@@ -276,7 +276,7 @@ window.saveChanges = async function(id) {
     await fetch("https://bcahztzetpfuklipjmxx.supabase.co/functions/v1/admin-service", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ mode: "edit", id: Number(id), manual_duration: Number(dur), password: password })
+        body: JSON.stringify({ mode: "edit", id: Number(id), manual_duration: Number(dur),end_time: end_time, password: password })
     });
     closeModal(); await fetchData(); render();
 };
