@@ -39,21 +39,23 @@ async function initAdmin() {
 async function fetchData(pass = null) {
     const password = pass || localStorage.getItem('admin_password');
     if (!password) return false;
-try {
+    try {
         const response = await fetch("https://bcahztzetpfuklipjmxx.supabase.co/functions/v1/admin-service", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ mode: "list", password: password })
         });
         if (!response.ok) return false;
+        
         const data = await response.json();
         
+        // データを変数に代入
         reservations = data.reservations || [];
         holidays = data.holidays || [];
         specialOpens = data.special_open || [];
         offTimes = data.off_times || [];
 
-        // メニュー情報を読み込んで時間をセットする処理を追加
+        // メニュー情報を読み込んで時間をセット（重要）
         if (data.menus) {
             MENU_DURATION = {};
             data.menus.forEach(m => {
@@ -61,16 +63,9 @@ try {
             });
         }
 
+        // 最後に1回だけ true を返す
         return true;
-        reservations = result.reservations || [];
-        // ★ここを確実に同期させる
-        offTimes = result.off_times || []; 
-        holidays = result.holidays || [];
-        specialOpens = result.special_open || [];
-        if (result.menus) {
-            result.menus.forEach(m => { MENU_DURATION[m.name] = m.duration; });
-        }
-        return true;
+
     } catch (e) {
         console.error("Fetch error:", e);
         return false;
