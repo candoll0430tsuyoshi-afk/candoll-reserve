@@ -151,6 +151,47 @@ function setupSelectColorChange(selectElement) {
   });
 }
 
+// メニュー追加ボタンのイベント設定（DOMContentLoaded後に実行）
+document.addEventListener("DOMContentLoaded", () => {
+  const addMenuBtn = document.getElementById("addMenu");
+  if (addMenuBtn) {
+    addMenuBtn.addEventListener("click", () => {
+      const menuContainer = document.getElementById("menuContainer");
+      if (!menuContainer) return;
+      
+      const newSelect = document.createElement("select");
+      newSelect.className = "menu-select placeholder-color";
+      newSelect.required = true;
+      
+      // メニューオプションをレンダリング
+      const categories = {
+        "組み合わせ": ["＋", "+"],
+        "カット": ["カット"],
+        "カラー": ["カラー", "ヘナ"],
+        "パーマ": ["パーマ"],
+        "ストレート": ["ストレート"],
+        "トリートメント": ["トリートメント"],
+        "メニュー未定": ["相談"]
+      };
+      
+      const menuData = Object.keys(MENU_DATA).map(name => ({ 
+        name: name, 
+        duration: MENU_DATA[name] 
+      }));
+      
+      renderMenuOptions(newSelect, menuData, categories);
+      
+      // ★重要: 新しく追加したセレクトにもイベントリスナーを設定
+      setupSelectColorChange(newSelect);
+      
+      menuContainer.appendChild(newSelect);
+      
+      // 施術時間を即座に更新（空欄が追加されただけなので変わらないが、一貫性のため）
+      updateTotalDurationDisplay();
+    });
+  }
+});
+
 function renderMenuOptions(selectElement, data, categories) {
   selectElement.innerHTML = '<option value="">メニューを選択</option>';
   
