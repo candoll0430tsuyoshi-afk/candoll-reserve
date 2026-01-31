@@ -398,37 +398,48 @@ async function updateTimeOptions() {
 // 最新の予約状況（全日休み・個別休み・重複予約）をすべて確認する関数
 async function checkFinalAvailability(date, time) {
   try {
-    // 1. 全日休みの確認 (holidaysテーブル)
+    // 1. 全日休みの確認
     const { data: holiday } = await supabaseClient
       .from("holidays")
       .select("id")
       .eq("date", date)
       .maybeSingle();
-    if (holiday) return false;
+    
+    if (holiday) {
+      console.log("Check: Holiday found");
+      return false;
+    }
 
-    // 2. 個別休みの確認 (off_timesテーブル)
+    // 2. 個別休みの確認 (判定条件を修正)
     const { data: offTime } = await supabaseClient
       .from("off_times")
       .select("id")
       .eq("date", date)
       .eq("time", time)
       .maybeSingle();
-    // データが存在すれば(length > 0)予約不可
-    if (offTime) return false;
+    
+    if (offTime) { // maybeSingleの場合、データがあればオブジェクト(true相当)が入る
+      console.log("Check: Off-time found");
+      return false;
+    }
 
-    // 3. 他の予約との重複確認 (reservationsテーブル)
+    // 3. 他の予約との重複確認
     const { data: reservation } = await supabaseClient
       .from("reservations")
       .select("id")
       .eq("date", date)
       .eq("time", time)
       .maybeSingle();
-    if (reservation) return false;
+    
+    if (reservation) {
+      console.log("Check: Existing reservation found");
+      return false;
+    }
 
     return true; // すべて問題なければOK
   } catch (err) {
     console.error("Check Error:", err);
-    return false;
+    return false; // エラー時は安全のため予約不可とする
   }
 }
 // ===== 予約送信 =====
@@ -447,7 +458,7 @@ document.getElementById("reserveForm").onsubmit = async e => {
   // --- 【追加】確認画面に進む前の空き状況ダブルチェック ---
   const isAvailable = await checkFinalAvailability(dateValue, time);
   if (!isAvailable) {
-    alert("申し訳ございません。選択された日時は予約不可となったか、既に予約が入ってしまいました。別の日時を選択してください。");
+    alert("申し訳ございません。別の日時を選択してください。");
     location.reload();
     return;
   }
