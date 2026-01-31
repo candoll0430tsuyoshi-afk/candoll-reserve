@@ -158,33 +158,47 @@ function renderSlot(col, date, time, isClosed) {
     col.appendChild(div);
 }
 
-// 関数名を toggleOff から toggleOffTime に変更しました
+// 関数名はHTMLから呼ばれる toggleOffTime に統一
 async function toggleOffTime(date, time) {
     const password = localStorage.getItem('admin_password');
-    // ここも関数名変更に合わせて offTimes.some の中をチェック
+    // 現在の状態を確認
     const isOff = offTimes.some(o => o.date === date && o.time === time);
-    const mode = isOff ? "delete_off" : "add_off";
+    
+    // 【重要】元々のサーバー設定に合わせたmodeの指定
+    // 追加時は "off"、削除時は "delete_off" を送る必要があります
+    const mode = isOff ? "delete_off" : "off";
 
-    // --- 29分設定 ---
+    // --- 29分設定の計算 ---
     const [h, m] = time.split(':').map(Number);
-    const endD = new Date(2000, 0, 1, h, m + 29); 
+    const endD = new Date(2000, 0, 1, h, m + 29); // 30ではなく29
     const end_time = `${String(endD.getHours()).padStart(2,'0')}:${String(endD.getMinutes()).padStart(2,'0')}`;
 
-    await fetch("https://bcahztzetpfuklipjmxx.supabase.co/functions/v1/admin-service", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-            mode: mode, 
-            date: date, 
-            time: time, 
-            end_time: end_time, 
-            password: password 
-        })
-    });
-    await fetchData(); 
-    render();
-}
+    try {
+        const response = await fetch("https://bcahztzetpfuklipjmxx.supabase.co/functions/v1/admin-service", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ 
+                mode: mode, 
+                date: date, 
+                time: time, 
+                end_time: end_time, 
+                password: password 
+            })
+        });
 
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`エラー: ${response.status} ${errorText}`);
+        }
+
+        // 成功したらデータを再読み込みして画面を更新
+        await fetchData(); 
+        render();
+    } catch (err) {
+        console.error("送信エラー:", err);
+        alert("設定の保存に失敗しました。パスワードが正しいか確認してください。");
+    }
+}
 async function openSlotModal(date, time, res, isOff) {
     const body = document.getElementById('modal-body');
     const dayOfWeek = ['日','月','火','水','木','金','土'][new Date(date.replace(/-/g, '/')).getDay()];
