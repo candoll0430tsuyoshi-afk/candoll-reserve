@@ -86,9 +86,12 @@ const navCurrent = document.getElementById('nav-current');
     const existingHeader = document.getElementById('date-header-row');
     if (existingHeader) existingHeader.remove();
     
-    // PCの場合：ナビゲーションには何も表示せず、予約エリアの直前にヘッダーを追加
+    // PCの場合：ナビゲーションには基準日を表示し、予約エリアの直前に3日分のヘッダーを追加
     if (!isMobile) {
-        navCurrent.innerHTML = '';  // ナビゲーションバナーを空に
+        // バナーには基準日（1日目）を表示
+        const d_banner = new Date(baseDate);
+        const w_banner = d_banner.getDay();
+        navCurrent.innerHTML = `${String(d_banner.getMonth() + 1).padStart(2, '0')}/${String(d_banner.getDate()).padStart(2, '0')} (${['日','月','火','水','木','金','土'][w_banner]})`;
         
         // 3日分のヘッダーを作成
         const headerRow = document.createElement('div');
