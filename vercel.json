@@ -1,5 +1,8 @@
 {
-  "rewrites": [
-    { "source": "/(.*)", "destination": "/$1" }
-  ]
+  "build": {
+    "env": {
+      "SUPABASE_URL": "@supabase-url",
+      "SUPABASE_KEY": "@supabase-key"
+    }
+  }
 }

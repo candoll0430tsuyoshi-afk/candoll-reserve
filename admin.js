@@ -1,3 +1,4 @@
+// APIキーはconfig.jsから読み込み
 const SUPABASE_URL = CONFIG.SUPABASE_URL;
 const SUPABASE_KEY = CONFIG.SUPABASE_KEY;
 const adminClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -16,7 +17,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const passInput = document.getElementById('admin-pass').value;
             const success = await fetchData(passInput); 
             if (success) {
-                localStorage.setItem('admin_password', btoa(passInput)); // Base64エンコード
+                localStorage.setItem('admin_password', passInput);
                 initAdmin();
             } else {
                 alert("パスワードが違うか、通信エラーです");
@@ -36,27 +37,16 @@ async function initAdmin() {
     }
 }
 
-
 async function fetchData(pass = null) {
-    const storedPass = localStorage.getItem('admin_password');
-    const password = pass || (storedPass ? atob(storedPass) : null);
+    const password = pass || localStorage.getItem('admin_password');
     if (!password) return false;
-
-try {
+    try {
         const response = await fetch("https://bcahztzetpfuklipjmxx.supabase.co/functions/v1/admin-service", {
             method: "POST",
-            headers: { 
-                "Content-Type": "application/json",
-                "apikey": SUPABASE_KEY 
-            },
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ mode: "list", password: password })
         });
-        
-        if (!response.ok) {
-            console.error("HTTP Error:", response.status); // 403などが出た場合にログで見れる
-            return false;
-        }
-        
+        if (!response.ok) return false;
         const data = await response.json();
         
         // データを各変数に正しく格納
@@ -528,4 +518,3 @@ function updateNowLine() {
         line.style.top = `${((currentMins - startMins) / 30) * slots[0].offsetHeight + slots[0].offsetTop}px`;
         col.appendChild(line);
     }
-}
