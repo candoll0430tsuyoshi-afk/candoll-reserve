@@ -199,7 +199,9 @@ function setupMobileScroll() {
         }
     };
     
-    // スクロールイベント
+    // スクロールイベント（既存のリスナーを削除してから追加）
+    window.removeEventListener('scroll', updateBanner);
+    wrap.removeEventListener('scroll', updateBanner);
     window.addEventListener('scroll', updateBanner);
     wrap.addEventListener('scroll', updateBanner);
 }
