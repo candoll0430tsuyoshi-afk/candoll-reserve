@@ -45,11 +45,12 @@ async function fetchData(pass = null) {
     try {
         const response = await fetch("https://bcahztzetpfuklipjmxx.supabase.co/functions/v1/admin-service", {
             method: "POST",
-            headers: { 
-                "Content-Type": "application/json",
-                // ↓ ここを追加！ これで「許可されたアクセス」になります
-                "Authorization": `Bearer ${SUPABASE_KEY}`
-            },
+headers: { 
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${SUPABASE_KEY}`,
+        // ★ここを必ず追加してください！
+        "apikey": SUPABASE_KEY 
+    },
             body: JSON.stringify({ mode: "list", password: password })
         });
         
