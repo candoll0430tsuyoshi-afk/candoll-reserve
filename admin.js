@@ -80,47 +80,53 @@ function render() {
     wrap.style.flexDirection = isMobile ? "column" : "row";
     wrap.style.gap = "15px";
     
-    const navCurrent = document.getElementById('nav-current');
-    
-    // 既存の日付ヘッダーを削除（重複防止）
-    const existingHeader = document.getElementById('date-header-row');
-    if (existingHeader) existingHeader.remove();
-    
-// PCの場合：ナビゲーションには何も表示せず、予約エリアの直前にヘッダーを追加
-    if (!isMobile) {
-        navCurrent.innerHTML = '';  // ナビゲーションバナーを空に
-        
-        // 3日分のヘッダーを作成
-        const headerRow = document.createElement('div');
-        headerRow.id = 'date-header-row';  // IDを追加して削除できるように
-        headerRow.style.display = "flex";
-        headerRow.style.gap = "15px";
-        headerRow.style.marginBottom = "10px";
-        headerRow.style.padding = "0 10px";
-        
-        for (let i = 0; i < 3; i++) {
+ const navCurrent = document.getElementById('nav-current');
+    if (navCurrent) {
+        if (!isMobile) {
+            // PCの場合：バナーに今日の日付を表示し、3日分のヘッダーを作成
+            const d_nav = new Date(baseDate);
+            const w_nav = d_nav.getDay();
+            const week = ['日','月','火','水','木','金','土'];
+            navCurrent.innerHTML = `<span style="font-weight:bold; font-size:18px;">${d_nav.getFullYear()}年${d_nav.getMonth() + 1}月${d_nav.getDate()}日 (${week[w_nav]})</span>`;
+
+            const oldHeader = document.getElementById('date-header-row');
+            if (oldHeader) oldHeader.remove();
+            
+            const headerRow = document.createElement('div');
+            headerRow.id = 'date-header-row';
+            headerRow.style.display = "flex";
+            headerRow.style.gap = "15px";
+            headerRow.style.marginBottom = "10px";
+            headerRow.style.padding = "0 10px";
+            
+            for (let i = 0; i < 3; i++) {
+                const d = new Date(baseDate);
+                d.setDate(d.getDate() + i);
+                const w = d.getDay();
+                const headerCell = document.createElement('div');
+                headerCell.style.flex = "1";
+                headerCell.style.textAlign = "center";
+                headerCell.style.fontWeight = "bold";
+                headerCell.style.fontSize = "16px";
+                headerCell.style.padding = "10px";
+                headerCell.style.background = "#f2f2f7";
+                headerCell.style.borderRadius = "8px";
+                headerCell.innerHTML = `${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')} (${['日','月','火','水','木','金','土'][w]})`;
+                headerRow.appendChild(headerCell);
+            }
+            
+            const container = document.getElementById('reservations-container');
+            if (container) {
+                container.parentNode.insertBefore(headerRow, container);
+            }
+        } else {
+            // スマホの場合：初期表示（1日目）を設定してからスクロール監視を開始
             const d = new Date(baseDate);
-            d.setDate(d.getDate() + i);
             const w = d.getDay();
-            const headerCell = document.createElement('div');
-            headerCell.style.flex = "1";
-            headerCell.style.textAlign = "center";
-            headerCell.style.fontWeight = "bold";
-            headerCell.style.fontSize = "16px";
-            headerCell.style.padding = "10px";
-            headerCell.style.background = "#f2f2f7";
-            headerCell.style.borderRadius = "8px";
-            headerCell.innerHTML = `${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')} (${['日','月','火','水','木','金','土'][w]})`;
-            headerRow.appendChild(headerCell);
+            navCurrent.innerHTML = `<span>${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')} (${['日','月','火','水','木','金','土'][w]})</span>`;
+            
+            setupMobileScroll();
         }
-        
-        // days-wrapperの直前に挿入
-        wrap.parentElement.insertBefore(headerRow, wrap);
-    } else {
-        // スマホは初期表示（1日目）
-        const d = new Date(baseDate);
-        const w = d.getDay();
-        navCurrent.innerHTML = `${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')} (${['日','月','火','水','木','金','土'][w]})`;
     }
     
     for (let i = 0; i < 3; i++) {
