@@ -36,17 +36,29 @@ async function initAdmin() {
     }
 }
 
+const SUPABASE_KEY = CONFIG.SUPABASE_KEY; // Vercelから注入されたキーを使用
+
 async function fetchData(pass = null) {
     const storedPass = localStorage.getItem('admin_password');
-    const password = pass || (storedPass ? atob(storedPass) : null); // Base64デコード
+    const password = pass || (storedPass ? atob(storedPass) : null);
     if (!password) return false;
+
     try {
         const response = await fetch("https://bcahztzetpfuklipjmxx.supabase.co/functions/v1/admin-service", {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: { 
+                "Content-Type": "application/json",
+                // ↓ ここを追加！ これで「許可されたアクセス」になります
+                "Authorization": `Bearer ${SUPABASE_KEY}`
+            },
             body: JSON.stringify({ mode: "list", password: password })
         });
-        if (!response.ok) return false;
+        
+        if (!response.ok) {
+            console.error("HTTP Error:", response.status); // 403などが出た場合にログで見れる
+            return false;
+        }
+        
         const data = await response.json();
         
         // データを各変数に正しく格納
