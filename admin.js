@@ -86,9 +86,7 @@ function render() {
     const existingHeader = document.getElementById('date-header-row');
     if (existingHeader) existingHeader.remove();
     
-// --- render() 関数内の if (navCurrent) { ... } の中をここから入れ替え ---
-
-    if (navCurrent) {
+if (navCurrent) {
         // PCの場合：ナビゲーションに日付を表示し、予約エリアの直前に3日分のヘッダーを追加
         if (!isMobile) {
             const d_nav = new Date(baseDate);
@@ -126,13 +124,16 @@ function render() {
             if (container) {
                 container.parentNode.insertBefore(headerRow, container);
             }
-            // PC版はここでバナー処理終わり
+            // PC版はここで処理終了
         } else {
-            // スマホの場合：スクロール監視をセットアップ
+            // スマホの場合：初期表示（1日目）を設定してからスクロール監視を開始
+            const d = new Date(baseDate);
+            const w = d.getDay();
+            navCurrent.innerHTML = `<span>${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')} (${['日','月','火','水','木','金','土'][w]})</span>`;
+            
             setupMobileScroll();
         }
     }
-
 // --- ここまでを入れ替え ---
         // days-wrapperの直前に挿入
         wrap.parentElement.insertBefore(headerRow, wrap);
