@@ -81,53 +81,68 @@ function render() {
     wrap.style.gap = "15px";
     
 const navCurrent = document.getElementById('nav-current');
-    if (navCurrent) {
-        if (!isMobile) {
-            // PCの場合：バナーに今日の日付を表示し、3日分のヘッダーを作成
-            const d_nav = new Date(baseDate);
-            const w_nav = d_nav.getDay();
-            const week = ['日','月','火','水','木','金','土'];
-            navCurrent.innerHTML = `<span style="font-weight:bold; font-size:18px;">${d_nav.getFullYear()}年${d_nav.getMonth() + 1}月${d_nav.getDate()}日 (${week[w_nav]})</span>`;
-
-            const oldHeader = document.getElementById('date-header-row');
-            if (oldHeader) oldHeader.remove();
-            
-            const headerRow = document.createElement('div');
-            headerRow.id = 'date-header-row';
-            headerRow.style.display = "flex";
-            headerRow.style.gap = "15px";
-            headerRow.style.marginBottom = "10px";
-            headerRow.style.padding = "0 10px";
-            
-            for (let i = 0; i < 3; i++) {
-                const d = new Date(baseDate);
-                d.setDate(d.getDate() + i);
-                const w = d.getDay();
-                const headerCell = document.createElement('div');
-                headerCell.style.flex = "1";
-                headerCell.style.textAlign = "center";
-                headerCell.style.fontWeight = "bold";
-                headerCell.style.fontSize = "16px";
-                headerCell.style.padding = "10px";
-                headerCell.style.background = "#f2f2f7";
-                headerCell.style.borderRadius = "8px";
-                headerCell.innerHTML = `${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')} (${['日','月','火','水','木','金','土'][w]})`;
-                headerRow.appendChild(headerCell);
-            }
-            
-            const container = document.getElementById('reservations-container');
-            if (container) {
-                container.parentNode.insertBefore(headerRow, container);
-            }
-        } else {
-            // スマホの場合：初期表示（1日目）を設定してからスクロール監視を開始
+    
+    // 既存の日付ヘッダーを削除（重複防止）
+    const existingHeader = document.getElementById('date-header-row');
+    if (existingHeader) existingHeader.remove();
+    
+    // PCの場合：ナビゲーションには何も表示せず、予約エリアの直前にヘッダーを追加
+    if (!isMobile) {
+        navCurrent.innerHTML = '';  // ナビゲーションバナーを空に
+        
+        // 3日分のヘッダーを作成
+        const headerRow = document.createElement('div');
+        headerRow.id = 'date-header-row';  // IDを追加して削除できるように
+        headerRow.style.display = "flex";
+        headerRow.style.gap = "15px";
+        headerRow.style.marginBottom = "10px";
+        headerRow.style.padding = "0 10px";
+        
+        for (let i = 0; i < 3; i++) {
             const d = new Date(baseDate);
+            d.setDate(d.getDate() + i);
             const w = d.getDay();
-            navCurrent.innerHTML = `<span>${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')} (${['日','月','火','水','木','金','土'][w]})</span>`;
-            
-            setupMobileScroll();
+            const headerCell = document.createElement('div');
+            headerCell.style.flex = "1";
+            headerCell.style.textAlign = "center";
+            headerCell.style.fontWeight = "bold";
+            headerCell.style.fontSize = "16px";
+            headerCell.style.padding = "10px";
+            headerCell.style.background = "#f2f2f7";
+            headerCell.style.borderRadius = "8px";
+            headerCell.innerHTML = `${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')} (${['日','月','火','水','木','金','土'][w]})`;
+            headerRow.appendChild(headerCell);
         }
+        
+        // days-wrapperの直前に挿入
+        wrap.parentElement.insertBefore(headerRow, wrap);
+    } else {
+        // スマホは初期表示（1日目）
+        const d = new Date(baseDate);
+        const w = d.getDay();
+        navCurrent.innerHTML = `${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')} (${['日','月','火','水','木','金','土'][w]})`;
     }
+    
+    for (let i = 0; i < 3; i++) {
+        const d = new Date(baseDate);
+        d.setDate(d.getDate() + i);
+        const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        const col = document.createElement('div');
+        col.className = 'day-column';
+        col.id = `col-${dateStr}`;
+        col.dataset.index = i;
+        col.dataset.date = dateStr;
+        col.style.flex = "1";
+        const w = d.getDay();
+        const isClosed = (w === 1 || w === 2 || holidays.some(h => h.date === dateStr)) && !specialOpens.some(s => s.date === dateStr);
+        
+        if (isMobile) {
+            // スマホは各カラムに日付を表示
+            col.innerHTML = `<div style="background:#f2f2f7; padding:12px; text-align:center; border-bottom:1px solid #ddd;">
+                <b style="font-size:16px;">${dateStr} (${['日','月','火','水','木','金','土'][w]})</b>
+                <div onclick="toggleDay('${dateStr}', ${isClosed})" style="font-size:11px; text-decoration:underline; cursor:pointer; color:#007aff;">${isClosed ? '営業にする' : '休みにする'}</div>
+            </div>`;
+        } else {
             // PCは「営業にする/休みにする」ボタンのみ
             col.innerHTML = `<div style="background:#f2f2f7; padding:8px; text-align:center; border-bottom:1px solid #ddd;">
                 <div onclick="toggleDay('${dateStr}', ${isClosed})" style="font-size:11px; text-decoration:underline; cursor:pointer; color:#007aff;">${isClosed ? '営業にする' : '休みにする'}</div>
@@ -171,20 +186,14 @@ function setupMobileScroll() {
             }
         });
         
-// --- 修正後 ---
-if (currentIndex !== lastIndex) {
-    lastIndex = currentIndex;
-    const d = new Date(baseDate);
-    d.setDate(d.getDate() + currentIndex);
-    const w = d.getDay();
-
-    // 💡 月/日 (曜) の形式で、spanタグに入れて見栄えを良くする
-    const month = String(d.getMonth() + 1).padStart(2, '0');
-    const date = String(d.getDate()).padStart(2, '0');
-    const day = ['日','月','火','水','木','金','土'][w];
-
-    navCurrent.innerHTML = `<span style="font-weight:bold; font-size:1.1rem;">${month}/${date} (${day})</span>`;
-}
+        // 日付が変わった時だけバナーを更新
+        if (currentIndex !== lastIndex) {
+            lastIndex = currentIndex;
+            const d = new Date(baseDate);
+            d.setDate(d.getDate() + currentIndex);
+            const w = d.getDay();
+            navCurrent.innerHTML = `${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')} (${['日','月','火','水','木','金','土'][w]})`;
+        }
     };
     
     // スクロールイベント
