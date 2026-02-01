@@ -103,7 +103,8 @@
         <div class="admin-nav">
             <button class="nav-btn" onclick="moveDate(-1)">&lt;&lt;</button>
   <div class="date-picker-container">
-    <div id="nav-current" style="pointer-events: none;">読み込み中...</div>
+<div class="date-picker-container" style="min-height: 50px; display: flex; align-items: center;">
+    <div id="nav-current" style="pointer-events: none; white-space: nowrap; line-height: 1.2;">読み込み中...</div>
     <input type="date" id="calendar-input" onchange="handleCalendarChange(this.value)" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer;">
 </div>
             <button class="nav-btn" onclick="moveDate(1)">&gt;&gt;</button>
