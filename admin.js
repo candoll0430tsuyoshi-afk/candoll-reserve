@@ -80,7 +80,7 @@ function render() {
     wrap.style.flexDirection = isMobile ? "column" : "row";
     wrap.style.gap = "15px";
     
- const navCurrent = document.getElementById('nav-current');
+const navCurrent = document.getElementById('nav-current');
     if (navCurrent) {
         if (!isMobile) {
             // PCの場合：バナーに今日の日付を表示し、3日分のヘッダーを作成
@@ -128,27 +128,6 @@ function render() {
             setupMobileScroll();
         }
     }
-    
-    for (let i = 0; i < 3; i++) {
-        const d = new Date(baseDate);
-        d.setDate(d.getDate() + i);
-        const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-        const col = document.createElement('div');
-        col.className = 'day-column';
-        col.id = `col-${dateStr}`;
-        col.dataset.index = i;
-        col.dataset.date = dateStr;
-        col.style.flex = "1";
-        const w = d.getDay();
-        const isClosed = (w === 1 || w === 2 || holidays.some(h => h.date === dateStr)) && !specialOpens.some(s => s.date === dateStr);
-        
-        if (isMobile) {
-            // スマホは各カラムに日付を表示
-            col.innerHTML = `<div style="background:#f2f2f7; padding:12px; text-align:center; border-bottom:1px solid #ddd;">
-                <b style="font-size:16px;">${dateStr} (${['日','月','火','水','木','金','土'][w]})</b>
-                <div onclick="toggleDay('${dateStr}', ${isClosed})" style="font-size:11px; text-decoration:underline; cursor:pointer; color:#007aff;">${isClosed ? '営業にする' : '休みにする'}</div>
-            </div>`;
-        } else {
             // PCは「営業にする/休みにする」ボタンのみ
             col.innerHTML = `<div style="background:#f2f2f7; padding:8px; text-align:center; border-bottom:1px solid #ddd;">
                 <div onclick="toggleDay('${dateStr}', ${isClosed})" style="font-size:11px; text-decoration:underline; cursor:pointer; color:#007aff;">${isClosed ? '営業にする' : '休みにする'}</div>
