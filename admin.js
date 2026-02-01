@@ -1,5 +1,6 @@
-const SUPABASE_URL = "https://bcahztzetpfuklipjmxx.supabase.co";
-const SUPABASE_KEY = "sb_publishable_rPyAIzNttEK3P8nsnBllYA_FTF-kxJQ";
+// APIキーはconfig.jsから読み込み
+const SUPABASE_URL = CONFIG.SUPABASE_URL;
+const SUPABASE_KEY = CONFIG.SUPABASE_KEY;
 const adminClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 let baseDate = new Date();
@@ -16,7 +17,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const passInput = document.getElementById('admin-pass').value;
             const success = await fetchData(passInput); 
             if (success) {
-                localStorage.setItem('admin_password', passInput);
+                localStorage.setItem('admin_password', btoa(passInput)); // Base64エンコード
                 initAdmin();
             } else {
                 alert("パスワードが違うか、通信エラーです");
@@ -37,7 +38,8 @@ async function initAdmin() {
 }
 
 async function fetchData(pass = null) {
-    const password = pass || localStorage.getItem('admin_password');
+    const storedPass = localStorage.getItem('admin_password');
+    const password = pass || (storedPass ? atob(storedPass) : null); // Base64デコード
     if (!password) return false;
     try {
         const response = await fetch("https://bcahztzetpfuklipjmxx.supabase.co/functions/v1/admin-service", {
