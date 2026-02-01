@@ -88,7 +88,7 @@ function render() {
     
     // PCの場合：ナビゲーションには何も表示せず、予約エリアの直前にヘッダーを追加
     if (!isMobile) {
-        navCurrent.innerHTML = '';  // ナビゲーションバナーを空に
+        //navCurrent.innerHTML = '';  // ナビゲーションバナーを空に
         
         // 3日分のヘッダーを作成
         const headerRow = document.createElement('div');
@@ -178,7 +178,7 @@ function setupMobileScroll() {
         // 画面上部に最も近いカラムを見つける
         columns.forEach((col, index) => {
             const rect = col.getBoundingClientRect();
-            const distance = Math.abs(rect.top - 100); // ナビゲーションバーの高さを考慮
+            const distance = Math.abs(rect.top - 60); // ナビゲーションバーの高さを考慮
             
             if (distance < minDistance) {
                 minDistance = distance;
@@ -186,14 +186,20 @@ function setupMobileScroll() {
             }
         });
         
-        // 日付が変わった時だけバナーを更新
-        if (currentIndex !== lastIndex) {
-            lastIndex = currentIndex;
-            const d = new Date(baseDate);
-            d.setDate(d.getDate() + currentIndex);
-            const w = d.getDay();
-            navCurrent.innerHTML = `${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')} (${['日','月','火','水','木','金','土'][w]})`;
-        }
+// --- 修正後 ---
+if (currentIndex !== lastIndex) {
+    lastIndex = currentIndex;
+    const d = new Date(baseDate);
+    d.setDate(d.getDate() + currentIndex);
+    const w = d.getDay();
+
+    // 💡 月/日 (曜) の形式で、spanタグに入れて見栄えを良くする
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const date = String(d.getDate()).padStart(2, '0');
+    const day = ['日','月','火','水','木','金','土'][w];
+
+    navCurrent.innerHTML = `<span style="font-weight:bold; font-size:1.1rem;">${month}/${date} (${day})</span>`;
+}
     };
     
     // スクロールイベント
