@@ -36,7 +36,6 @@ async function initAdmin() {
     }
 }
 
-const SUPABASE_KEY = CONFIG.SUPABASE_KEY; // Vercelから注入されたキーを使用
 
 async function fetchData(pass = null) {
     const storedPass = localStorage.getItem('admin_password');
