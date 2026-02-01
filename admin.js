@@ -42,16 +42,13 @@ async function fetchData(pass = null) {
     const password = pass || (storedPass ? atob(storedPass) : null);
     if (!password) return false;
 
-    try {
+try {
         const response = await fetch("https://bcahztzetpfuklipjmxx.supabase.co/functions/v1/admin-service", {
             method: "POST",
-const response = await fetch("https://bcahztzetpfuklipjmxx.supabase.co/functions/v1/admin-service", {
-    method: "POST",
-    headers: { 
-        "Content-Type": "application/json",
-        // ここが重要：apikey だけを送り、Authorization はあえて Bearer にしない
-        "apikey": SUPABASE_KEY 
-    },
+            headers: { 
+                "Content-Type": "application/json",
+                "apikey": SUPABASE_KEY 
+            },
             body: JSON.stringify({ mode: "list", password: password })
         });
         
