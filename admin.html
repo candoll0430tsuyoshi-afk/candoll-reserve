@@ -11,20 +11,18 @@
             margin: 0; background: #f4f4f9; color: #333;
         }
         /* ナビゲーション */
-  .admin-nav { 
-    display: flex; 
-    justify-content: center; 
-    align-items: center; 
-    gap: 10px; 
-    padding: 10px; 
-    background: #fff; 
-    border-bottom: 1px solid #ddd; 
-    position: sticky; 
-    top: 0; 
-    z-index: 200;
-    min-height: 60px; /* 最低限の高さを確保 */
-    overflow: visible; /* 中身がはみ出ても隠さない */
-}
+        .admin-nav { 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            gap: 10px; 
+            padding: 15px; 
+            background: #fff; 
+            border-bottom: 1px solid #ddd; 
+            position: sticky; 
+            top: 0; 
+            z-index: 200;
+        }
         
         /* カレンダーコンテナ */
         .date-picker-container { 
@@ -32,7 +30,7 @@
             display: inline-block; 
         }
 
-        /* 日付表示の見た目（ここをタップさせたい） */
+        /* 日付表示の見た目 */
         #nav-current { 
             font-size: 18px; 
             font-weight: bold; 
@@ -41,37 +39,35 @@
             border: 2px solid #007aff; 
             border-radius: 25px; 
             color: #007aff; 
-            min-width: 200px; 
+            min-width: 150px; 
             text-align: center;
             position: relative; 
             z-index: 1;
         }
 
-#calendar-input { 
-    position: absolute; 
-    top: 0; 
-    left: 0; 
-    width: 100%; 
-    height: 100%; 
-    opacity: 0;         /* 透明にする */
-    cursor: pointer; 
-    z-index: 10;        
-    
-    /* ↓ここが重要：ブラウザの既定デザインを無視して全体をクリック可能にする */
-    display: block;
-}
+        #calendar-input { 
+            position: absolute; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%; 
+            opacity: 0;
+            cursor: pointer; 
+            z-index: 10;
+            display: block;
+        }
 
-/* Chromeなどのブラウザでカレンダーアイコンをボタン全体に広げる魔法のコード */
-#calendar-input::-webkit-calendar-picker-indicator {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    margin: 0;
-    padding: 0;
-    cursor: pointer;
-}
+        /* Chromeなどのブラウザでカレンダーアイコンをボタン全体に広げる */
+        #calendar-input::-webkit-calendar-picker-indicator {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            cursor: pointer;
+        }
         
         button.nav-btn { background:#eee; border:none; padding:10px 15px; border-radius:8px; cursor:pointer; font-weight:bold; }
         
@@ -115,11 +111,10 @@
     <div class="admin-container">
         <div class="admin-nav">
             <button class="nav-btn" onclick="moveDate(-1)">&lt;&lt;</button>
-  <div class="date-picker-container">
-<div class="date-picker-container" style="position: relative; min-height: 50px; min-width: 220px; display: flex; align-items: center; justify-content: center;">
-    <div id="nav-current" style="pointer-events: none; white-space: nowrap; line-height: 1.2; z-index: 1;">読み込み中...</div>
-    <input type="date" id="calendar-input" onchange="handleCalendarChange(this.value)" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; z-index: 2;">
-</div>
+            <div class="date-picker-container">
+                <div id="nav-current">読み込み中...</div>
+                <input type="date" id="calendar-input" onchange="handleCalendarChange(this.value)">
+            </div>
             <button class="nav-btn" onclick="moveDate(1)">&gt;&gt;</button>
         </div>
         <div id="days-wrapper"></div>
