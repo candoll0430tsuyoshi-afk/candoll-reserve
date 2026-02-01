@@ -11,7 +11,20 @@
             margin: 0; background: #f4f4f9; color: #333;
         }
         /* ナビゲーション */
-        .admin-nav { display: flex; justify-content: center; align-items: center; gap: 10px; padding: 15px; background: #fff; border-bottom: 1px solid #ddd; position: sticky; top: 0; z-index: 200; }
+  .admin-nav { 
+    display: flex; 
+    justify-content: center; 
+    align-items: center; 
+    gap: 10px; 
+    padding: 10px; 
+    background: #fff; 
+    border-bottom: 1px solid #ddd; 
+    position: sticky; 
+    top: 0; 
+    z-index: 200;
+    min-height: 60px; /* 最低限の高さを確保 */
+    overflow: visible; /* 中身がはみ出ても隠さない */
+}
         
         /* カレンダーコンテナ */
         .date-picker-container { 
