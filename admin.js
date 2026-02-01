@@ -86,13 +86,23 @@ function render() {
     const existingHeader = document.getElementById('date-header-row');
     if (existingHeader) existingHeader.remove();
     
-    // PCの場合：ナビゲーションには何も表示せず、予約エリアの直前にヘッダーを追加
+ // PCの場合：ナビゲーションに日付を表示し、予約エリアの直前に3日分のヘッダーを追加
     if (!isMobile) {
-        //navCurrent.innerHTML = '';  // ナビゲーションバナーを空に
+        // --- ここでバナー（nav-current）に日付をセット ---
+        if (navCurrent) {
+            const d_nav = new Date(baseDate);
+            const w_nav = d_nav.getDay();
+            const week = ['日','月','火','水','木','金','土'];
+            navCurrent.innerHTML = `<span style="font-weight:bold; font-size:18px;">${d_nav.getFullYear()}年${d_nav.getMonth() + 1}月${d_nav.getDate()}日 (${week[w_nav]})</span>`;
+        }
+
+        // 既存のヘッダーがあれば一度削除（重複防止）
+        const oldHeader = document.getElementById('date-header-row');
+        if (oldHeader) oldHeader.remove();
         
         // 3日分のヘッダーを作成
         const headerRow = document.createElement('div');
-        headerRow.id = 'date-header-row';  // IDを追加して削除できるように
+        headerRow.id = 'date-header-row';
         headerRow.style.display = "flex";
         headerRow.style.gap = "15px";
         headerRow.style.marginBottom = "10px";
@@ -113,6 +123,15 @@ function render() {
             headerCell.innerHTML = `${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')} (${['日','月','火','水','木','金','土'][w]})`;
             headerRow.appendChild(headerCell);
         }
+        
+        // 予約コンテナの前に挿入
+        const container = document.getElementById('reservations-container');
+        if (container) {
+            container.parentNode.insertBefore(headerRow, container);
+        }
+        
+        return; // PCの場合はここで処理を終了
+    }
         
         // days-wrapperの直前に挿入
         wrap.parentElement.insertBefore(headerRow, wrap);
