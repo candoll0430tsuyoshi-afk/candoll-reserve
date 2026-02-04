@@ -352,12 +352,44 @@ async function handleDrop(e, newDate, newTime) {
 async function handleTouchDrop(id, newDate, newTime) {
     if (!confirm(`${newDate} ${newTime} に移動しますか？`)) return;
     const password = localStorage.getItem('admin_password');
-    await fetch("https://bcahztzetpfuklipjmxx.supabase.co/functions/v1/admin-service", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ mode: "edit", id: Number(id), date: newDate, time: newTime, password: password })
-    });
-    await fetchData(); render();
+    
+    // 移動する予約のデータを取得
+    const reservation = reservations.find(r => r.id == id);
+    if (!reservation) {
+        alert('予約が見つかりません');
+        return;
+    }
+    
+    // end_timeを計算
+    const duration = reservation.manual_duration || MENU_DURATION[reservation.menus.split(',')[0].trim()] || 60;
+    const [h, m] = newTime.split(':').map(Number);
+    const endD = new Date(2000, 0, 1, h, m + duration);
+    const end_time = `${String(endD.getHours()).padStart(2, '0')}:${String(endD.getMinutes()).padStart(2, '0')}`;
+    
+    try {
+        const response = await fetch("https://bcahztzetpfuklipjmxx.supabase.co/functions/v1/admin-service", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ 
+                mode: "edit", 
+                id: Number(id), 
+                date: newDate, 
+                time: newTime, 
+                end_time: end_time,
+                password: password 
+            })
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        await fetchData(); 
+        render();
+    } catch (error) {
+        console.error('予約移動エラー:', error);
+        alert('予約の移動に失敗しました');
+    }
 }
 function setupTouchEvents(div, exactRes, date, time) {
     let touchTimer; 
@@ -518,3 +550,4 @@ function updateNowLine() {
         line.style.top = `${((currentMins - startMins) / 30) * slots[0].offsetHeight + slots[0].offsetTop}px`;
         col.appendChild(line);
     }
+}
