@@ -1,6 +1,6 @@
 {
   "type": "module",
   "scripts": {
-    "build": "sed -i s/__SUPABASE_URL__/${SUPABASE_URL}/g admin.html && sed -i s/__SUPABASE_KEY__/${SUPABASE_KEY}/g admin.html && sed -i s/admin.js/admin.js?v=$(date +%s)/g admin.html"
+    "build": "sed -i 's/__SUPABASE_URL__/'${SUPABASE_URL}'/g' admin.html && sed -i 's/__SUPABASE_KEY__/'${SUPABASE_KEY}'/g' admin.html && sed -i 's/admin.js/admin.js?v='$(date +%s)'/g' admin.html"
   }
 }
