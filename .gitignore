@@ -1,5 +1,5 @@
 # セキュリティ関連ファイル（絶対にGitHubにアップしない！）
-config.js
+api/config.js
 
 # その他の除外ファイル
 .DS_Store

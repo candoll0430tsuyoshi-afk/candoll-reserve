@@ -1,7 +1,6 @@
-// 一番上の数行をこれに差し替え
-const SUPABASE_URL = "__SUPABASE_URL__";
-const SUPABASE_KEY = "__SUPABASE_KEY__";
 const adminClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const SUPABASE_URL = window.CONFIG?.SUPABASE_URL;
+const SUPABASE_KEY = window.CONFIG?.SUPABASE_KEY;
 
 let baseDate = new Date();
 let reservations = [];
@@ -43,11 +42,11 @@ async function fetchData(pass = null) {
     try {
         const response = await fetch("https://bcahztzetpfuklipjmxx.supabase.co/functions/v1/admin-service", {
             method: "POST",
-            headers: { 
-        "Content-Type": "application/json",
-        "apikey": "__SUPABASE_KEY__", 
-        "Authorization": "Bearer __SUPABASE_KEY__" 
-    },
+headers: { 
+    "Content-Type": "application/json",
+    "apikey": window.CONFIG?.SUPABASE_KEY, 
+    "Authorization": `Bearer ${window.CONFIG?.SUPABASE_KEY}` 
+},
             body: JSON.stringify({ mode: "list", password: password })
         });
         if (!response.ok) return false;
@@ -435,10 +434,10 @@ window.saveChanges = async function(id) {
 
     await fetch("https://bcahztzetpfuklipjmxx.supabase.co/functions/v1/admin-service", {
         method: "POST",
-        headers: { 
+headers: { 
     "Content-Type": "application/json",
-    "apikey": "__SUPABASE_KEY__",
-    "Authorization": "Bearer __SUPABASE_KEY__"
+    "apikey": window.CONFIG?.SUPABASE_KEY, 
+    "Authorization": `Bearer ${window.CONFIG?.SUPABASE_KEY}` 
 },
         body: JSON.stringify({ 
             mode: "edit", 
@@ -465,10 +464,11 @@ async function addManual(date, time) {
     
     await fetch("https://bcahztzetpfuklipjmxx.supabase.co/functions/v1/admin-service", {
         method: "POST",
-        headers: { 
+// headers の中を修正
+headers: { 
     "Content-Type": "application/json",
-    "apikey": "__SUPABASE_KEY__",
-    "Authorization": "Bearer __SUPABASE_KEY__"
+    "apikey": window.CONFIG?.SUPABASE_KEY, 
+    "Authorization": `Bearer ${window.CONFIG?.SUPABASE_KEY}` 
 },
         body: JSON.stringify({ 
             mode: "add", 
@@ -488,10 +488,11 @@ async function toggleDay(date, isClosed) {
     const password = localStorage.getItem('admin_password'), mode = isClosed ? "delHoliday" : "addHoliday";
     await fetch("https://bcahztzetpfuklipjmxx.supabase.co/functions/v1/admin-service", {
         method: "POST",
-        headers: { 
+// headers の中を修正
+headers: { 
     "Content-Type": "application/json",
-    "apikey": "__SUPABASE_KEY__",
-    "Authorization": "Bearer __SUPABASE_KEY__"
+    "apikey": window.CONFIG?.SUPABASE_KEY, 
+    "Authorization": `Bearer ${window.CONFIG?.SUPABASE_KEY}` 
 },
         body: JSON.stringify({ mode: mode, date: date, password: password })
     });
@@ -525,10 +526,11 @@ async function addReservation() {
     try {
         const response = await fetch("https://bcahztzetpfuklipjmxx.supabase.co/functions/v1/admin-service", {
             method: "POST",
-            headers: { 
+// headers の中を修正
+headers: { 
     "Content-Type": "application/json",
-    "apikey": "__SUPABASE_KEY__",
-    "Authorization": "Bearer __SUPABASE_KEY__"
+    "apikey": window.CONFIG?.SUPABASE_KEY, 
+    "Authorization": `Bearer ${window.CONFIG?.SUPABASE_KEY}` 
 },
             body: JSON.stringify({
                 mode: "add",
@@ -557,10 +559,11 @@ async function deleteRes(id) {
     const password = localStorage.getItem('admin_password');
     await fetch("https://bcahztzetpfuklipjmxx.supabase.co/functions/v1/admin-service", {
         method: "POST",
-        headers: { 
+// headers の中を修正
+headers: { 
     "Content-Type": "application/json",
-    "apikey": "__SUPABASE_KEY__",
-    "Authorization": "Bearer __SUPABASE_KEY__"
+    "apikey": window.CONFIG?.SUPABASE_KEY, 
+    "Authorization": `Bearer ${window.CONFIG?.SUPABASE_KEY}` 
 },
         body: JSON.stringify({ mode: "delete", id: id, password: password })
     });
