@@ -369,10 +369,14 @@ async function handleTouchDrop(id, newDate, newTime) {
     const endD = new Date(2000, 0, 1, h, m + duration);
     const end_time = `${String(endD.getHours()).padStart(2, '0')}:${String(endD.getMinutes()).padStart(2, '0')}`;
     
-    try {
+try {
         const response = await fetch("https://bcahztzetpfuklipjmxx.supabase.co/functions/v1/admin-service", {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: { 
+                "Content-Type": "application/json",
+                "apikey": "__SUPABASE_KEY__",              // 追加
+                "Authorization": "Bearer __SUPABASE_KEY__" // 追加
+            },
             body: JSON.stringify({ 
                 mode: "edit", 
                 id: Number(id), 
