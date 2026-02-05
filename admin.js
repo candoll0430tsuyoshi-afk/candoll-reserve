@@ -1,6 +1,7 @@
 const SUPABASE_URL = window.CONFIG?.SUPABASE_URL;
-const SUPABASE_KEY = window.CONFIG?.SUPABASE_KEY;
-const adminClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const SUPABASE_ANON_KEY = window.CONFIG?.SUPABASE_KEY;
+const SUPABASE_SERVICE_ROLE_KEY = window.CONFIG?.SUPABASE_SERVICE_ROLE_KEY;
+const adminClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 let baseDate = new Date();
 let reservations = [];
@@ -39,17 +40,28 @@ async function initAdmin() {
 async function fetchData(pass = null) {
     const password = pass || localStorage.getItem('admin_password');
     if (!password) return false;
+    
+    console.log('fetchData - Sending password:', password);
+    
     try {
         const response = await fetch("https://bcahztzetpfuklipjmxx.supabase.co/functions/v1/admin-service", {
             method: "POST",
-headers: { 
-    "Content-Type": "application/json",
-    "apikey": window.CONFIG?.SUPABASE_KEY, 
-    "Authorization": `Bearer ${window.CONFIG?.SUPABASE_KEY}` 
-},
+            headers: { 
+                "Content-Type": "application/json",
+                "apikey": SUPABASE_ANON_KEY,
+                "Authorization": `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`
+            },
             body: JSON.stringify({ mode: "list", password: password })
         });
-        if (!response.ok) return false;
+        
+        console.log('fetchData - Response status:', response.status);
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('fetchData - Error response:', errorText);
+            return false;
+        }
+        
         const data = await response.json();
         
         // データを各変数に正しく格納
@@ -66,9 +78,9 @@ headers: {
             });
         }
 
-        return true; // ここで初めて終わる
+        return true;
     } catch (e) {
-        console.error("Fetch error:", e);
+        console.error("fetchData - Fetch error:", e);
         return false;
     }
 }
@@ -84,7 +96,7 @@ function render() {
     wrap.style.flexDirection = isMobile ? "column" : "row";
     wrap.style.gap = "15px";
     
-const navCurrent = document.getElementById('nav-current');
+    const navCurrent = document.getElementById('nav-current');
     
     // 既存の日付ヘッダーを削除（重複防止）
     const existingHeader = document.getElementById('date-header-row');
@@ -99,7 +111,7 @@ const navCurrent = document.getElementById('nav-current');
         
         // 3日分のヘッダーを作成
         const headerRow = document.createElement('div');
-        headerRow.id = 'date-header-row';  // IDを追加して削除できるように
+        headerRow.id = 'date-header-row';
         headerRow.style.display = "flex";
         headerRow.style.gap = "15px";
         headerRow.style.marginBottom = "10px";
@@ -213,185 +225,161 @@ function setupMobileScroll() {
 function renderSlot(col, date, time, isClosed) {
     const timeMins = toMin(time);
     const exactRes = reservations.find(r => r.date === date && r.time === time);
-    const overlappingRes = reservations.find(r => {
-        if (r.date !== date) return false;
-        const start = toMin(r.time);
-        const firstMenu = r.menus.split(',')[0].trim();
-        const duration = r.manual_duration || MENU_DURATION[firstMenu] || 60;
-        return timeMins >= start && timeMins < start + duration;
-    });
-
-    const isOff = offTimes.some(o => o.date === date && o.time === time);
-    const div = document.createElement('div');
-    div.className = 'slot';
-    div.style.border = "1px solid #000"; 
-    div.style.boxSizing = "border-box";
-    div.dataset.date = date;
-    div.dataset.time = time;
-    div.ondragover = (e) => e.preventDefault();
-    div.ondrop = (e) => handleDrop(e, date, time);
-
-    // ★角丸とデザインの修正ポイント
-    if (overlappingRes) {
-        div.style.background = "#e5e5ea";
-        const resStart = toMin(overlappingRes.time);
-        const dur = overlappingRes.manual_duration || MENU_DURATION[overlappingRes.menus.split(',')[0].trim()] || 60;
-        const resEnd = resStart + dur;
-        const isLastSlot = (timeMins + 30 >= resEnd);
-
-        if (exactRes) {
-            div.draggable = true;
-            // カプセル状の角丸を適用
-            div.style.borderRadius = isLastSlot ? "15px" : "15px 15px 0 0";
-            div.style.marginTop = "8px";
-            if (!isLastSlot) div.style.borderBottom = "none";
-            div.ondragstart = (e) => { e.dataTransfer.setData("text/plain", exactRes.id); div.style.opacity = "0.4"; };
-            div.ondragend = () => div.style.opacity = "1";
-            setupTouchEvents(div, exactRes, date, time);
-        } else {
-            div.style.marginTop = "0";
-            div.style.borderTop = "none";
-            div.style.borderRadius = isLastSlot ? "0 0 15px 15px" : "0";
-            if (isLastSlot) div.style.marginBottom = "8px";
-            else div.style.borderBottom = "none";
-        }
-    } else {
-        div.style.background = (isOff || isClosed) ? "#f2f2f7" : "#ffffff";
-        div.style.borderRadius = "12px";
-        div.style.marginBottom = "6px";
-    }
-
-    let content = `<div class="time-label">${time}</div><div class="slot-info">`;
-    if (overlappingRes && exactRes) content += `<b style="color:#000;">${exactRes.name} 様</b><span class="menu-label">${exactRes.menus}</span>`;
-    else if (!overlappingRes) content += `<span style="color:#666; font-size:13px;">${(isOff || isClosed) ? '不可' : '空き'}</span>`;
-    content += `</div>`;
-    div.innerHTML = content;
-    div.onclick = (e) => { if (div.style.opacity === "0.4") return; openSlotModal(date, time, exactRes || overlappingRes, isOff); };
-    col.appendChild(div);
-}
-
-async function toggleOffTime(date, time) {
-    const password = localStorage.getItem('admin_password');
-    const isOff = offTimes.some(o => o.date === date && o.time === time);
+    const overlappingRes = reservations.filter(r => {
+        if (r.date !== date || !r.end_time) return false;
+        const s = toMin(r.time), e = toMin(r.end_time);
+        return timeMins >= s && timeMins < e;
+    }).sort((a, b) => toMin(a.time) - toMin(b.time));
     
-    // サーバーの仕様に合わせたモード名
-    const mode = isOff ? "delOff" : "addOff";
-
-    // 29分設定の計算
-    const [h, m] = time.split(':').map(Number);
-    const endD = new Date(2000, 0, 1, h, m + 29); 
-    const end_t = `${String(endD.getHours()).padStart(2,'0')}:${String(endD.getMinutes()).padStart(2,'0')}`;
-
-    try {
-        await fetch("https://bcahztzetpfuklipjmxx.supabase.co/functions/v1/admin-service", {
-            method: "POST",
-headers: { 
-    "Content-Type": "application/json",
-    "apikey": "__SUPABASE_KEY__",
-    "Authorization": "Bearer __SUPABASE_KEY__"
-},
-            body: JSON.stringify({ 
-                mode: mode, 
-                date: date, 
-                time: time, 
-                end_time: end_t, 
-                password: password 
-            })
-        });
-
-        // --- ここから追加 ---
-        if (window.closeModal) {
-            closeModal(); // 画面上のボックスを閉じる
-        }
-        // ------------------
-
-        await fetchData(); 
-        render();
-    } catch (err) {
-        console.error("送信エラー:", err);
-        alert("設定の保存に失敗しました。");
-    }
-}
-async function openSlotModal(date, time, res, isOff) {
-    const body = document.getElementById('modal-body');
-    const dayOfWeek = ['日','月','火','水','木','金','土'][new Date(date.replace(/-/g, '/')).getDay()];
-    let html = `<h3 style="margin:0 0 20px 0; text-align:center; color:#333; font-size:18px;">${date}(${dayOfWeek}) ${time}</h3>`;
-
-    if (res) {
-        const currentDur = res.manual_duration || MENU_DURATION[res.menus.split(',')[0].trim()] || 60;
-        html += `
-            <div style="font-size:18px; margin-bottom:20px; text-align:center; color:#000;"><b>${res.name} 様</b></div>
-            <div style="background:#f2f2f7; padding:20px; border-radius:15px; margin-bottom:15px;">
-                <label style="font-size:14px; font-weight:bold; color:#666; display:block; margin-bottom:8px;">所要時間の変更</label>
-                <select id="new-duration" style="width:100%; height:45px; font-size:16px; border:1px solid #ddd; border-radius:8px; padding:0 10px; margin-bottom:15px; background:#fff;">
-                    ${[30, 45, 60, 75, 90, 105, 120, 135, 150, 165, 180, 210, 240].map(m => 
-                        `<option value="${m}" ${currentDur == m ? 'selected' : ''}>${m}分</option>`
-                    ).join('')}
-                </select>
-                <button onclick="saveChanges('${res.id}')" style="background:#34c759; color:white; border:none; height:50px; width:100%; border-radius:10px; font-weight:bold; font-size:16px; cursor:pointer; margin-top:20px;">変更を保存</button>
-            </div>
-            <button onclick="deleteRes('${res.id}')" style="background:none; color:#ff3b30; border:none; width:100%; padding:10px; cursor:pointer; font-size:14px;">この予約を削除する</button>`;
-    } else {
-        html += `
-            <div style="display:flex; flex-direction:column; gap:12px; background:#f2f2f7; padding:20px; border-radius:15px; margin-bottom:15px;">
-                <label style="font-size:14px; font-weight:bold; color:#666; display:block;">新規予約の追加</label>
-                <input type="text" id="manual-name" placeholder="お客様名" style="width:100%; height:45px; font-size:16px; border:1px solid #ddd; border-radius:8px; padding:0 10px; box-sizing:border-box;">
-                <select id="manual-menu" style="width:100%; height:45px; font-size:16px; border:1px solid #ddd; border-radius:8px; padding:0 10px; box-sizing:border-box; background:#fff;">
-                    ${Object.keys(MENU_DURATION).map(m => `<option value="${m}">${m}</option>`).join('')}
-                </select>
-                <button onclick="addManual('${date}', '${time}')" style="background:#007aff; color:white; border:none; height:50px; width:100%; border-radius:10px; font-weight:bold; font-size:16px; margin-top:10px; cursor:pointer;">予約を追加</button>
-            </div>
-            <button onclick="toggleOffTime('${date}', '${time}', ${isOff})" style="background:${isOff ? '#ff9500' : '#8e8e93'}; color:white; border:none; height:45px; width:100%; border-radius:10px; font-weight:bold; font-size:15px; cursor:pointer;">
-                ${isOff ? '予約可能に戻す' : '予約不可にする'}
-            </button>`;
-    }
-    html += `<button onclick="closeModal()" style="margin-top:15px; width:100%; padding:10px; border:none; background:none; color:#007aff; font-size:16px; cursor:pointer;">閉じる</button>`;
-    body.innerHTML = html;
-    document.getElementById('slot-modal').style.display = 'flex';
-}
-
-// 補助関数
-async function handleDrop(e, newDate, newTime) {
-    e.preventDefault();
-    const id = e.dataTransfer.getData("text/plain");
-    if (id) handleTouchDrop(id, newDate, newTime);
-}
-async function handleTouchDrop(id, newDate, newTime) {
-    if (!confirm(`${newDate} ${newTime} に移動しますか？`)) return;
-    const password = localStorage.getItem('admin_password');
+    if (exactRes) overlappingRes.unshift(exactRes);
+    const first = overlappingRes[0];
     
-    // 移動する予約のデータを取得
-    const reservation = reservations.find(r => r.id == id);
-    if (!reservation) {
-        alert('予約が見つかりません');
+    const slot = document.createElement('div');
+    slot.className = 'slot';
+    slot.dataset.date = date;
+    slot.dataset.time = time;
+    slot.style.cssText = `position:relative; border:1px solid #ddd; padding:8px; min-height:60px; background:${isClosed ? '#f0f0f0' : '#fff'}; cursor:pointer; opacity:${isClosed ? '0.5' : '1'};`;
+    
+    const conflictOffTime = offTimes.find(o => o.date === date && o.time === time);
+    if (conflictOffTime) {
+        slot.style.background = '#ffd700';
+        slot.innerHTML = `<div style="color:#000; font-weight:bold; font-size:11px;">臨時休み</div>`;
+        slot.onclick = () => alert("この時間は臨時休みです");
+        col.appendChild(slot);
         return;
     }
     
-    // end_timeを計算
-    const duration = reservation.manual_duration || MENU_DURATION[reservation.menus.split(',')[0].trim()] || 60;
+    if (!first) {
+        const label = document.createElement('div');
+        label.textContent = time;
+        label.style.cssText = 'font-size:11px; color:#999;';
+        slot.appendChild(label);
+        if (!isClosed) {
+            slot.onclick = () => openModal(date, time);
+        }
+        col.appendChild(slot);
+        return;
+    }
+    
+    if (exactRes) {
+        slot.style.background = '#007aff';
+        slot.style.color = '#fff';
+        slot.draggable = true;
+        slot.ondragstart = e => {
+            e.dataTransfer.effectAllowed = "move";
+            e.dataTransfer.setData("text/plain", JSON.stringify({ id: exactRes.id, date: date, time: time }));
+        };
+        setupTouchEvents(slot, exactRes, date, time);
+        
+        const info = document.createElement('div');
+        info.style.cssText = 'position:relative; z-index:10;';
+        info.innerHTML = `
+            <div style="font-size:12px; font-weight:bold;">${exactRes.name}</div>
+            <div style="font-size:10px;">${exactRes.menus || ''}</div>
+            <div style="font-size:10px;">${time} ~ ${exactRes.end_time || ''}</div>
+        `;
+        slot.appendChild(info);
+        slot.onclick = () => editModal(exactRes.id);
+    } else {
+        slot.style.background = '#ffcccc';
+        slot.style.color = '#000';
+        slot.style.cursor = 'default';
+        const info = document.createElement('div');
+        info.innerHTML = `<div style="font-size:11px; color:#666;">${time}</div><div style="font-size:10px; color:#999;">予約あり</div>`;
+        slot.appendChild(info);
+    }
+    
+    slot.ondragover = e => { e.preventDefault(); slot.style.background = '#cce5ff'; };
+    slot.ondragleave = () => { slot.style.background = exactRes ? '#007aff' : (first ? '#ffcccc' : '#fff'); };
+    slot.ondrop = e => {
+        e.preventDefault();
+        const data = JSON.parse(e.dataTransfer.getData("text/plain"));
+        if (data.id) handleDrop(data.id, date, time);
+        slot.style.background = exactRes ? '#007aff' : (first ? '#ffcccc' : '#fff');
+    };
+    
+    col.appendChild(slot);
+}
+
+function openModal(date, time) {
+    const modal = document.getElementById('slot-modal');
+    modal.style.display = 'block';
+    modal.innerHTML = `
+        <div style="background:#fff; width:90%; max-width:500px; margin:80px auto; padding:20px; border-radius:12px; box-shadow:0 4px 20px rgba(0,0,0,0.2);">
+            <h3 style="margin-top:0;">${date} ${time} に予約を追加</h3>
+            <label>名前<br><input type="text" id="manual-name" style="width:100%; padding:8px; margin-bottom:10px; box-sizing:border-box;"></label><br>
+            <label>メニュー<br><input type="text" id="manual-menu" placeholder="カット, カラーなど" style="width:100%; padding:8px; margin-bottom:10px; box-sizing:border-box;"></label><br>
+            <button onclick="addManual('${date}', '${time}')" style="padding:10px 20px; background:#007aff; color:#fff; border:none; border-radius:8px; cursor:pointer;">保存</button>
+            <button onclick="closeModal()" style="padding:10px 20px; background:#ccc; color:#000; border:none; border-radius:8px; cursor:pointer; margin-left:10px;">キャンセル</button>
+        </div>
+    `;
+}
+
+function editModal(id) {
+    const res = reservations.find(r => r.id == id);
+    if (!res) return;
+    
+    const duration = res.manual_duration || (MENU_DURATION[res.menus] || 60);
+    
+    const modal = document.getElementById('slot-modal');
+    modal.style.display = 'block';
+    modal.innerHTML = `
+        <div style="background:#fff; width:90%; max-width:500px; margin:80px auto; padding:20px; border-radius:12px; box-shadow:0 4px 20px rgba(0,0,0,0.2);">
+            <h3 style="margin-top:0;">予約の編集</h3>
+            <div><b>名前:</b> ${res.name}</div>
+            <div><b>日時:</b> ${res.date} ${res.time}</div>
+            <div><b>メニュー:</b> ${res.menus || ''}</div>
+            <br>
+            <label>施術時間 (分)<br>
+                <input type="number" id="new-duration" value="${duration}" style="width:100%; padding:8px; margin-bottom:10px; box-sizing:border-box;">
+            </label><br>
+            <button onclick="saveChanges(${id})" style="padding:10px 20px; background:#007aff; color:#fff; border:none; border-radius:8px; cursor:pointer;">保存</button>
+            <button onclick="deleteRes(${id})" style="padding:10px 20px; background:#ff3b30; color:#fff; border:none; border-radius:8px; cursor:pointer; margin-left:10px;">削除</button>
+            <button onclick="closeModal()" style="padding:10px 20px; background:#ccc; color:#000; border:none; border-radius:8px; cursor:pointer; margin-left:10px;">閉じる</button>
+        </div>
+    `;
+}
+
+async function handleDrop(id, newDate, newTime) {
+    const password = localStorage.getItem('admin_password');
+    if (!password) return alert("パスワードが設定されていません");
+    
+    const res = reservations.find(r => r.id == id);
+    if (!res) return;
+    
+    const duration = res.manual_duration || (MENU_DURATION[res.menus] || 60);
     const [h, m] = newTime.split(':').map(Number);
     const endD = new Date(2000, 0, 1, h, m + duration);
     const end_time = `${String(endD.getHours()).padStart(2, '0')}:${String(endD.getMinutes()).padStart(2, '0')}`;
     
-try {
+    console.log('handleDrop - Sending password:', password);
+    
+    try {
         const response = await fetch("https://bcahztzetpfuklipjmxx.supabase.co/functions/v1/admin-service", {
             method: "POST",
-headers: { 
-    "Content-Type": "application/json",
-    "apikey": window.CONFIG.SUPABASE_KEY, // 変数を使う
-    "Authorization": `Bearer ${window.CONFIG.SUPABASE_KEY}` // 変数を使う
-},
+            headers: { 
+                "Content-Type": "application/json",
+                "apikey": SUPABASE_ANON_KEY,
+                "Authorization": `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`
+            },
             body: JSON.stringify({ 
                 mode: "edit", 
-                id: Number(id), 
+                id: Number(id),
+                name: res.name,
+                menus: res.menus,
                 date: newDate, 
                 time: newTime, 
                 end_time: end_time,
-                password: password 
+                manual_duration: res.manual_duration,
+                password: password
             })
         });
         
+        console.log('handleDrop - Response status:', response.status);
+        
         if (!response.ok) {
+            const errorText = await response.text();
+            console.error('handleDrop - Error response:', errorText);
             throw new Error(`HTTP error! status: ${response.status}`);
         }
         
@@ -402,6 +390,11 @@ headers: {
         alert('予約の移動に失敗しました');
     }
 }
+
+async function handleTouchDrop(id, newDate, newTime) {
+    await handleDrop(id, newDate, newTime);
+}
+
 function setupTouchEvents(div, exactRes, date, time) {
     let touchTimer; 
     div.ontouchstart = () => { touchTimer = setTimeout(() => { div.style.opacity = "0.4"; window.draggingId = exactRes.id; }, 500); };
@@ -419,36 +412,58 @@ function setupTouchEvents(div, exactRes, date, time) {
         }
     };
 }
+
 window.saveChanges = async function(id) {
     const dur = document.getElementById('new-duration').value;
     const password = localStorage.getItem('admin_password');
 
-    // --- 修正：既存の予約データから時間を取得 ---
     const res = reservations.find(r => r.id == id);
     if (!res) return alert("予約が見つかりません");
     
     const [h, m] = res.time.split(':').map(Number);
     const endD = new Date(2000, 0, 1, h, m + Number(dur));
     const end_time = `${String(endD.getHours()).padStart(2, '0')}:${String(endD.getMinutes()).padStart(2, '0')}`;
-    // -------------------------
 
-    await fetch("https://bcahztzetpfuklipjmxx.supabase.co/functions/v1/admin-service", {
-        method: "POST",
-headers: { 
-    "Content-Type": "application/json",
-    "apikey": window.CONFIG?.SUPABASE_KEY, 
-    "Authorization": `Bearer ${window.CONFIG?.SUPABASE_KEY}` 
-},
-        body: JSON.stringify({ 
-            mode: "edit", 
-            id: Number(id), 
-            manual_duration: Number(dur), 
-            end_time: end_time,
-            password: password 
-        })
-    });
-    closeModal(); await fetchData(); render();
+    console.log('saveChanges - Sending password:', password);
+
+    try {
+        const response = await fetch("https://bcahztzetpfuklipjmxx.supabase.co/functions/v1/admin-service", {
+            method: "POST",
+            headers: { 
+                "Content-Type": "application/json",
+                "apikey": SUPABASE_ANON_KEY,
+                "Authorization": `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`
+            },
+            body: JSON.stringify({ 
+                mode: "edit", 
+                id: Number(id),
+                name: res.name,
+                menus: res.menus,
+                date: res.date,
+                time: res.time,
+                manual_duration: Number(dur), 
+                end_time: end_time,
+                password: password
+            })
+        });
+
+        console.log('saveChanges - Response status:', response.status);
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('saveChanges - Error response:', errorText);
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        closeModal(); 
+        await fetchData(); 
+        render();
+    } catch (error) {
+        console.error('保存エラー:', error);
+        alert('保存に失敗しました');
+    }
 };
+
 async function addManual(date, time) {
     const name = document.getElementById('manual-name').value;
     const menus = document.getElementById('manual-menu').value;
@@ -456,48 +471,82 @@ async function addManual(date, time) {
     
     if (!name) return alert("名前を入力してください");
     
-    // ★ end_timeを計算（この部分を追加）
     const duration = MENU_DURATION[menus] || 60;
     const [h, m] = time.split(':').map(Number);
     const endD = new Date(2000, 0, 1, h, m + duration);
     const end_time = `${String(endD.getHours()).padStart(2, '0')}:${String(endD.getMinutes()).padStart(2, '0')}`;
     
-    await fetch("https://bcahztzetpfuklipjmxx.supabase.co/functions/v1/admin-service", {
-        method: "POST",
-// headers の中を修正
-headers: { 
-    "Content-Type": "application/json",
-    "apikey": window.CONFIG?.SUPABASE_KEY, 
-    "Authorization": `Bearer ${window.CONFIG?.SUPABASE_KEY}` 
-},
-        body: JSON.stringify({ 
-            mode: "add", 
-            name, 
-            date, 
-            time, 
-            menus, 
-            end_time,  // ← これを追加
-            password: password 
-        })
-    });
-    closeModal(); 
-    await fetchData(); 
-    render();
+    console.log('addManual - Sending password:', password);
+    
+    try {
+        const response = await fetch("https://bcahztzetpfuklipjmxx.supabase.co/functions/v1/admin-service", {
+            method: "POST",
+            headers: { 
+                "Content-Type": "application/json",
+                "apikey": SUPABASE_ANON_KEY,
+                "Authorization": `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`
+            },
+            body: JSON.stringify({ 
+                mode: "add", 
+                name, 
+                date, 
+                time, 
+                menus, 
+                end_time,
+                password: password
+            })
+        });
+
+        console.log('addManual - Response status:', response.status);
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('addManual - Error response:', errorText);
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        closeModal(); 
+        await fetchData(); 
+        render();
+    } catch (error) {
+        console.error('予約追加エラー:', error);
+        alert('予約の追加に失敗しました');
+    }
 }
+
 async function toggleDay(date, isClosed) {
-    const password = localStorage.getItem('admin_password'), mode = isClosed ? "delHoliday" : "addHoliday";
-    await fetch("https://bcahztzetpfuklipjmxx.supabase.co/functions/v1/admin-service", {
-        method: "POST",
-// headers の中を修正
-headers: { 
-    "Content-Type": "application/json",
-    "apikey": window.CONFIG?.SUPABASE_KEY, 
-    "Authorization": `Bearer ${window.CONFIG?.SUPABASE_KEY}` 
-},
-        body: JSON.stringify({ mode: mode, date: date, password: password })
-    });
-    await fetchData(); render();
+    const password = localStorage.getItem('admin_password');
+    const mode = isClosed ? "delHoliday" : "addHoliday";
+    
+    console.log('toggleDay - mode:', mode, 'date:', date, 'password:', password);
+    
+    try {
+        const response = await fetch("https://bcahztzetpfuklipjmxx.supabase.co/functions/v1/admin-service", {
+            method: "POST",
+            headers: { 
+                "Content-Type": "application/json",
+                "apikey": SUPABASE_ANON_KEY,
+                "Authorization": `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`
+            },
+            body: JSON.stringify({ mode: mode, date: date, password: password })
+        });
+
+        console.log('toggleDay - Response status:', response.status);
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('toggleDay - Error response:', errorText);
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        await fetchData(); 
+        render();
+    } catch (error) {
+        console.error('営業日変更エラー:', error);
+        alert('営業日の変更に失敗しました');
+    }
 }
+
 async function addReservation() {
     const name = document.getElementById('res-name').value;
     const date = document.getElementById('res-date').value;
@@ -512,10 +561,9 @@ async function addReservation() {
 
     const selectedMenus = Array.from(menuEls).map(el => el.value);
     
-    // 読み込んだ MENU_DURATION を使って計算
     let totalMin = 0;
     selectedMenus.forEach(m => {
-        const d = MENU_DURATION[m] || 30; // データがなければ30分
+        const d = MENU_DURATION[m] || 30;
         totalMin += d;
     });
 
@@ -523,27 +571,34 @@ async function addReservation() {
     const endD = new Date(2000, 0, 1, h, min + totalMin);
     const end_time = `${String(endD.getHours()).padStart(2, '0')}:${String(endD.getMinutes()).padStart(2, '0')}`;
 
+    console.log('addReservation - Sending password:', password);
+
     try {
         const response = await fetch("https://bcahztzetpfuklipjmxx.supabase.co/functions/v1/admin-service", {
             method: "POST",
-// headers の中を修正
-headers: { 
-    "Content-Type": "application/json",
-    "apikey": window.CONFIG?.SUPABASE_KEY, 
-    "Authorization": `Bearer ${window.CONFIG?.SUPABASE_KEY}` 
-},
+            headers: { 
+                "Content-Type": "application/json",
+                "apikey": SUPABASE_ANON_KEY,
+                "Authorization": `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`
+            },
             body: JSON.stringify({
                 mode: "add",
                 name: name,
                 menus: selectedMenus.join(','),
                 date: date,
                 time: time,
-                end_time: end_time, // ここで計算した値が入る
+                end_time: end_time,
                 password: password
             })
         });
 
-        if (!response.ok) throw new Error("保存失敗");
+        console.log('addReservation - Response status:', response.status);
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('addReservation - Error response:', errorText);
+            throw new Error("保存失敗");
+        }
 
         alert("予約を保存しました");
         closeModal();
@@ -551,24 +606,45 @@ headers: {
         render();
 
     } catch (err) {
+        console.error('予約保存エラー:', err);
         alert("保存に失敗しました。パスワードを確認してください。");
     }
 }
+
 async function deleteRes(id) {
     if (!confirm("削除しますか？")) return;
     const password = localStorage.getItem('admin_password');
-    await fetch("https://bcahztzetpfuklipjmxx.supabase.co/functions/v1/admin-service", {
-        method: "POST",
-// headers の中を修正
-headers: { 
-    "Content-Type": "application/json",
-    "apikey": window.CONFIG?.SUPABASE_KEY, 
-    "Authorization": `Bearer ${window.CONFIG?.SUPABASE_KEY}` 
-},
-        body: JSON.stringify({ mode: "delete", id: id, password: password })
-    });
-    closeModal(); await fetchData(); render();
+    
+    console.log('deleteRes - Deleting id:', id, 'password:', password);
+    
+    try {
+        const response = await fetch("https://bcahztzetpfuklipjmxx.supabase.co/functions/v1/admin-service", {
+            method: "POST",
+            headers: { 
+                "Content-Type": "application/json",
+                "apikey": SUPABASE_ANON_KEY,
+                "Authorization": `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`
+            },
+            body: JSON.stringify({ mode: "delete", id: id, password: password })
+        });
+
+        console.log('deleteRes - Response status:', response.status);
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('deleteRes - Error response:', errorText);
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        closeModal(); 
+        await fetchData(); 
+        render();
+    } catch (error) {
+        console.error('削除エラー:', error);
+        alert('予約の削除に失敗しました');
+    }
 }
+
 window.handleCalendarChange = v => { if(v) { baseDate = new Date(v.replace(/-/g, '/')); render(); } };
 window.moveDate = n => { baseDate.setDate(baseDate.getDate() + n); render(); };
 window.closeModal = () => document.getElementById('slot-modal').style.display = 'none';
