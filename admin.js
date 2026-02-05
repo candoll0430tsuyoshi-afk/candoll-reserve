@@ -285,7 +285,11 @@ async function toggleOffTime(date, time) {
     try {
         await fetch("https://bcahztzetpfuklipjmxx.supabase.co/functions/v1/admin-service", {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+headers: { 
+    "Content-Type": "application/json",
+    "apikey": "__SUPABASE_KEY__",
+    "Authorization": "Bearer __SUPABASE_KEY__"
+},
             body: JSON.stringify({ 
                 mode: mode, 
                 date: date, 
@@ -430,7 +434,11 @@ window.saveChanges = async function(id) {
 
     await fetch("https://bcahztzetpfuklipjmxx.supabase.co/functions/v1/admin-service", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+    "Content-Type": "application/json",
+    "apikey": "__SUPABASE_KEY__",
+    "Authorization": "Bearer __SUPABASE_KEY__"
+},
         body: JSON.stringify({ 
             mode: "edit", 
             id: Number(id), 
@@ -456,7 +464,11 @@ async function addManual(date, time) {
     
     await fetch("https://bcahztzetpfuklipjmxx.supabase.co/functions/v1/admin-service", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+    "Content-Type": "application/json",
+    "apikey": "__SUPABASE_KEY__",
+    "Authorization": "Bearer __SUPABASE_KEY__"
+},
         body: JSON.stringify({ 
             mode: "add", 
             name, 
@@ -475,7 +487,11 @@ async function toggleDay(date, isClosed) {
     const password = localStorage.getItem('admin_password'), mode = isClosed ? "delHoliday" : "addHoliday";
     await fetch("https://bcahztzetpfuklipjmxx.supabase.co/functions/v1/admin-service", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+    "Content-Type": "application/json",
+    "apikey": "__SUPABASE_KEY__",
+    "Authorization": "Bearer __SUPABASE_KEY__"
+},
         body: JSON.stringify({ mode: mode, date: date, password: password })
     });
     await fetchData(); render();
@@ -508,7 +524,11 @@ async function addReservation() {
     try {
         const response = await fetch("https://bcahztzetpfuklipjmxx.supabase.co/functions/v1/admin-service", {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: { 
+    "Content-Type": "application/json",
+    "apikey": "__SUPABASE_KEY__",
+    "Authorization": "Bearer __SUPABASE_KEY__"
+},
             body: JSON.stringify({
                 mode: "add",
                 name: name,
@@ -536,7 +556,11 @@ async function deleteRes(id) {
     const password = localStorage.getItem('admin_password');
     await fetch("https://bcahztzetpfuklipjmxx.supabase.co/functions/v1/admin-service", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+    "Content-Type": "application/json",
+    "apikey": "__SUPABASE_KEY__",
+    "Authorization": "Bearer __SUPABASE_KEY__"
+},
         body: JSON.stringify({ mode: "delete", id: id, password: password })
     });
     closeModal(); await fetchData(); render();
