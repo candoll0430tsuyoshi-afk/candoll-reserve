@@ -1,5 +1,6 @@
-const SUPABASE_URL = CONFIG.SUPABASE_URL;
-const SUPABASE_KEY = CONFIG.SUPABASE_KEY;
+// 一番上の数行をこれに差し替え
+const SUPABASE_URL = "__SUPABASE_URL__";
+const SUPABASE_KEY = "__SUPABASE_KEY__";
 const adminClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 let baseDate = new Date();
@@ -42,7 +43,11 @@ async function fetchData(pass = null) {
     try {
         const response = await fetch("https://bcahztzetpfuklipjmxx.supabase.co/functions/v1/admin-service", {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: { 
+        "Content-Type": "application/json",
+        "apikey": "__SUPABASE_KEY__", 
+        "Authorization": "Bearer __SUPABASE_KEY__" 
+    },
             body: JSON.stringify({ mode: "list", password: password })
         });
         if (!response.ok) return false;
