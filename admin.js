@@ -1,6 +1,6 @@
-const adminClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const SUPABASE_URL = window.CONFIG?.SUPABASE_URL;
 const SUPABASE_KEY = window.CONFIG?.SUPABASE_KEY;
+const adminClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 let baseDate = new Date();
 let reservations = [];
