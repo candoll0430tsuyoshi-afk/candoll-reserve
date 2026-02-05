@@ -1,7 +1,3 @@
-
-コピー
-
-// APIキーはconfig.jsから読み込み
 const SUPABASE_URL = CONFIG.SUPABASE_URL;
 const SUPABASE_KEY = CONFIG.SUPABASE_KEY;
 const adminClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
