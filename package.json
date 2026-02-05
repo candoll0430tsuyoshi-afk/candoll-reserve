@@ -1,4 +1,11 @@
-"build": "ts=$(date +%s); \
-sed -i s|__SUPABASE_URL__|${SUPABASE_URL}|g admin.html && \
-sed -i s|__SUPABASE_KEY__|${SUPABASE_KEY}|g admin.html && \
-sed -i s|admin.js|admin.js?v=$ts|g admin.html"
+{
+  "name": "candoll-reserve",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "build": "ts=$(date +%s); \
+sed -i \"s|__SUPABASE_URL__|${SUPABASE_URL}|g\" admin.html && \
+sed -i \"s|__SUPABASE_KEY__|${SUPABASE_KEY}|g\" admin.html && \
+sed -i \"s|admin.js|admin.js?v=$ts|g\" admin.html"
+  }
+}
