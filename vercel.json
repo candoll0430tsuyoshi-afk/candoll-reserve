@@ -1,8 +1,8 @@
 {
   "build": {
     "env": {
-      "SUPABASE_URL": "@supabase-url",
-      "SUPABASE_KEY": "@supabase-key"
+      "SUPABASE_URL": "https://bcahztzetpfuklipjmxx.supabase.co",
+      "SUPABASE_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJjYWh6dHpldHBmdWtsaXBqbXh4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQxMzE1MzUsImV4cCI6MjA3OTcwNzUzNX0.f-zFTESZMsYTFoFKoLaw4_-cdsGPnpixScId1Rk8Nys"
     }
   }
 }
