@@ -376,11 +376,11 @@ async function handleTouchDrop(id, newDate, newTime) {
 try {
         const response = await fetch("https://bcahztzetpfuklipjmxx.supabase.co/functions/v1/admin-service", {
             method: "POST",
-            headers: { 
-                "Content-Type": "application/json",
-                "apikey": "__SUPABASE_KEY__",              // 追加
-                "Authorization": "Bearer __SUPABASE_KEY__" // 追加
-            },
+headers: { 
+    "Content-Type": "application/json",
+    "apikey": window.CONFIG.SUPABASE_KEY, // 変数を使う
+    "Authorization": `Bearer ${window.CONFIG.SUPABASE_KEY}` // 変数を使う
+},
             body: JSON.stringify({ 
                 mode: "edit", 
                 id: Number(id), 
