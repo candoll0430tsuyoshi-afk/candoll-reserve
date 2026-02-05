@@ -1,0 +1,12 @@
+import fs from "fs";
+
+const ts = Date.now();
+
+let html = fs.readFileSync("admin.html", "utf8");
+
+html = html
+  .replace(/__SUPABASE_URL__/g, process.env.SUPABASE_URL || "")
+  .replace(/__SUPABASE_KEY__/g, process.env.SUPABASE_KEY || "")
+  .replace(/admin\.js/g, `admin.js?v=${ts}`);
+
+fs.writeFileSync("admin.html", html);
