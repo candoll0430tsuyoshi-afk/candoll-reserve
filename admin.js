@@ -39,6 +39,11 @@ async function initAdmin() {
 
 async function fetchData(pass = null) {
     const password = pass || localStorage.getItem('admin_password');
+    console.log("--- ENV不一致チェック ---");
+    console.log("① ブラウザが送っているパスワード:", password);
+    console.log("② Vercelから届いたURL:", window.CONFIG?.SUPABASE_URL);
+    console.log("③ Vercelから届いたKEY:", window.CONFIG?.SUPABASE_KEY);
+    console.log("④ Vercelから届いたSERVICE_ROLE_KEY:", window.CONFIG?.SUPABASE_SERVICE_ROLE_KEY);
     if (!password) return false;
     
     console.log('fetchData - Sending password:', password);
