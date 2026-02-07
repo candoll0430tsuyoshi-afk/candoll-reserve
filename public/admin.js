@@ -141,7 +141,18 @@ const navCurrent = document.getElementById('nav-current');
         col.dataset.date = dateStr;
         col.style.flex = "1";
         const w = d.getDay();
-        const isClosed = (w === 1 || w === 2 || holidays.some(h => h.date === dateStr)) && !specialOpens.some(s => s.date === dateStr);
+        // 第1・第3火曜判定
+const day = d.getDate();
+const isFirstTuesday = (w === 2 && day <= 7);
+const isThirdTuesday = (w === 2 && day >= 15 && day <= 21);
+
+// 定休日ロジック
+const isRegularClosed = (w === 1) || isFirstTuesday || isThirdTuesday;
+
+// 最終的な休み判定
+const isClosed = (isRegularClosed || holidays.some(h => h.date === dateStr))
+    && !specialOpens.some(s => s.date === dateStr);
+
         
         if (isMobile) {
             // スマホは各カラムに日付を表示
