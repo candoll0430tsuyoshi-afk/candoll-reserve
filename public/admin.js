@@ -17,11 +17,17 @@ document.addEventListener("DOMContentLoaded", () => {
             const success = await fetchData(passInput); 
             if (success) {
 
-                try {
-                    localStorage.setItem('admin_password', passInput);
-                } catch (e) {
-                    console.log("localStorage 保存失敗:", e);
-                }
+try {
+    localStorage.setItem('admin_password', passInput);
+} catch (e) {
+    console.log("localStorage 保存失敗:", e);
+}
+
+// ★ Safari 対策：保存が完了するまで少し待つ
+setTimeout(() => {
+    initAdmin();
+}, 150);
+
 
                 // ★ Safari 対策：保存が完了するまで少し待つ
                 setTimeout(() => {
