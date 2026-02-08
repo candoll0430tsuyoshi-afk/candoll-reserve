@@ -156,6 +156,79 @@ function render() {
     setTimeout(updateNowLine, 300);
 }
 /* ============================
+   appendDays（定休日ロジック入り）
+   ============================ */
+
+function appendDays(count, isInitial = false) {
+    const wrap = document.getElementById('days-wrapper');
+    if (!wrap) return;
+
+    for (let i = 0; i < count; i++) {
+        const d = new Date(baseDate);
+        d.setDate(d.getDate() + (isInitial ? i : wrap.children.length));
+
+        const dateStr =
+            `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
+        const col = document.createElement('div');
+        col.className = 'day-column';
+        col.dataset.date = dateStr;
+
+        const w = d.getDay();
+
+        // ★ 定休日ロジック（毎週月曜＋第1・第3火曜）
+        const day = d.getDate();
+        const isFirstTuesday = (w === 2 && day <= 7);
+        const isThirdTuesday = (w === 2 && day >= 15 && day <= 21);
+        const isRegularClosed = (w === 1) || isFirstTuesday || isThirdTuesday;
+
+        const isClosed =
+            (isRegularClosed || holidays.some(h => h.date === dateStr))
+            && !specialOpens.some(s => s.date === dateStr);
+
+        // 日付ヘッダー（スマホ用）
+        col.innerHTML = `
+            <div style="background:#f2f2f7; padding:12px; text-align:center; border-bottom:1px solid #ddd;">
+                <b style="font-size:16px;">${dateStr} (${['日','月','火','水','木','金','土'][w]})</b>
+                <div onclick="toggleDay('${dateStr}', ${isClosed})"
+                     style="font-size:11px; text-decoration:underline; cursor:pointer; color:#007aff;">
+                     ${isClosed ? '営業にする' : '休みにする'}
+                </div>
+            </div>
+        `;
+
+        // スロット生成
+        for (let h = 10; h <= 18; h++) {
+            ['00', '30'].forEach(m => {
+                renderSlot(col, dateStr, `${String(h).padStart(2, '0')}:${m}`, isClosed);
+            });
+        }
+
+        wrap.appendChild(col);
+    }
+}
+
+
+/* ============================
+   無限スクロール
+   ============================ */
+
+function setupInfiniteScroll() {
+    const wrap = document.getElementById('days-wrapper');
+    if (!wrap) return;
+
+    wrap.addEventListener('scroll', () => {
+        const nearEnd =
+            wrap.scrollLeft + wrap.clientWidth >= wrap.scrollWidth - 50;
+
+        if (nearEnd) {
+            appendDays(7);
+        }
+    });
+}
+
+
+/* ============================
    スマホ用：スクロールで日付バナー更新
    ============================ */
 
@@ -197,7 +270,7 @@ function setupMobileScroll() {
 
 
 /* ============================
-   スロット描画（あなたの元コード）
+   スロット描画
    ============================ */
 
 function renderSlot(col, date, time, isClosed) {
@@ -214,10 +287,9 @@ function renderSlot(col, date, time, isClosed) {
     const isOff = offTimes.some(o => o.date === date && o.time === time);
     const div = document.createElement('div');
     div.className = 'slot';
-    div.style.border = "1px solid #000"; 
-    div.style.boxSizing = "border-box";
     div.dataset.date = date;
     div.dataset.time = time;
+
     div.ondragover = (e) => e.preventDefault();
     div.ondrop = (e) => handleDrop(e, date, time);
 
@@ -267,90 +339,6 @@ function renderSlot(col, date, time, isClosed) {
 
     col.appendChild(div);
 }
-
-
-/* ============================
-   予約不可（OffTime）切り替え
-   ============================ */
-
-async function toggleOffTime(date, time) {
-    const password = localStorage.getItem('admin_password');
-    const isOff = offTimes.some(o => o.date === date && o.time === time);
-    const mode = isOff ? "delOff" : "addOff";
-
-    const [h, m] = time.split(':').map(Number);
-    const endD = new Date(2000, 0, 1, h, m + 29); 
-    const end_t = `${String(endD.getHours()).padStart(2,'0')}:${String(endD.getMinutes()).padStart(2,'0')}`;
-
-    try {
-        await fetch("https://bcahztzetpfuklipjmxx.supabase.co/functions/v1/admin-service", {
-            method: "POST",
-            headers: { 
-                "Content-Type": "application/json",
-                "apikey": "__SUPABASE_KEY__",
-                "Authorization": "Bearer __SUPABASE_KEY__"
-            },
-            body: JSON.stringify({ 
-                mode: mode, 
-                date: date, 
-                time: time, 
-                end_time: end_t, 
-                password: password 
-            })
-        });
-
-        if (window.closeModal) closeModal();
-
-        await fetchData(); 
-        render();
-    } catch (err) {
-        console.error("送信エラー:", err);
-        alert("設定の保存に失敗しました。");
-    }
-}
-/* ============================
-   スロットモーダル（あなたの元コード）
-   ============================ */
-
-async function openSlotModal(date, time, res, isOff) {
-    const body = document.getElementById('modal-body');
-    const dayOfWeek = ['日','月','火','水','木','金','土'][new Date(date.replace(/-/g, '/')).getDay()];
-    let html = `<h3 style="margin:0 0 20px 0; text-align:center; color:#333; font-size:18px;">${date}(${dayOfWeek}) ${time}</h3>`;
-
-    if (res) {
-        const currentDur = res.manual_duration || MENU_DURATION[res.menus.split(',')[0].trim()] || 60;
-        html += `
-            <div style="font-size:18px; margin-bottom:20px; text-align:center; color:#000;"><b>${res.name} 様</b></div>
-            <div style="background:#f2f2f7; padding:20px; border-radius:15px; margin-bottom:15px;">
-                <label style="font-size:14px; font-weight:bold; color:#666; display:block; margin-bottom:8px;">所要時間の変更</label>
-                <select id="new-duration" style="width:100%; height:45px; font-size:16px; border:1px solid #ddd; border-radius:8px; padding:0 10px; margin-bottom:15px; background:#fff;">
-                    ${[30, 45, 60, 75, 90, 105, 120, 135, 150, 165, 180, 210, 240].map(m => 
-                        `<option value="${m}" ${currentDur == m ? 'selected' : ''}>${m}分</option>`
-                    ).join('')}
-                </select>
-                <button onclick="saveChanges('${res.id}')" style="background:#34c759; color:white; border:none; height:50px; width:100%; border-radius:10px; font-weight:bold; font-size:16px; cursor:pointer; margin-top:20px;">変更を保存</button>
-            </div>
-            <button onclick="deleteRes('${res.id}')" style="background:none; color:#ff3b30; border:none; width:100%; padding:10px; cursor:pointer; font-size:14px;">この予約を削除する</button>`;
-    } else {
-        html += `
-            <div style="display:flex; flex-direction:column; gap:12px; background:#f2f2f7; padding:20px; border-radius:15px; margin-bottom:15px;">
-                <label style="font-size:14px; font-weight:bold; color:#666; display:block;">新規予約の追加</label>
-                <input type="text" id="manual-name" placeholder="お客様名" style="width:100%; height:45px; font-size:16px; border:1px solid #ddd; border-radius:8px; padding:0 10px; box-sizing:border-box;">
-                <select id="manual-menu" style="width:100%; height:45px; font-size:16px; border:1px solid #ddd; border-radius:8px; padding:0 10px; box-sizing:border-box; background:#fff;">
-                    ${Object.keys(MENU_DURATION).map(m => `<option value="${m}">${m}</option>`).join('')}
-                </select>
-                <button onclick="addManual('${date}', '${time}')" style="background:#007aff; color:white; border:none; height:50px; width:100%; border-radius:10px; font-weight:bold; font-size:16px; margin-top:10px; cursor:pointer;">予約を追加</button>
-            </div>
-            <button onclick="toggleOffTime('${date}', '${time}', ${isOff})" style="background:${isOff ? '#ff9500' : '#8e8e93'}; color:white; border:none; height:45px; width:100%; border-radius:10px; font-weight:bold; font-size:15px; cursor:pointer;">
-                ${isOff ? '予約可能に戻す' : '予約不可にする'}
-            </button>`;
-    }
-    html += `<button onclick="closeModal()" style="margin-top:15px; width:100%; padding:10px; border:none; background:none; color:#007aff; font-size:16px; cursor:pointer;">閉じる</button>`;
-    body.innerHTML = html;
-    document.getElementById('slot-modal').style.display = 'flex';
-}
-
-
 /* ============================
    ドラッグ＆ドロップ処理
    ============================ */
@@ -532,7 +520,7 @@ async function toggleDay(date, isClosed) {
 
 
 /* ============================
-   通常の予約追加（管理画面のフォーム）
+   通常の予約追加（管理画面フォーム）
    ============================ */
 
 async function addReservation() {
