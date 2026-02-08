@@ -90,7 +90,7 @@ const toMin = t => { const [h, m] = t.split(':').map(Number); return h * 60 + m;
 
 
 /* ============================
-   ★★★ 完全統合版 render() ★★★
+   ★★★ 完全修正版 render() ★★★
    ============================ */
 
 function render() {
@@ -173,6 +173,7 @@ function appendDays(count, isInitial = false) {
         const col = document.createElement('div');
         col.className = 'day-column';
         col.dataset.date = dateStr;
+        col.id = `col-${dateStr}`;
 
         const w = d.getDay();
 
@@ -270,7 +271,7 @@ function setupMobileScroll() {
 
 
 /* ============================
-   スロット描画
+   スロット描画（空きも角丸15pxに修正）
    ============================ */
 
 function renderSlot(col, date, time, isClosed) {
@@ -319,9 +320,10 @@ function renderSlot(col, date, time, isClosed) {
             else div.style.borderBottom = "none";
         }
     } else {
+        // ★ 空きスロットも角丸15pxで統一
         div.style.background = (isOff || isClosed) ? "#f2f2f7" : "#ffffff";
-        div.style.borderRadius = "12px";
-        div.style.marginBottom = "6px";
+        div.style.borderRadius = "15px";
+        div.style.margin = "6px 0";
     }
 
     let content = `<div class="time-label">${time}</div><div class="slot-info">`;
@@ -611,12 +613,20 @@ window.handleCalendarChange = v => {
     if (v) { 
         baseDate = new Date(v.replace(/-/g, '/')); 
         render(); 
+        document.getElementById('days-wrapper').scrollLeft = 0; // ← 今日の列を左端へ
     } 
 };
 
 window.moveDate = n => { 
     baseDate.setDate(baseDate.getDate() + n); 
     render(); 
+    document.getElementById('days-wrapper').scrollLeft = 0; // ← 左右移動後も左端へ
+};
+
+document.getElementById('btn-today').onclick = () => {
+    baseDate = new Date();
+    render();
+    document.getElementById('days-wrapper').scrollLeft = 0; // ← 今日の列を左端へ
 };
 
 window.closeModal = () => 
