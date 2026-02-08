@@ -16,15 +16,29 @@ document.addEventListener("DOMContentLoaded", () => {
             const passInput = document.getElementById('admin-pass').value;
             const success = await fetchData(passInput); 
             if (success) {
-                localStorage.setItem('admin_password', passInput);
-                initAdmin();
+
+                try {
+                    localStorage.setItem('admin_password', passInput);
+                } catch (e) {
+                    console.log("localStorage 保存失敗:", e);
+                }
+
+                // ★ Safari 対策：保存が完了するまで少し待つ
+                setTimeout(() => {
+                    initAdmin();
+                }, 100);
+
             } else {
                 alert("パスワードが違うか、通信エラーです");
             }
         };
     }
-    if (localStorage.getItem('admin_password')) { initAdmin(); }
+
+    if (localStorage.getItem('admin_password')) { 
+        initAdmin(); 
+    }
 });
+
 
 async function initAdmin() {
     const screen = document.getElementById('login-screen');
