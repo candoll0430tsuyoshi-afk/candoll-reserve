@@ -11,12 +11,13 @@ let MENU_DURATION = {};
 
 document.addEventListener("DOMContentLoaded", () => {
     const loginBtn = document.getElementById('login-btn');
+
     if (loginBtn) {
         loginBtn.onclick = async () => {
             const passInput = document.getElementById('admin-pass').value;
-            const success = await fetchData(passInput); 
-            if (success) {
+            const success = await fetchData(passInput);
 
+            if (success) {
                 try {
                     localStorage.setItem('admin_password', passInput);
                 } catch (e) {
@@ -34,18 +35,11 @@ document.addEventListener("DOMContentLoaded", () => {
         };
     }
 
-    if (localStorage.getItem('admin_password')) { 
-        initAdmin(); 
+    // すでにログイン済みなら管理画面へ
+    if (localStorage.getItem('admin_password')) {
+        initAdmin();
     }
 });
-
-
-    if (localStorage.getItem('admin_password')) { 
-        initAdmin(); 
-    }
-});
-
-
 
 
 async function initAdmin() {
