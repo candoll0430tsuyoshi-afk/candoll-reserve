@@ -26,7 +26,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 // ★ Safari 対策：保存が完了するまで少し待つ
                 setTimeout(() => {
                     initAdmin();
-                }, 100);
+                }, 150);
 
             } else {
                 alert("パスワードが違うか、通信エラーです");
@@ -38,6 +38,7 @@ document.addEventListener("DOMContentLoaded", () => {
         initAdmin(); 
     }
 });
+
 
 
 async function initAdmin() {
