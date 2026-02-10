@@ -219,25 +219,6 @@ function render() {
     setTimeout(updateNowLine, 300);
 }
 
-// ★ 横スクロールで次の日を追加する監視
-const container = document.getElementById("days-wrapper");
-
-container.addEventListener("scroll", () => {
-
-    // ★ ヘッダーを同期させる
-    const headerRow = document.getElementById("date-header-row");
-    if (headerRow) {
-        headerRow.scrollLeft = container.scrollLeft;
-    }
-
-    // ★ 右端判定（160px 固定に対応）
-    const nearRight = container.scrollLeft + container.clientWidth >= container.scrollWidth - 200;
-
-    if (nearRight) {
-        addNextDayColumn();
-    }
-});
-
 
 
 
@@ -660,6 +641,24 @@ function updateNowLine() {
 // ★ 今表示している最後の日付を覚えておく（最初は3日目）
 let lastDate = new Date(baseDate);
 lastDate.setDate(lastDate.getDate() + 2); // baseDate + 2日 = 3日目
+// ★ 横スクロールで次の日を追加する監視
+const container = document.getElementById("days-wrapper");
+
+container.addEventListener("scroll", () => {
+
+    // ★ ヘッダーを同期させる
+    const headerRow = document.getElementById("date-header-row");
+    if (headerRow) {
+        headerRow.scrollLeft = container.scrollLeft;
+    }
+
+    // ★ 右端判定（160px 固定に対応）
+    const nearRight = container.scrollLeft + container.clientWidth >= container.scrollWidth - 200;
+
+    if (nearRight) {
+        addNextDayColumn();
+    }
+});
 
 // ★ 次の日のカラムを追加する関数（完全版・そのまま置き換えOK）
 function addNextDayColumn() {
