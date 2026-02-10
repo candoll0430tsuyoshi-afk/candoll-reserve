@@ -219,6 +219,9 @@ function render() {
     setTimeout(updateNowLine, 300);
 }
 
+// ★ 横スクロールで次の日を追加する監視
+const container = document.getElementById("days-wrapper");
+
 container.addEventListener("scroll", () => {
 
     // ★ ヘッダーを同期させる
@@ -227,13 +230,14 @@ container.addEventListener("scroll", () => {
         headerRow.scrollLeft = container.scrollLeft;
     }
 
-    // ★ 右端判定を「ほぼ右端」に変更（160px 固定に対応）
+    // ★ 右端判定（160px 固定に対応）
     const nearRight = container.scrollLeft + container.clientWidth >= container.scrollWidth - 200;
 
     if (nearRight) {
         addNextDayColumn();
     }
 });
+
 
 
 
