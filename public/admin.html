@@ -100,7 +100,8 @@
         textarea { width: 100%; height: 80px; padding: 10px; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box; font-size: 16px; margin-top: 5px; }
         input, select { font-size: 16px; padding: 12px; border: 1px solid #ddd; border-radius: 10px; width: 100%; box-sizing: border-box; margin-top: 5px; }
   
-        #days-wrapper {
+#days-wrapper {
+    padding: 0;
     display: flex;
     overflow-x: auto;
     scroll-snap-type: x mandatory;
@@ -108,14 +109,17 @@
 }
 
 .day-column {
-    min-width: 320px;
+    min-width: 160px;
+    max-width: 160px;
     scroll-snap-align: start;
 }
+
 #date-header-row {
     display: flex;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
 }
+
 
     </style>
 </head>
