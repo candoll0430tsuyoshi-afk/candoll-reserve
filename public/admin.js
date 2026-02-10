@@ -120,7 +120,10 @@ const navCurrent = document.getElementById('nav-current');
         headerRow.style.gap = "15px";
         headerRow.style.marginBottom = "10px";
         headerRow.style.padding = "0 10px";
-        
+        // ヘッダーも横スクロール可能にする
+headerRow.style.overflowX = "auto";
+headerRow.style.whiteSpace = "nowrap";
+
         for (let i = 0; i < 3; i++) {
             const d = new Date(baseDate);
             d.setDate(d.getDate() + i);
