@@ -714,14 +714,14 @@ function addNextDayColumn() {
 
     wrap.appendChild(col);
 
-    // ★★★ PC の場合：ヘッダーも 160px 幅で追加（render と完全同期）★★★
+    // ★★★ PC の場合：ヘッダーも 320px 幅で追加（render と完全同期）★★★
     if (!isMobile) {
         const headerRow = document.getElementById('date-header-row');
         if (headerRow) {
             const headerCell = document.createElement('div');
 
-            headerCell.style.minWidth = "160px";
-            headerCell.style.maxWidth = "160px";
+            headerCell.style.minWidth = "320px";
+            headerCell.style.maxWidth = "320px";
             headerCell.style.flex = "none";
 
             headerCell.style.textAlign = "center";
