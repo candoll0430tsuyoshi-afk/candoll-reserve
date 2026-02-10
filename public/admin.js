@@ -676,14 +676,14 @@ function addNextDayColumn() {
         (w === 1 || w === 2 || holidays.some(h => h.date === dateStr)) &&
         !specialOpens.some(s => s.date === dateStr);
 
-    // ★ カラム生成（160px 固定）
+    // ★ カラム生成（320px 固定）
     const col = document.createElement('div');
     col.className = 'day-column';
     col.id = `col-${dateStr}`;
     col.dataset.date = dateStr;
 
-    col.style.minWidth = "160px";
-    col.style.maxWidth = "160px";
+    col.style.minWidth = "320px";
+    col.style.maxWidth = "320px";
     col.style.flex = "none";
 
     if (isMobile) {
