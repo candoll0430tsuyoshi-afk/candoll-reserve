@@ -662,7 +662,7 @@ function setupScrollWatcher() {
 function addNextDayColumn() {
     const wrap = document.getElementById('days-wrapper');
     if (!wrap) return;
-
+wrap.style.gap = "15px";
     // 次の日に進める
     const d = new Date(lastDate);
     d.setDate(d.getDate() + 1);
