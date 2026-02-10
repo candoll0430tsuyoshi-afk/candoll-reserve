@@ -226,6 +226,7 @@ function render() {
 // スマホ用：スクロールで日付バナーを更新
 function setupMobileScroll() {
     const wrap = document.getElementById('days-wrapper');
+    wrap.style.gap = "15px";
     const navCurrent = document.getElementById('nav-current');
     
     let lastIndex = -1;
