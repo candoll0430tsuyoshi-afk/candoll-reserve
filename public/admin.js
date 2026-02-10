@@ -657,7 +657,7 @@ function updateNowLine() {
 let lastDate = new Date(baseDate);
 lastDate.setDate(lastDate.getDate() + 2); // baseDate + 2日 = 3日目
 
-// ★ 次の日のカラムを追加する関数
+// ★ 次の日のカラムを追加する関数（完全版・そのまま置き換えOK）
 function addNextDayColumn() {
     const wrap = document.getElementById('days-wrapper');
     if (!wrap) return;
@@ -665,33 +665,46 @@ function addNextDayColumn() {
     // 次の日に進める
     const d = new Date(lastDate);
     d.setDate(d.getDate() + 1);
-    lastDate = new Date(d); // 更新しておく
+    lastDate = new Date(d); // 更新
 
     const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    const w = d.getDay();
+    const isMobile = window.innerWidth < 600;
+
+    const isClosed =
+        (w === 1 || w === 2 || holidays.some(h => h.date === dateStr)) &&
+        !specialOpens.some(s => s.date === dateStr);
+
+    // ★ カラム生成（160px 固定）
     const col = document.createElement('div');
     col.className = 'day-column';
     col.id = `col-${dateStr}`;
     col.dataset.date = dateStr;
-    col.style.flex = "1";
 
-    const w = d.getDay();
-    const isClosed = (w === 1 || w === 2 || holidays.some(h => h.date === dateStr)) && !specialOpens.some(s => s.date === dateStr);
-
-    const isMobile = window.innerWidth < 600;
+    col.style.minWidth = "160px";
+    col.style.maxWidth = "160px";
+    col.style.flex = "none";
 
     if (isMobile) {
-        // スマホは各カラムに日付を表示
-        col.innerHTML = `<div style="background:#f2f2f7; padding:12px; text-align:center; border-bottom:1px solid #ddd;">
-            <b style="font-size:16px;">${dateStr} (${['日','月','火','水','木','金','土'][w]})</b>
-            <div onclick="toggleDay('${dateStr}', ${isClosed})" style="font-size:11px; text-decoration:underline; cursor:pointer; color:#007aff;">${isClosed ? '営業にする' : '休みにする'}</div>
-        </div>`;
+        col.innerHTML = `
+            <div style="background:#f2f2f7; padding:12px; text-align:center; border-bottom:1px solid #ddd;">
+                <b style="font-size:16px;">${dateStr} (${['日','月','火','水','木','金','土'][w]})</b>
+                <div onclick="toggleDay('${dateStr}', ${isClosed})"
+                    style="font-size:11px; text-decoration:underline; cursor:pointer; color:#007aff;">
+                    ${isClosed ? '営業にする' : '休みにする'}
+                </div>
+            </div>`;
     } else {
-        // PCは「営業にする/休みにする」ボタンのみ
-        col.innerHTML = `<div style="background:#f2f2f7; padding:8px; text-align:center; border-bottom:1px solid #ddd;">
-            <div onclick="toggleDay('${dateStr}', ${isClosed})" style="font-size:11px; text-decoration:underline; cursor:pointer; color:#007aff;">${isClosed ? '営業にする' : '休みにする'}</div>
-        </div>`;
+        col.innerHTML = `
+            <div style="background:#f2f2f7; padding:8px; text-align:center; border-bottom:1px solid #ddd;">
+                <div onclick="toggleDay('${dateStr}', ${isClosed})"
+                    style="font-size:11px; text-decoration:underline; cursor:pointer; color:#007aff;">
+                    ${isClosed ? '営業にする' : '休みにする'}
+                </div>
+            </div>`;
     }
 
+    // スロット生成
     for (let h = 10; h <= 18; h++) {
         ['00', '30'].forEach(m => {
             renderSlot(col, dateStr, `${String(h).padStart(2, '0')}:${m}`, isClosed);
@@ -700,19 +713,25 @@ function addNextDayColumn() {
 
     wrap.appendChild(col);
 
-    // ★★★ ここが正しいヘッダー追加位置（関数の中の最後）★★★
-    if (window.innerWidth >= 600) {
+    // ★★★ PC の場合：ヘッダーも 160px 幅で追加（render と完全同期）★★★
+    if (!isMobile) {
         const headerRow = document.getElementById('date-header-row');
         if (headerRow) {
             const headerCell = document.createElement('div');
-            headerCell.style.flex = "1";
+
+            headerCell.style.minWidth = "160px";
+            headerCell.style.maxWidth = "160px";
+            headerCell.style.flex = "none";
+
             headerCell.style.textAlign = "center";
             headerCell.style.fontWeight = "bold";
             headerCell.style.fontSize = "16px";
             headerCell.style.padding = "10px";
             headerCell.style.background = "#f2f2f7";
             headerCell.style.borderRadius = "8px";
-            headerCell.innerHTML = `${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')} (${['日','月','火','水','木','金','土'][w]})`;
+
+            headerCell.innerHTML =
+                `${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')} (${['日','月','火','水','木','金','土'][w]})`;
 
             headerRow.appendChild(headerCell);
         }
