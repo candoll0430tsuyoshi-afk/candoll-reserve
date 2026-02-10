@@ -185,6 +185,16 @@ const navCurrent = document.getElementById('nav-current');
     
     setTimeout(updateNowLine, 300); 
 }
+// ★ 横スクロールで次の日を追加する監視
+const container = document.getElementById("days-wrapper");
+
+container.addEventListener("scroll", () => {
+    const nearRight = container.scrollLeft + container.clientWidth >= container.scrollWidth - 50;
+
+    if (nearRight) {
+        addNextDayColumn();
+    }
+});
 
 // スマホ用：スクロールで日付バナーを更新
 function setupMobileScroll() {
@@ -601,4 +611,13 @@ function updateNowLine() {
         line.style.top = `${((currentMins - startMins) / 30) * slots[0].offsetHeight + slots[0].offsetTop}px`;
         col.appendChild(line);
     }
+}
+// ★ 現在の最後の日付を記録
+let lastDate = new Date(baseDate);
+
+// ★ 次の日のカラムを追加する関数
+function addNextDayColumn() {
+    lastDate.setDate(lastDate.getDate() + 1);
+    const newColumn = createDayColumn(new Date(lastDate));
+    document.getElementById("days-wrapper").appendChild(newColumn);
 }
