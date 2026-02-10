@@ -96,98 +96,129 @@ function render() {
     if (!wrap) return;
     wrap.innerHTML = '';
     const isMobile = window.innerWidth < 600;
+
     wrap.style.display = "flex";
     wrap.style.flexDirection = isMobile ? "column" : "row";
     wrap.style.gap = "15px";
-    
-const navCurrent = document.getElementById('nav-current');
-    
-    // 既存の日付ヘッダーを削除（重複防止）
+
+    const navCurrent = document.getElementById('nav-current');
+
+    // 既存ヘッダー削除
     const existingHeader = document.getElementById('date-header-row');
     if (existingHeader) existingHeader.remove();
-    
-    // PCの場合：ナビゲーションには基準日を表示し、予約エリアの直前に3日分のヘッダーを追加
+
+    // PC の場合：ヘッダー生成
     if (!isMobile) {
-        // バナーには基準日（1日目）を表示
         const d_banner = new Date(baseDate);
         const w_banner = d_banner.getDay();
         navCurrent.innerHTML = `${String(d_banner.getMonth() + 1).padStart(2, '0')}/${String(d_banner.getDate()).padStart(2, '0')} (${['日','月','火','水','木','金','土'][w_banner]})`;
-        
-        // 3日分のヘッダーを作成
+
         const headerRow = document.createElement('div');
-        headerRow.id = 'date-header-row';  // IDを追加して削除できるように
+        headerRow.id = 'date-header-row';
         headerRow.style.display = "flex";
         headerRow.style.gap = "15px";
         headerRow.style.marginBottom = "10px";
-        headerRow.style.padding = "0 10px";
-        // ヘッダーも横スクロール可能にする
-headerRow.style.overflowX = "auto";
-headerRow.style.whiteSpace = "nowrap";
 
+        // ★ padding を 0 にしてズレを完全に消す
+        headerRow.style.padding = "0";
+
+        // ★ 横スクロール可能（スクロールバーは非表示）
+        headerRow.style.overflowX = "hidden";
+        headerRow.style.whiteSpace = "nowrap";
+
+        // ★ 最初の3日分のヘッダー
         for (let i = 0; i < 3; i++) {
             const d = new Date(baseDate);
             d.setDate(d.getDate() + i);
             const w = d.getDay();
+
             const headerCell = document.createElement('div');
-            headerCell.style.flex = "1";
+
+            // ★★★ カラムと完全に噛み合う幅（160px 固定）★★★
+            headerCell.style.minWidth = "160px";
+            headerCell.style.maxWidth = "160px";
+            headerCell.style.flex = "none";
+
             headerCell.style.textAlign = "center";
             headerCell.style.fontWeight = "bold";
             headerCell.style.fontSize = "16px";
             headerCell.style.padding = "10px";
             headerCell.style.background = "#f2f2f7";
             headerCell.style.borderRadius = "8px";
-            headerCell.innerHTML = `${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')} (${['日','月','火','水','木','金','土'][w]})`;
+
+            headerCell.innerHTML =
+                `${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')} (${['日','月','火','水','木','金','土'][w]})`;
+
             headerRow.appendChild(headerCell);
         }
-        
-        // days-wrapperの直前に挿入
+
+        // days-wrapper の直前に挿入
         wrap.parentElement.insertBefore(headerRow, wrap);
     } else {
         // スマホは初期表示（1日目）
         const d = new Date(baseDate);
         const w = d.getDay();
-        navCurrent.innerHTML = `${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')} (${['日','月','火','水','木','金','土'][w]})`;
+        navCurrent.innerHTML =
+            `${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')} (${['日','月','火','水','木','金','土'][w]})`;
     }
-    
+
+    // ★ カラム生成（最初の3日）
     for (let i = 0; i < 3; i++) {
         const d = new Date(baseDate);
         d.setDate(d.getDate() + i);
         const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
         const col = document.createElement('div');
         col.className = 'day-column';
         col.id = `col-${dateStr}`;
         col.dataset.index = i;
         col.dataset.date = dateStr;
-        col.style.flex = "1";
+
+        // ★★★ カラム幅も 160px に固定（ヘッダーと完全一致）★★★
+        col.style.minWidth = "160px";
+        col.style.maxWidth = "160px";
+        col.style.flex = "none";
+
         const w = d.getDay();
-        const isClosed = (w === 1 || w === 2 || holidays.some(h => h.date === dateStr)) && !specialOpens.some(s => s.date === dateStr);
-        
+        const isClosed =
+            (w === 1 || w === 2 || holidays.some(h => h.date === dateStr)) &&
+            !specialOpens.some(s => s.date === dateStr);
+
         if (isMobile) {
-            // スマホは各カラムに日付を表示
-            col.innerHTML = `<div style="background:#f2f2f7; padding:12px; text-align:center; border-bottom:1px solid #ddd;">
-                <b style="font-size:16px;">${dateStr} (${['日','月','火','水','木','金','土'][w]})</b>
-                <div onclick="toggleDay('${dateStr}', ${isClosed})" style="font-size:11px; text-decoration:underline; cursor:pointer; color:#007aff;">${isClosed ? '営業にする' : '休みにする'}</div>
-            </div>`;
+            col.innerHTML = `
+                <div style="background:#f2f2f7; padding:12px; text-align:center; border-bottom:1px solid #ddd;">
+                    <b style="font-size:16px;">${dateStr} (${['日','月','火','水','木','金','土'][w]})</b>
+                    <div onclick="toggleDay('${dateStr}', ${isClosed})"
+                        style="font-size:11px; text-decoration:underline; cursor:pointer; color:#007aff;">
+                        ${isClosed ? '営業にする' : '休みにする'}
+                    </div>
+                </div>`;
         } else {
-            // PCは「営業にする/休みにする」ボタンのみ
-            col.innerHTML = `<div style="background:#f2f2f7; padding:8px; text-align:center; border-bottom:1px solid #ddd;">
-                <div onclick="toggleDay('${dateStr}', ${isClosed})" style="font-size:11px; text-decoration:underline; cursor:pointer; color:#007aff;">${isClosed ? '営業にする' : '休みにする'}</div>
-            </div>`;
+            col.innerHTML = `
+                <div style="background:#f2f2f7; padding:8px; text-align:center; border-bottom:1px solid #ddd;">
+                    <div onclick="toggleDay('${dateStr}', ${isClosed})"
+                        style="font-size:11px; text-decoration:underline; cursor:pointer; color:#007aff;">
+                        ${isClosed ? '営業にする' : '休みにする'}
+                    </div>
+                </div>`;
         }
-        
+
         for (let h = 10; h <= 18; h++) {
-            ['00', '30'].forEach(m => { renderSlot(col, dateStr, `${String(h).padStart(2, '0')}:${m}`, isClosed); });
+            ['00', '30'].forEach(m => {
+                renderSlot(col, dateStr, `${String(h).padStart(2, '0')}:${m}`, isClosed);
+            });
         }
+
         wrap.appendChild(col);
     }
-    
-    // スマホ用：スクロールで日付バナーを切り替え
+
     if (isMobile) {
         setupMobileScroll();
     }
-    
-    setTimeout(updateNowLine, 300); 
+
+    setTimeout(updateNowLine, 300);
 }
+
 // ★ 横スクロールで次の日を追加する監視
 const container = document.getElementById("days-wrapper");
 
