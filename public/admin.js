@@ -194,10 +194,17 @@ const container = document.getElementById("days-wrapper");
 container.addEventListener("scroll", () => {
     const nearRight = container.scrollLeft + container.clientWidth >= container.scrollWidth - 50;
 
+    // ★ ヘッダーを同期させる
+    const headerRow = document.getElementById("date-header-row");
+    if (headerRow) {
+        headerRow.scrollLeft = container.scrollLeft;
+    }
+
     if (nearRight) {
         addNextDayColumn();
     }
 });
+
 
 // スマホ用：スクロールで日付バナーを更新
 function setupMobileScroll() {
