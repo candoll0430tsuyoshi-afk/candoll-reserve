@@ -135,9 +135,9 @@ function render() {
 
             const headerCell = document.createElement('div');
 
-            // ★★★ カラムと完全に噛み合う幅（160px 固定）★★★
-            headerCell.style.minWidth = "160px";
-            headerCell.style.maxWidth = "160px";
+            // ★★★ カラムと完全に噛み合う幅（320px 固定）★★★
+            headerCell.style.minWidth = "320px";
+            headerCell.style.maxWidth = "320px";
             headerCell.style.flex = "none";
 
             headerCell.style.textAlign = "center";
@@ -175,9 +175,9 @@ function render() {
         col.dataset.index = i;
         col.dataset.date = dateStr;
 
-        // ★★★ カラム幅も 160px に固定（ヘッダーと完全一致）★★★
-        col.style.minWidth = "160px";
-        col.style.maxWidth = "160px";
+        // ★★★ カラム幅も 320px に固定（ヘッダーと完全一致）★★★
+        col.style.minWidth = "320px";
+        col.style.maxWidth = "320px";
         col.style.flex = "none";
 
         const w = d.getDay();
