@@ -48,6 +48,7 @@ async function initAdmin() {
     const success = await fetchData();
     if (success) {
         render();
+        setupScrollWatcher();
         setInterval(updateNowLine, 60000);
     }
 }
@@ -641,6 +642,23 @@ function updateNowLine() {
 // ★ 今表示している最後の日付を覚えておく（最初は3日目）
 let lastDate = new Date(baseDate);
 lastDate.setDate(lastDate.getDate() + 2); // baseDate + 2日 = 3日目
+
+// ★ 横スクロールで次の日を追加する監視
+function setupScrollWatcher() {
+    const container = document.getElementById("days-wrapper");
+    if (!container) return;
+
+    container.addEventListener("scroll", () => {
+        const headerRow = document.getElementById("date-header-row");
+        if (headerRow) headerRow.scrollLeft = container.scrollLeft;
+
+        const nearRight =
+            container.scrollLeft + container.clientWidth >= container.scrollWidth - 200;
+
+        if (nearRight) addNextDayColumn();
+    });
+}
+
 // ★ 横スクロールで次の日を追加する監視
 const container = document.getElementById("days-wrapper");
 
