@@ -612,12 +612,50 @@ function updateNowLine() {
         col.appendChild(line);
     }
 }
-// ★ 現在の最後の日付を記録
+// ★ 今表示している最後の日付を覚えておく（最初は3日目）
 let lastDate = new Date(baseDate);
+lastDate.setDate(lastDate.getDate() + 2); // baseDate + 2日 = 3日目
 
 // ★ 次の日のカラムを追加する関数
 function addNextDayColumn() {
-    lastDate.setDate(lastDate.getDate() + 1);
-    const newColumn = createDayColumn(new Date(lastDate));
-    document.getElementById("days-wrapper").appendChild(newColumn);
+    const wrap = document.getElementById('days-wrapper');
+    if (!wrap) return;
+
+    // 次の日に進める
+    const d = new Date(lastDate);
+    d.setDate(d.getDate() + 1);
+    lastDate = new Date(d); // 更新しておく
+
+    const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    const col = document.createElement('div');
+    col.className = 'day-column';
+    col.id = `col-${dateStr}`;
+    col.dataset.date = dateStr;
+    col.style.flex = "1";
+
+    const w = d.getDay();
+    const isClosed = (w === 1 || w === 2 || holidays.some(h => h.date === dateStr)) && !specialOpens.some(s => s.date === dateStr);
+
+    const isMobile = window.innerWidth < 600;
+
+    if (isMobile) {
+        // スマホは各カラムに日付を表示
+        col.innerHTML = `<div style="background:#f2f2f7; padding:12px; text-align:center; border-bottom:1px solid #ddd;">
+            <b style="font-size:16px;">${dateStr} (${['日','月','火','水','木','金','土'][w]})</b>
+            <div onclick="toggleDay('${dateStr}', ${isClosed})" style="font-size:11px; text-decoration:underline; cursor:pointer; color:#007aff;">${isClosed ? '営業にする' : '休みにする'}</div>
+        </div>`;
+    } else {
+        // PCは「営業にする/休みにする」ボタンのみ
+        col.innerHTML = `<div style="background:#f2f2f7; padding:8px; text-align:center; border-bottom:1px solid #ddd;">
+            <div onclick="toggleDay('${dateStr}', ${isClosed})" style="font-size:11px; text-decoration:underline; cursor:pointer; color:#007aff;">${isClosed ? '営業にする' : '休みにする'}</div>
+        </div>`;
+    }
+
+    for (let h = 10; h <= 18; h++) {
+        ['00', '30'].forEach(m => {
+            renderSlot(col, dateStr, `${String(h).padStart(2, '0')}:${m}`, isClosed);
+        });
+    }
+
+    wrap.appendChild(col);
 }
