@@ -195,6 +195,24 @@ container.addEventListener("scroll", () => {
         addNextDayColumn();
     }
 });
+// ★ PC の場合はヘッダーも追加する
+if (window.innerWidth >= 600) {
+    const headerRow = document.getElementById('date-header-row');
+    if (headerRow) {
+        const w = lastDate.getDay();
+        const headerCell = document.createElement('div');
+        headerCell.style.flex = "1";
+        headerCell.style.textAlign = "center";
+        headerCell.style.fontWeight = "bold";
+        headerCell.style.fontSize = "16px";
+        headerCell.style.padding = "10px";
+        headerCell.style.background = "#f2f2f7";
+        headerCell.style.borderRadius = "8px";
+        headerCell.innerHTML = `${String(lastDate.getMonth() + 1).padStart(2, '0')}/${String(lastDate.getDate()).padStart(2, '0')} (${['日','月','火','水','木','金','土'][w]})`;
+
+        headerRow.appendChild(headerCell);
+    }
+}
 
 // スマホ用：スクロールで日付バナーを更新
 function setupMobileScroll() {
