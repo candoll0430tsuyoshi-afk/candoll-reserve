@@ -2,7 +2,11 @@ const SUPABASE_URL = window.CONFIG?.SUPABASE_URL;
 const SUPABASE_KEY = window.CONFIG?.SUPABASE_KEY;
 const adminClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-let baseDate = new Date();
+const urlParams = new URLSearchParams(window.location.search);
+const paramDate = urlParams.get("date");
+
+let baseDate = paramDate ? new Date(paramDate) : new Date();
+
 let reservations = [];
 let offTimes = [];
 let holidays = [];
