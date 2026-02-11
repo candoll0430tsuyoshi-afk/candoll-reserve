@@ -92,98 +92,125 @@ headers: {
 
 const toMin = t => { const [h, m] = t.split(':').map(Number); return h * 60 + m; };
 
-function renderSlot(col, date, time, isClosed) {
-    const timeMins = toMin(time);
-    const exactRes = reservations.find(r => r.date === date && r.time === time);
-    const overlappingRes = reservations.find(r => {
-        if (r.date !== date) return false;
-        const start = toMin(r.time);
-        const firstMenu = r.menus.split(',')[0].trim();
-        const duration = r.manual_duration || MENU_DURATION[firstMenu] || 60;
-        return timeMins >= start && timeMins < start + duration;
-    });
+function render() {
+    const wrap = document.getElementById('days-wrapper');
+    if (!wrap) return;
+    wrap.innerHTML = '';
+    const isMobile = window.innerWidth < 600;
 
-    const isOff = offTimes.some(o => o.date === date && o.time === time);
+    wrap.style.display = "flex";
+    wrap.style.flexDirection = isMobile ? "column" : "row";
+    wrap.style.gap = "15px";
 
-    const div = document.createElement('div');
-    div.className = 'slot';
+    const navCurrent = document.getElementById('nav-current');
 
-    // ▼ 基本の枠（左右の border は常に残す）
-    div.style.marginTop = "0";
-    div.style.marginBottom = "6px";
-    div.style.borderLeft = "1px solid #000";
-    div.style.borderRight = "1px solid #000";
-    div.style.boxSizing = "border-box";
+    // 既存ヘッダー削除
+    const existingHeader = document.getElementById('date-header-row');
+    if (existingHeader) existingHeader.remove();
 
-    div.dataset.date = date;
-    div.dataset.time = time;
+    // PC の場合：ヘッダー生成
+    if (!isMobile) {
+        const d_banner = new Date(baseDate);
+        const w_banner = d_banner.getDay();
+        navCurrent.innerHTML = `${String(d_banner.getMonth() + 1).padStart(2, '0')}/${String(d_banner.getDate()).padStart(2, '0')} (${['日','月','火','水','木','金','土'][w_banner]})`;
 
-    div.ondragover = (e) => e.preventDefault();
-    div.ondrop = (e) => handleDrop(e, date, time);
+        const headerRow = document.createElement('div');
+        headerRow.id = 'date-header-row';
+        headerRow.style.display = "flex";
+        headerRow.style.gap = "15px";
+        headerRow.style.marginBottom = "10px";
+        headerRow.style.padding = "0";
+        headerRow.style.overflowX = "hidden";
+        headerRow.style.whiteSpace = "nowrap";
 
-    if (overlappingRes) {
-        div.style.background = "#e5e5ea";
+        // ★ 最初の3日分のヘッダー
+        for (let i = 0; i < 3; i++) {
+            const d = new Date(baseDate);
+            d.setDate(d.getDate() + i);
+            const w = d.getDay();
 
-        const resStart = toMin(overlappingRes.time);
-        const dur = overlappingRes.manual_duration || MENU_DURATION[overlappingRes.menus.split(',')[0].trim()] || 60;
-        const resEnd = resStart + dur;
+            const headerCell = document.createElement('div');
+            headerCell.style.minWidth = "320px";
+            headerCell.style.maxWidth = "320px";
+            headerCell.style.flex = "none";
+            headerCell.style.textAlign = "center";
+            headerCell.style.fontWeight = "bold";
+            headerCell.style.fontSize = "16px";
+            headerCell.style.padding = "0";
+            headerCell.style.background = "#f2f2f7";
+            headerCell.style.borderRadius = "8px";
 
-        const isFirst = (timeMins === resStart);
-        const isLast = (timeMins + 30 >= resEnd);
+            headerCell.innerHTML =
+                `${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')} (${['日','月','火','水','木','金','土'][w]})`;
 
-        // ▼ カプセル形状（上下の border を制御）
-        if (isFirst) {
-            div.style.borderTop = "1px solid #000";
-            div.style.borderBottom = isLast ? "1px solid #000" : "none";
-            div.style.borderRadius = isLast ? "15px" : "15px 15px 0 0";
-        } else if (isLast) {
-            div.style.borderTop = "none";
-            div.style.borderBottom = "1px solid #000";
-            div.style.borderRadius = "0 0 15px 15px";
-        } else {
-            // 中間
-            div.style.borderTop = "none";
-            div.style.borderBottom = "none";
-            div.style.borderRadius = "0";
+            headerRow.appendChild(headerCell);
         }
 
-        if (exactRes) {
-            div.draggable = true;
-            div.ondragstart = (e) => {
-                e.dataTransfer.setData("text/plain", exactRes.id);
-                div.style.opacity = "0.4";
-            };
-            div.ondragend = () => div.style.opacity = "1";
-            setupTouchEvents(div, exactRes, date, time);
-        }
-
+        wrap.parentElement.insertBefore(headerRow, wrap);
     } else {
-        // 空き or 不可
-        div.style.background = (isOff || isClosed) ? "#f2f2f7" : "#ffffff";
-        div.style.borderTop = "1px solid #000";
-        div.style.borderBottom = "1px solid #000";
-        div.style.borderRadius = "12px";
+        // スマホは初期表示（1日目）
+        const d = new Date(baseDate);
+        const w = d.getDay();
+        navCurrent.innerHTML =
+            `${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')} (${['日','月','火','水','木','金','土'][w]})`;
     }
 
-    // 内容
-    let content = `<div class="time-label">${time}</div><div class="slot-info">`;
-    if (overlappingRes && exactRes) {
-        content += `<b style="color:#000;">${exactRes.name} 様</b><span class="menu-label">${exactRes.menus}</span>`;
-    } else if (!overlappingRes) {
-        content += `<span style="color:#666; font-size:13px;">${(isOff || isClosed) ? '不可' : '空き'}</span>`;
+    // ★ カラム生成（最初の3日）
+    for (let i = 0; i < 3; i++) {
+        const d = new Date(baseDate);
+        d.setDate(d.getDate() + i);
+        const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
+        const col = document.createElement('div');
+        col.className = 'day-column';
+        col.id = `col-${dateStr}`;
+        col.dataset.index = i;
+        col.dataset.date = dateStr;
+
+        col.style.minWidth = "320px";
+        col.style.maxWidth = "320px";
+        col.style.flex = "none";
+
+        const w = d.getDay();
+        const isClosed =
+            (w === 1 || w === 2 || holidays.some(h => h.date === dateStr)) &&
+            !specialOpens.some(s => s.date === dateStr);
+
+        if (isMobile) {
+            col.innerHTML = `
+                <div style="background:#f2f2f7; padding:12px; text-align:center; border-bottom:1px solid #ddd;">
+                    <b style="font-size:16px;">${dateStr} (${['日','月','火','水','木','金','土'][w]})</b>
+                    <div onclick="toggleDay('${dateStr}', ${isClosed})"
+                        style="font-size:11px; text-decoration:underline; cursor:pointer; color:#007aff;">
+                        ${isClosed ? '営業にする' : '休みにする'}
+                    </div>
+                </div>`;
+        } else {
+            col.innerHTML = `
+                <div style="background:#f2f2f7; padding:8px; text-align:center; border-bottom:1px solid #ddd;">
+                    <div onclick="toggleDay('${dateStr}', ${isClosed})"
+                        style="font-size:11px; text-decoration:underline; cursor:pointer; color:#007aff;">
+                        ${isClosed ? '営業にする' : '休みにする'}
+                    </div>
+                </div>`;
+        }
+
+        for (let h = 10; h <= 18; h++) {
+            ['00', '30'].forEach(m => {
+                renderSlot(col, dateStr, `${String(h).padStart(2, '0')}:${m}`, isClosed);
+            });
+        }
+
+        wrap.appendChild(col);
     }
-    content += `</div>`;
-    div.innerHTML = content;
 
-    div.onclick = (e) => {
-        if (div.style.opacity === "0.4") return;
-        openSlotModal(date, time, exactRes || overlappingRes, isOff);
-    };
+    // ★★★ 正しい位置はここ！ ★★★
+    if (isMobile) {
+        setupMobileScroll();
+    }
 
-    col.appendChild(div);
+    setTimeout(updateNowLine, 300);
 }
-if (isMobile) { setupMobileScroll(); } 
-setTimeout(updateNowLine, 300); }
 
 
 // スマホ用：スクロールで日付バナーを更新
