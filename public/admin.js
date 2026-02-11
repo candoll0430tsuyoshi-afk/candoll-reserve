@@ -182,11 +182,8 @@ function renderSlot(col, date, time, isClosed) {
 
     col.appendChild(div);
 }
-if (isMobile) {
-    setupMobileScroll();
-}
-
-setTimeout(updateNowLine, 300);
+if (isMobile) { setupMobileScroll(); } 
+setTimeout(updateNowLine, 300); }
 
 
 // スマホ用：スクロールで日付バナーを更新
