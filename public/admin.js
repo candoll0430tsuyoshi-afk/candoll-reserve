@@ -131,7 +131,7 @@ function renderSlot(col, date, time, isClosed) {
         const isFirst = (timeMins === resStart);
         const isLast = (timeMins + 30 >= resEnd);
 
-        // ▼ カプセル形状を復活（上下の border を制御）
+        // ▼ カプセル形状（上下の border を制御）
         if (isFirst) {
             div.style.borderTop = "1px solid #000";
             div.style.borderBottom = isLast ? "1px solid #000" : "none";
@@ -182,16 +182,11 @@ function renderSlot(col, date, time, isClosed) {
 
     col.appendChild(div);
 }
+if (isMobile) {
+    setupMobileScroll();
+}
 
-
-    if (isMobile) {
-        setupMobileScroll();
-    }
-
-    setTimeout(updateNowLine, 300);
-
-
-
+setTimeout(updateNowLine, 300);
 
 
 // スマホ用：スクロールで日付バナーを更新
