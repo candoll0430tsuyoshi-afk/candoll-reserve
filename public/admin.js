@@ -707,7 +707,7 @@ wrap.style.gap = "15px";
     col.style.minWidth = "320px";
     col.style.maxWidth = "320px";
     col.style.flex = "none";
-    col.style.padding = "0";
+    col.style.padding = "10px";
     col.style.margin = "0"; 
     col.style.boxSizing = "border-box"; // ★追加
     if (isMobile) {
