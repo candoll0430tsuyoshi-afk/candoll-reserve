@@ -276,18 +276,26 @@ function renderSlot(col, date, time, isClosed) {
     });
 
     const isOff = offTimes.some(o => o.date === date && o.time === time);
+
     const div = document.createElement('div');
     div.className = 'slot';
-    div.style.border = "1px solid #000"; 
+
+    // ★ 統一：すべての slot の margin / border を固定
+    div.style.marginTop = "0";
+    div.style.marginBottom = "6px";
+    div.style.border = "1px solid #000";
     div.style.boxSizing = "border-box";
+
     div.dataset.date = date;
     div.dataset.time = time;
+
     div.ondragover = (e) => e.preventDefault();
     div.ondrop = (e) => handleDrop(e, date, time);
 
-    // ★角丸とデザインの修正ポイント
+    // ★ デザイン（背景色・角丸だけ変える）
     if (overlappingRes) {
         div.style.background = "#e5e5ea";
+
         const resStart = toMin(overlappingRes.time);
         const dur = overlappingRes.manual_duration || MENU_DURATION[overlappingRes.menus.split(',')[0].trim()] || 60;
         const resEnd = resStart + dur;
@@ -295,34 +303,47 @@ function renderSlot(col, date, time, isClosed) {
 
         if (exactRes) {
             div.draggable = true;
-            // カプセル状の角丸を適用
+
+            // ★ 統一：border は消さない（高さズレ防止）
             div.style.borderRadius = isLastSlot ? "15px" : "15px 15px 0 0";
-            div.style.marginTop = "8px";
-            if (!isLastSlot) div.style.borderBottom = "none";
-            div.ondragstart = (e) => { e.dataTransfer.setData("text/plain", exactRes.id); div.style.opacity = "0.4"; };
+
+            div.ondragstart = (e) => {
+                e.dataTransfer.setData("text/plain", exactRes.id);
+                div.style.opacity = "0.4";
+            };
             div.ondragend = () => div.style.opacity = "1";
+
             setupTouchEvents(div, exactRes, date, time);
+
         } else {
-            div.style.marginTop = "0";
-            div.style.borderTop = "none";
+            // 途中 slot
             div.style.borderRadius = isLastSlot ? "0 0 15px 15px" : "0";
-            if (isLastSlot) div.style.marginBottom = "8px";
-            else div.style.borderBottom = "none";
         }
+
     } else {
+        // 空き or 不可
         div.style.background = (isOff || isClosed) ? "#f2f2f7" : "#ffffff";
         div.style.borderRadius = "12px";
-        div.style.marginBottom = "6px";
     }
 
+    // 内容
     let content = `<div class="time-label">${time}</div><div class="slot-info">`;
-    if (overlappingRes && exactRes) content += `<b style="color:#000;">${exactRes.name} 様</b><span class="menu-label">${exactRes.menus}</span>`;
-    else if (!overlappingRes) content += `<span style="color:#666; font-size:13px;">${(isOff || isClosed) ? '不可' : '空き'}</span>`;
+    if (overlappingRes && exactRes) {
+        content += `<b style="color:#000;">${exactRes.name} 様</b><span class="menu-label">${exactRes.menus}</span>`;
+    } else if (!overlappingRes) {
+        content += `<span style="color:#666; font-size:13px;">${(isOff || isClosed) ? '不可' : '空き'}</span>`;
+    }
     content += `</div>`;
     div.innerHTML = content;
-    div.onclick = (e) => { if (div.style.opacity === "0.4") return; openSlotModal(date, time, exactRes || overlappingRes, isOff); };
+
+    div.onclick = (e) => {
+        if (div.style.opacity === "0.4") return;
+        openSlotModal(date, time, exactRes || overlappingRes, isOff);
+    };
+
     col.appendChild(div);
 }
+
 
 async function toggleOffTime(date, time) {
     const password = localStorage.getItem('admin_password');
