@@ -707,7 +707,9 @@ wrap.style.gap = "15px";
     col.style.minWidth = "320px";
     col.style.maxWidth = "320px";
     col.style.flex = "none";
-
+    col.style.padding = "0";
+    col.style.margin = "0"; 
+    col.style.boxSizing = "border-box"; // ★追加
     if (isMobile) {
         col.innerHTML = `
             <div style="background:#f2f2f7; padding:12px; text-align:center; border-bottom:1px solid #ddd;">
@@ -745,6 +747,9 @@ wrap.style.gap = "15px";
             headerCell.style.minWidth = "320px";
             headerCell.style.maxWidth = "320px";
             headerCell.style.flex = "none";
+            col.style.padding = "0";
+            col.style.margin = "0";
+            ol.style.boxSizing = "border-box";
 
             headerCell.style.textAlign = "center";
             headerCell.style.fontWeight = "bold";
