@@ -143,7 +143,7 @@ function render() {
             headerCell.style.textAlign = "center";
             headerCell.style.fontWeight = "bold";
             headerCell.style.fontSize = "16px";
-            headerCell.style.padding = "10px";
+            headerCell.style.padding = "0";
             headerCell.style.background = "#f2f2f7";
             headerCell.style.borderRadius = "8px";
 
