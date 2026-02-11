@@ -189,7 +189,7 @@ function renderSlot(col, date, time, isClosed) {
     }
 
     setTimeout(updateNowLine, 300);
-}
+
 
 
 
