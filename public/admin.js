@@ -92,126 +92,97 @@ headers: {
 
 const toMin = t => { const [h, m] = t.split(':').map(Number); return h * 60 + m; };
 
-function render() {
-    const wrap = document.getElementById('days-wrapper');
-    if (!wrap) return;
-    wrap.innerHTML = '';
-    const isMobile = window.innerWidth < 600;
+function renderSlot(col, date, time, isClosed) {
+    const timeMins = toMin(time);
+    const exactRes = reservations.find(r => r.date === date && r.time === time);
+    const overlappingRes = reservations.find(r => {
+        if (r.date !== date) return false;
+        const start = toMin(r.time);
+        const firstMenu = r.menus.split(',')[0].trim();
+        const duration = r.manual_duration || MENU_DURATION[firstMenu] || 60;
+        return timeMins >= start && timeMins < start + duration;
+    });
 
-    wrap.style.display = "flex";
-    wrap.style.flexDirection = isMobile ? "column" : "row";
-    wrap.style.gap = "15px";
+    const isOff = offTimes.some(o => o.date === date && o.time === time);
 
-    const navCurrent = document.getElementById('nav-current');
+    const div = document.createElement('div');
+    div.className = 'slot';
 
-    // 既存ヘッダー削除
-    const existingHeader = document.getElementById('date-header-row');
-    if (existingHeader) existingHeader.remove();
+    // ▼ 基本の枠（左右の border は常に残す）
+    div.style.marginTop = "0";
+    div.style.marginBottom = "6px";
+    div.style.borderLeft = "1px solid #000";
+    div.style.borderRight = "1px solid #000";
+    div.style.boxSizing = "border-box";
 
-    // PC の場合：ヘッダー生成
-    if (!isMobile) {
-        const d_banner = new Date(baseDate);
-        const w_banner = d_banner.getDay();
-        navCurrent.innerHTML = `${String(d_banner.getMonth() + 1).padStart(2, '0')}/${String(d_banner.getDate()).padStart(2, '0')} (${['日','月','火','水','木','金','土'][w_banner]})`;
+    div.dataset.date = date;
+    div.dataset.time = time;
 
-        const headerRow = document.createElement('div');
-        headerRow.id = 'date-header-row';
-        headerRow.style.display = "flex";
-        headerRow.style.gap = "15px";
-        headerRow.style.marginBottom = "10px";
+    div.ondragover = (e) => e.preventDefault();
+    div.ondrop = (e) => handleDrop(e, date, time);
 
-        // ★ padding を 0 にしてズレを完全に消す
-        headerRow.style.padding = "0";
+    if (overlappingRes) {
+        div.style.background = "#e5e5ea";
 
-        // ★ 横スクロール可能（スクロールバーは非表示）
-        headerRow.style.overflowX = "hidden";
-        headerRow.style.whiteSpace = "nowrap";
+        const resStart = toMin(overlappingRes.time);
+        const dur = overlappingRes.manual_duration || MENU_DURATION[overlappingRes.menus.split(',')[0].trim()] || 60;
+        const resEnd = resStart + dur;
 
-        // ★ 最初の3日分のヘッダー
-        for (let i = 0; i < 3; i++) {
-            const d = new Date(baseDate);
-            d.setDate(d.getDate() + i);
-            const w = d.getDay();
+        const isFirst = (timeMins === resStart);
+        const isLast = (timeMins + 30 >= resEnd);
 
-            const headerCell = document.createElement('div');
-
-            // ★★★ カラムと完全に噛み合う幅（320px 固定）★★★
-            headerCell.style.minWidth = "320px";
-            headerCell.style.maxWidth = "320px";
-            headerCell.style.flex = "none";
-
-            headerCell.style.textAlign = "center";
-            headerCell.style.fontWeight = "bold";
-            headerCell.style.fontSize = "16px";
-            headerCell.style.padding = "0";
-            headerCell.style.background = "#f2f2f7";
-            headerCell.style.borderRadius = "8px";
-
-            headerCell.innerHTML =
-                `${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')} (${['日','月','火','水','木','金','土'][w]})`;
-
-            headerRow.appendChild(headerCell);
-        }
-
-        // days-wrapper の直前に挿入
-        wrap.parentElement.insertBefore(headerRow, wrap);
-    } else {
-        // スマホは初期表示（1日目）
-        const d = new Date(baseDate);
-        const w = d.getDay();
-        navCurrent.innerHTML =
-            `${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')} (${['日','月','火','水','木','金','土'][w]})`;
-    }
-
-    // ★ カラム生成（最初の3日）
-    for (let i = 0; i < 3; i++) {
-        const d = new Date(baseDate);
-        d.setDate(d.getDate() + i);
-        const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-
-        const col = document.createElement('div');
-        col.className = 'day-column';
-        col.id = `col-${dateStr}`;
-        col.dataset.index = i;
-        col.dataset.date = dateStr;
-
-        // ★★★ カラム幅も 320px に固定（ヘッダーと完全一致）★★★
-        col.style.minWidth = "320px";
-        col.style.maxWidth = "320px";
-        col.style.flex = "none";
-
-        const w = d.getDay();
-        const isClosed =
-            (w === 1 || w === 2 || holidays.some(h => h.date === dateStr)) &&
-            !specialOpens.some(s => s.date === dateStr);
-
-        if (isMobile) {
-            col.innerHTML = `
-                <div style="background:#f2f2f7; padding:12px; text-align:center; border-bottom:1px solid #ddd;">
-                    <b style="font-size:16px;">${dateStr} (${['日','月','火','水','木','金','土'][w]})</b>
-                    <div onclick="toggleDay('${dateStr}', ${isClosed})"
-                        style="font-size:11px; text-decoration:underline; cursor:pointer; color:#007aff;">
-                        ${isClosed ? '営業にする' : '休みにする'}
-                    </div>
-                </div>`;
+        // ▼ カプセル形状を復活（上下の border を制御）
+        if (isFirst) {
+            div.style.borderTop = "1px solid #000";
+            div.style.borderBottom = isLast ? "1px solid #000" : "none";
+            div.style.borderRadius = isLast ? "15px" : "15px 15px 0 0";
+        } else if (isLast) {
+            div.style.borderTop = "none";
+            div.style.borderBottom = "1px solid #000";
+            div.style.borderRadius = "0 0 15px 15px";
         } else {
-            col.innerHTML = `
-                <div style="background:#f2f2f7; padding:8px; text-align:center; border-bottom:1px solid #ddd;">
-                    <div onclick="toggleDay('${dateStr}', ${isClosed})"
-                        style="font-size:11px; text-decoration:underline; cursor:pointer; color:#007aff;">
-                        ${isClosed ? '営業にする' : '休みにする'}
-                    </div>
-                </div>`;
+            // 中間
+            div.style.borderTop = "none";
+            div.style.borderBottom = "none";
+            div.style.borderRadius = "0";
         }
 
-        for (let h = 10; h <= 18; h++) {
-            ['00', '30'].forEach(m => {
-                renderSlot(col, dateStr, `${String(h).padStart(2, '0')}:${m}`, isClosed);
-            });
+        if (exactRes) {
+            div.draggable = true;
+            div.ondragstart = (e) => {
+                e.dataTransfer.setData("text/plain", exactRes.id);
+                div.style.opacity = "0.4";
+            };
+            div.ondragend = () => div.style.opacity = "1";
+            setupTouchEvents(div, exactRes, date, time);
         }
 
-        wrap.appendChild(col);
+    } else {
+        // 空き or 不可
+        div.style.background = (isOff || isClosed) ? "#f2f2f7" : "#ffffff";
+        div.style.borderTop = "1px solid #000";
+        div.style.borderBottom = "1px solid #000";
+        div.style.borderRadius = "12px";
     }
+
+    // 内容
+    let content = `<div class="time-label">${time}</div><div class="slot-info">`;
+    if (overlappingRes && exactRes) {
+        content += `<b style="color:#000;">${exactRes.name} 様</b><span class="menu-label">${exactRes.menus}</span>`;
+    } else if (!overlappingRes) {
+        content += `<span style="color:#666; font-size:13px;">${(isOff || isClosed) ? '不可' : '空き'}</span>`;
+    }
+    content += `</div>`;
+    div.innerHTML = content;
+
+    div.onclick = (e) => {
+        if (div.style.opacity === "0.4") return;
+        openSlotModal(date, time, exactRes || overlappingRes, isOff);
+    };
+
+    col.appendChild(div);
+}
+
 
     if (isMobile) {
         setupMobileScroll();
