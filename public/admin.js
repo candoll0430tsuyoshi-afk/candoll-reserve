@@ -749,7 +749,7 @@ wrap.style.gap = "15px";
             headerCell.style.flex = "none";
             col.style.padding = "0";
             col.style.margin = "0";
-            ol.style.boxSizing = "border-box";
+            col.style.boxSizing = "border-box";
 
             headerCell.style.textAlign = "center";
             headerCell.style.fontWeight = "bold";
