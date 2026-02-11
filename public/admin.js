@@ -665,7 +665,6 @@ function updateNowLine() {
 let lastDate = new Date(baseDate);
 lastDate.setDate(lastDate.getDate() + 2); // baseDate + 2日 = 3日目
 
-// ★ 横スクロールで次の日を追加する監視
 function setupScrollWatcher() {
     const container = document.getElementById("days-wrapper");
     if (!container) return;
@@ -680,6 +679,7 @@ function setupScrollWatcher() {
         if (nearRight) addNextDayColumn();
     });
 }
+
 // ★ 次の日のカラムを追加する関数（完全版・そのまま置き換えOK）
 function addNextDayColumn() {
     const wrap = document.getElementById('days-wrapper');
