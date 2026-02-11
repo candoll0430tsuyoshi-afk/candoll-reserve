@@ -102,6 +102,10 @@ function render() {
     wrap.innerHTML = '';
     const isMobile = window.innerWidth < 600;
 
+    // ★★★ 最重要：毎回 lastDate を baseDate + 2 にリセット ★★★
+    lastDate = new Date(baseDate);
+    lastDate.setDate(lastDate.getDate() + 2);
+
     wrap.style.display = "flex";
     wrap.style.flexDirection = isMobile ? "column" : "row";
     wrap.style.gap = "15px";
@@ -116,7 +120,8 @@ function render() {
     if (!isMobile) {
         const d_banner = new Date(baseDate);
         const w_banner = d_banner.getDay();
-        navCurrent.innerHTML = `${String(d_banner.getMonth() + 1).padStart(2, '0')}/${String(d_banner.getDate()).padStart(2, '0')} (${['日','月','火','水','木','金','土'][w_banner]})`;
+        navCurrent.innerHTML =
+            `${String(d_banner.getMonth() + 1).padStart(2, '0')}/${String(d_banner.getDate()).padStart(2, '0')} (${['日','月','火','水','木','金','土'][w_banner]})`;
 
         const headerRow = document.createElement('div');
         headerRow.id = 'date-header-row';
@@ -163,7 +168,8 @@ function render() {
     for (let i = 0; i < 3; i++) {
         const d = new Date(baseDate);
         d.setDate(d.getDate() + i);
-        const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        const dateStr =
+            `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
         const col = document.createElement('div');
         col.className = 'day-column';
