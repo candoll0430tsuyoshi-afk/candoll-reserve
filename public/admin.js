@@ -332,6 +332,7 @@ function renderSlot(col, date, time, isClosed) {
             div.style.borderLeft = "1px solid #000";
             div.style.borderRight = "1px solid #000";
             div.style.borderRadius = isEnd ? "15px" : "15px 15px 0 0";
+            div.style.marginBottom = isEnd ? "6px" : "0";
         } else if (isEnd) {
             // 終了 slot
             div.style.borderTop = "none";
@@ -339,6 +340,7 @@ function renderSlot(col, date, time, isClosed) {
             div.style.borderLeft = "1px solid #000";
             div.style.borderRight = "1px solid #000";
             div.style.borderRadius = "0 0 15px 15px";
+            div.style.marginBottom = "6px";
         } else {
             // 途中 slot（左右だけ黒線）
             div.style.borderTop = "none";
@@ -346,6 +348,7 @@ function renderSlot(col, date, time, isClosed) {
             div.style.borderLeft = "1px solid #000";
             div.style.borderRight = "1px solid #000";
             div.style.borderRadius = "0";
+            div.style.marginBottom = "0";
         }
 
         // ★ 開始 slot のみドラッグ可能
