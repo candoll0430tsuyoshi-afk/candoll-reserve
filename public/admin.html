@@ -121,7 +121,7 @@
 
 /* ★ pill 完全復元 CSS ★ */
 
-/* slot の基本形（JS の border を邪魔しない） */
+/* ★ 正しい slot の基本形（前の pill デザインと同じ） ★ */
 .slot {
     display: flex;
     flex-direction: row;
@@ -129,7 +129,9 @@
     padding: 12px 15px;
     min-height: 65px;
     box-sizing: border-box;
+    background-clip: padding-box;
 }
+
 
 /* 中の白背景を完全に消す（白い線の原因） */
 .slot .time-label,
