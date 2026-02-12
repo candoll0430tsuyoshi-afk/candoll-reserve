@@ -304,7 +304,7 @@ function renderSlot(col, date, time, isClosed) {
     div.style.margin = "0";
     div.style.marginBottom = "6px";
     div.style.boxSizing = "border-box";
-    div.style.border = "1px solid #000";
+    div.style.border = "none";  // ← 空き slot は border 完全なし
     div.style.borderRadius = "12px";
     div.style.background = (isOff || isClosed) ? "#f2f2f7" : "#ffffff";
 
@@ -355,7 +355,7 @@ function renderSlot(col, date, time, isClosed) {
         }
     }
 
-    // ★ 内容
+    // ★ 内容（背景は透明になるので白線が出ない）
     let content = `<div class="time-label">${time}</div><div class="slot-info">`;
     if (overlappingRes && exactRes) {
         content += `<b style="color:#000;">${exactRes.name} 様</b><span class="menu-label">${exactRes.menus}</span>`;
@@ -372,6 +372,7 @@ function renderSlot(col, date, time, isClosed) {
 
     col.appendChild(div);
 }
+
 
 
 
