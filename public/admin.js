@@ -52,7 +52,6 @@ async function initAdmin() {
     const success = await fetchData();
     if (success) {
         render();
-        setupScrollWatcher();
         setInterval(updateNowLine, 60000);
     }
 }
@@ -763,7 +762,13 @@ function setupScrollWatcher() {
     const container = document.getElementById("days-wrapper");
     if (!container) return;
 
-    container.addEventListener("scroll", () => {
+    // ★ 既存のリスナーを削除（重複防止）
+    if (container._scrollHandler) {
+        container.removeEventListener("scroll", container._scrollHandler);
+    }
+
+    // ★ スクロールハンドラを作成
+    const scrollHandler = () => {
         const headerRow = document.getElementById("date-header-row");
         if (headerRow) headerRow.scrollLeft = container.scrollLeft;
 
@@ -771,7 +776,11 @@ function setupScrollWatcher() {
             container.scrollLeft + container.clientWidth >= container.scrollWidth - 200;
 
         if (nearRight) addNextDayColumn();
-    });
+    };
+
+    // ★ ハンドラを保存して登録
+    container._scrollHandler = scrollHandler;
+    container.addEventListener("scroll", scrollHandler);
 }
 
 function addNextDayColumn() {
