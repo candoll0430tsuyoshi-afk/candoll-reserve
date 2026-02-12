@@ -269,20 +269,18 @@ function renderSlot(col, date, time, isClosed) {
 
     const exactRes = reservations.find(r => r.date === date && r.time === time);
 
-    // ★ 予約の長さを正しく計算（複数メニュー対応）
+    // ★ 予約の長さを正しく計算
     const overlappingRes = reservations.find(r => {
         if (r.date !== date) return false;
 
         const start = toMin(r.time);
-
         let dur = 0;
+
         if (r.manual_duration) {
             dur = Number(r.manual_duration);
         } else {
             const menuList = r.menus.split(',').map(m => m.trim());
-            menuList.forEach(m => {
-                dur += MENU_DURATION[m] || 60;
-            });
+            menuList.forEach(m => dur += MENU_DURATION[m] || 60);
         }
 
         const end = start + dur;
@@ -300,46 +298,54 @@ function renderSlot(col, date, time, isClosed) {
     div.ondragover = (e) => e.preventDefault();
     div.ondrop = (e) => handleDrop(e, date, time);
 
-    // ★ デフォルト（空き）
+    // ★ デフォルト（空き枠・不可枠） → 黒い四角い枠
     div.style.margin = "0";
     div.style.marginBottom = "6px";
     div.style.boxSizing = "border-box";
-    div.style.border = "none";  // 空き slot は border 完全なし
+    div.style.border = "1px solid #000";   // ← 黒枠復活
     div.style.borderRadius = "12px";
     div.style.background = (isOff || isClosed) ? "#f2f2f7" : "#ffffff";
 
-    // ★ 予約がある場合（pill カプセル）
+    // ★ 予約枠（pill）
     if (overlappingRes) {
         div.style.background = "#e5e5ea";
 
-        // 予約の開始・終了判定
         const start = toMin(overlappingRes.time);
-
         let dur = 0;
+
         if (overlappingRes.manual_duration) {
             dur = Number(overlappingRes.manual_duration);
         } else {
             const menuList = overlappingRes.menus.split(',').map(m => m.trim());
-            menuList.forEach(m => {
-                dur += MENU_DURATION[m] || 60;
-            });
+            menuList.forEach(m => dur += MENU_DURATION[m] || 60);
         }
 
         const end = start + dur;
         const isStart = timeMins === start;
         const isEnd = timeMins + 30 >= end;
 
-        // ★ pill デザイン復元（前の動作と同じ）
+        // ★ pill の正しい仕様
         if (isStart) {
             // 開始 slot
             div.style.borderTop = "1px solid #000";
             div.style.borderBottom = isEnd ? "1px solid #000" : "none";
+            div.style.borderLeft = "1px solid #000";
+            div.style.borderRight = "1px solid #000";
             div.style.borderRadius = isEnd ? "15px" : "15px 15px 0 0";
-        } else {
-            // 途中 slot
+        } else if (isEnd) {
+            // 終了 slot
             div.style.borderTop = "none";
-            div.style.borderBottom = isEnd ? "1px solid #000" : "none";
-            div.style.borderRadius = isEnd ? "0 0 15px 15px" : "0";
+            div.style.borderBottom = "1px solid #000";
+            div.style.borderLeft = "1px solid #000";
+            div.style.borderRight = "1px solid #000";
+            div.style.borderRadius = "0 0 15px 15px";
+        } else {
+            // 途中 slot（左右だけ黒線）
+            div.style.borderTop = "none";
+            div.style.borderBottom = "none";
+            div.style.borderLeft = "1px solid #000";
+            div.style.borderRight = "1px solid #000";
+            div.style.borderRadius = "0";
         }
 
         // ★ 開始 slot のみドラッグ可能
@@ -355,7 +361,7 @@ function renderSlot(col, date, time, isClosed) {
         }
     }
 
-    // ★ 内容（背景は透明になるので白線が出ない）
+    // ★ 内容
     let content = `<div class="time-label">${time}</div><div class="slot-info">`;
     if (overlappingRes && exactRes) {
         content += `<b style="color:#000;">${exactRes.name} 様</b><span class="menu-label">${exactRes.menus}</span>`;
@@ -372,6 +378,7 @@ function renderSlot(col, date, time, isClosed) {
 
     col.appendChild(div);
 }
+
 
 
 
