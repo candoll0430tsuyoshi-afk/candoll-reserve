@@ -119,7 +119,7 @@
     text-align: center !important;
 }
 
-/* ★ pill 完全復元 CSS（これだけ使う） ★ */
+/* ★ pill 完全復元 CSS ★ */
 
 /* slot の基本形（JS の border を邪魔しない） */
 .slot {
@@ -130,7 +130,7 @@
     min-height: 65px;
     box-sizing: border-box;
 
-    border: 1px solid transparent; /* ← これが超重要 */
+    border: 1px solid transparent; 
     background-clip: padding-box;
 }
 
@@ -140,9 +140,8 @@
     background: transparent !important;
 }
 
-
-/* 予約枠の背景色（グレー）を JS が付けた時に border を邪魔しない */
-.day-column .slot[style*="#e5e5ea"] {
+/* ★ 予約枠（グレー）の途中 slot の border を消す（pill をつなげる） */
+.slot[style*="#e5e5ea"] {
     border-color: transparent !important;
 }
 
