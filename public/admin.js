@@ -304,7 +304,7 @@ function renderSlot(col, date, time, isClosed) {
     div.style.margin = "0";
     div.style.marginBottom = "6px";
     div.style.boxSizing = "border-box";
-    div.style.border = "none";  // ← 空き slot は border 完全なし
+    div.style.border = "none";  // 空き slot は border 完全なし
     div.style.borderRadius = "12px";
     div.style.background = (isOff || isClosed) ? "#f2f2f7" : "#ffffff";
 
