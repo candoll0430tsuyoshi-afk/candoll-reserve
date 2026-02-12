@@ -100,6 +100,11 @@ function render() {
     if (!wrap) return;
     wrap.innerHTML = '';
     const isMobile = window.innerWidth < 600;
+    
+    console.log("render関数呼び出し:", {
+        windowWidth: window.innerWidth,
+        isMobile: isMobile
+    });
 
     // ★★★ 最重要：毎回 lastDate を baseDate + 2 にリセット ★★★
     lastDate = new Date(baseDate);
@@ -215,8 +220,10 @@ function render() {
 
     // ★★★ 正しい位置はここ！ ★★★
     if (isMobile) {
+        console.log("setupMobileScroll を呼び出します");
         setupMobileScroll();  // スマホ：縦スクロール監視
     } else {
+        console.log("setupScrollWatcher を呼び出します");
         setupScrollWatcher();  // PC/iPad：横スクロール監視
     }
 
@@ -760,7 +767,16 @@ lastDate.setDate(lastDate.getDate() + 2); // baseDate + 2日 = 3日目
 
 function setupScrollWatcher() {
     const container = document.getElementById("days-wrapper");
-    if (!container) return;
+    if (!container) {
+        console.log("setupScrollWatcher: container not found");
+        return;
+    }
+
+    console.log("setupScrollWatcher: 初期化", {
+        scrollWidth: container.scrollWidth,
+        clientWidth: container.clientWidth,
+        canScroll: container.scrollWidth > container.clientWidth
+    });
 
     // ★ 既存のリスナーを削除（重複防止）
     if (container._scrollHandler) {
@@ -769,18 +785,31 @@ function setupScrollWatcher() {
 
     // ★ スクロールハンドラを作成
     const scrollHandler = () => {
+        console.log("scroll event:", {
+            scrollLeft: container.scrollLeft,
+            clientWidth: container.clientWidth,
+            scrollWidth: container.scrollWidth
+        });
+
         const headerRow = document.getElementById("date-header-row");
         if (headerRow) headerRow.scrollLeft = container.scrollLeft;
 
         const nearRight =
             container.scrollLeft + container.clientWidth >= container.scrollWidth - 200;
 
-        if (nearRight) addNextDayColumn();
+        console.log("nearRight:", nearRight);
+
+        if (nearRight) {
+            console.log("addNextDayColumn 呼び出し");
+            addNextDayColumn();
+        }
     };
 
     // ★ ハンドラを保存して登録
     container._scrollHandler = scrollHandler;
     container.addEventListener("scroll", scrollHandler);
+    
+    console.log("setupScrollWatcher: イベントリスナー登録完了");
 }
 
 function addNextDayColumn() {
@@ -797,6 +826,15 @@ function addNextDayColumn() {
 
     const dateStr =
         `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    
+    console.log("addNextDayColumn:", {
+        date: dateStr,
+        dayOfWeek: d.getDay(),
+        lastDate: lastDate.toISOString(),
+        reservationsForDate: reservations.filter(r => r.date === dateStr),
+        allReservationDates: reservations.map(r => r.date)
+    });
+    
     const w = d.getDay();
     const isMobile = window.innerWidth < 600;
 
