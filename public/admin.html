@@ -119,9 +119,7 @@
     text-align: center !important;
 }
 
-/* ★ pill 完全復元 CSS（正しい仕様） ★ */
-
-/* slot の基本形（border は JS が制御する） */
+/* ★ slot の基本形（border は JS が制御する） */
 .slot {
     display: flex;
     flex-direction: row;
@@ -132,10 +130,16 @@
     background-clip: padding-box;
 }
 
-/* 中の白背景を消す（白い線の原因） */
+/* ★ 中の白背景を完全に消す（白い線の原因） */
 .slot .time-label,
 .slot .slot-info {
     background: transparent !important;
+}
+
+/* ★ 予約枠（グレー）の途中 slot の border を消す（JS の pill ロジックを邪魔しない） */
+.slot[style*="#e5e5ea"] {
+    border-top: none !important;
+    border-bottom: none !important;
 }
 
 
