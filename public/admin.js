@@ -217,7 +217,9 @@ function render() {
     // ★★★ 正しい位置はここ！ ★★★
     if (isMobile) {
         setupMobileScroll();
-    }
+    }} else {
+    setupScrollWatcher();  // PC/iPad：横スクロール監視
+}
 
     setTimeout(updateNowLine, 300);
 }
