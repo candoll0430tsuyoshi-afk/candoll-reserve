@@ -680,17 +680,20 @@ function setupScrollWatcher() {
     });
 }
 
-// ★ 次の日のカラムを追加する関数（完全版・そのまま置き換えOK）
 function addNextDayColumn() {
     const wrap = document.getElementById('days-wrapper');
     if (!wrap) return;
-wrap.style.gap = "15px";
-    // 次の日に進める
+    wrap.style.gap = "15px";
+
+    // ★ 次に追加する日付 = lastDate + 1日
     const d = new Date(lastDate);
     d.setDate(d.getDate() + 1);
-    lastDate = new Date(d); // 更新
 
-    const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    // ★ lastDate を更新（ここが超重要）
+    lastDate = new Date(d);
+
+    const dateStr =
+        `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
     const w = d.getDay();
     const isMobile = window.innerWidth < 600;
 
@@ -707,9 +710,10 @@ wrap.style.gap = "15px";
     col.style.minWidth = "320px";
     col.style.maxWidth = "320px";
     col.style.flex = "none";
-    col.style.padding = "10px";
-    col.style.margin = "0"; 
-    col.style.boxSizing = "border-box"; // ★追加
+    col.style.padding = "0";
+    col.style.margin = "0";
+    col.style.boxSizing = "border-box";
+
     if (isMobile) {
         col.innerHTML = `
             <div style="background:#f2f2f7; padding:12px; text-align:center; border-bottom:1px solid #ddd;">
@@ -729,7 +733,7 @@ wrap.style.gap = "15px";
             </div>`;
     }
 
-    // スロット生成
+    // ★ スロット生成
     for (let h = 10; h <= 18; h++) {
         ['00', '30'].forEach(m => {
             renderSlot(col, dateStr, `${String(h).padStart(2, '0')}:${m}`, isClosed);
@@ -737,6 +741,31 @@ wrap.style.gap = "15px";
     }
 
     wrap.appendChild(col);
+
+    // ★★★ PC の場合：ヘッダーも 320px 幅で追加（render と完全同期）★★★
+    if (!isMobile) {
+        const headerRow = document.getElementById('date-header-row');
+        if (headerRow) {
+            const headerCell = document.createElement('div');
+
+            headerCell.style.minWidth = "320px";
+            headerCell.style.maxWidth = "320px";
+            headerCell.style.flex = "none";
+            headerCell.style.textAlign = "center";
+            headerCell.style.fontWeight = "bold";
+            headerCell.style.fontSize = "16px";
+            headerCell.style.padding = "0";
+            headerCell.style.background = "#f2f2f7";
+            headerCell.style.borderRadius = "8px";
+
+            headerCell.innerHTML =
+                `${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')} (${['日','月','火','水','木','金','土'][w]})`;
+
+            headerRow.appendChild(headerCell);
+        }
+    }
+}
+
 
     // ★★★ PC の場合：ヘッダーも 320px 幅で追加（render と完全同期）★★★
     if (!isMobile) {
