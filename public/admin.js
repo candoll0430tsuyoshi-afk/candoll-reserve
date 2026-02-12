@@ -266,13 +266,27 @@ function setupMobileScroll() {
 
 function renderSlot(col, date, time, isClosed) {
     const timeMins = toMin(time);
+
     const exactRes = reservations.find(r => r.date === date && r.time === time);
+
+    // ★ 予約の長さを正しく計算（複数メニュー対応）
     const overlappingRes = reservations.find(r => {
         if (r.date !== date) return false;
+
         const start = toMin(r.time);
-        const firstMenu = r.menus.split(',')[0].trim();
-        const duration = r.manual_duration || MENU_DURATION[firstMenu] || 60;
-        return timeMins >= start && timeMins < start + duration;
+
+        let dur = 0;
+        if (r.manual_duration) {
+            dur = Number(r.manual_duration);
+        } else {
+            const menuList = r.menus.split(',').map(m => m.trim());
+            menuList.forEach(m => {
+                dur += MENU_DURATION[m] || 60;
+            });
+        }
+
+        const end = start + dur;
+        return timeMins >= start && timeMins < end;
     });
 
     const isOff = offTimes.some(o => o.date === date && o.time === time);
@@ -280,33 +294,57 @@ function renderSlot(col, date, time, isClosed) {
     const div = document.createElement('div');
     div.className = 'slot';
 
-    // ★ 統一：すべての slot の margin / border を固定
-    div.style.marginTop = "0";
-    div.style.marginBottom = "6px";
-    div.style.border = "1px solid #000";
-    div.style.boxSizing = "border-box";
-
     div.dataset.date = date;
     div.dataset.time = time;
 
     div.ondragover = (e) => e.preventDefault();
     div.ondrop = (e) => handleDrop(e, date, time);
 
-    // ★ デザイン（背景色・角丸だけ変える）
+    // ★ デフォルト（空き）
+    div.style.margin = "0";
+    div.style.marginBottom = "6px";
+    div.style.boxSizing = "border-box";
+    div.style.border = "1px solid #000";
+    div.style.borderRadius = "12px";
+    div.style.background = (isOff || isClosed) ? "#f2f2f7" : "#ffffff";
+
+    // ★ 予約がある場合（pill カプセル）
     if (overlappingRes) {
         div.style.background = "#e5e5ea";
 
-        const resStart = toMin(overlappingRes.time);
-        const dur = overlappingRes.manual_duration || MENU_DURATION[overlappingRes.menus.split(',')[0].trim()] || 60;
-        const resEnd = resStart + dur;
-        const isLastSlot = (timeMins + 30 >= resEnd);
+        // 予約の開始・終了判定
+        const start = toMin(overlappingRes.time);
 
+        let dur = 0;
+        if (overlappingRes.manual_duration) {
+            dur = Number(overlappingRes.manual_duration);
+        } else {
+            const menuList = overlappingRes.menus.split(',').map(m => m.trim());
+            menuList.forEach(m => {
+                dur += MENU_DURATION[m] || 60;
+            });
+        }
+
+        const end = start + dur;
+        const isStart = timeMins === start;
+        const isEnd = timeMins + 30 >= end;
+
+        // ★ pill デザイン復元（前の動作と同じ）
+        if (isStart) {
+            // 開始 slot
+            div.style.borderTop = "1px solid #000";
+            div.style.borderBottom = isEnd ? "1px solid #000" : "none";
+            div.style.borderRadius = isEnd ? "15px" : "15px 15px 0 0";
+        } else {
+            // 途中 slot
+            div.style.borderTop = "none";
+            div.style.borderBottom = isEnd ? "1px solid #000" : "none";
+            div.style.borderRadius = isEnd ? "0 0 15px 15px" : "0";
+        }
+
+        // ★ 開始 slot のみドラッグ可能
         if (exactRes) {
             div.draggable = true;
-
-            // ★ 統一：border は消さない（高さズレ防止）
-            div.style.borderRadius = isLastSlot ? "15px" : "15px 15px 0 0";
-
             div.ondragstart = (e) => {
                 e.dataTransfer.setData("text/plain", exactRes.id);
                 div.style.opacity = "0.4";
@@ -314,19 +352,10 @@ function renderSlot(col, date, time, isClosed) {
             div.ondragend = () => div.style.opacity = "1";
 
             setupTouchEvents(div, exactRes, date, time);
-
-        } else {
-            // 途中 slot
-            div.style.borderRadius = isLastSlot ? "0 0 15px 15px" : "0";
         }
-
-    } else {
-        // 空き or 不可
-        div.style.background = (isOff || isClosed) ? "#f2f2f7" : "#ffffff";
-        div.style.borderRadius = "12px";
     }
 
-    // 内容
+    // ★ 内容
     let content = `<div class="time-label">${time}</div><div class="slot-info">`;
     if (overlappingRes && exactRes) {
         content += `<b style="color:#000;">${exactRes.name} 様</b><span class="menu-label">${exactRes.menus}</span>`;
@@ -343,6 +372,7 @@ function renderSlot(col, date, time, isClosed) {
 
     col.appendChild(div);
 }
+
 
 
 async function toggleOffTime(date, time) {
