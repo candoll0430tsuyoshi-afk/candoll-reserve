@@ -216,16 +216,16 @@ function render() {
 
     // ★★★ 正しい位置はここ！ ★★★
     if (isMobile) {
-        setupMobileScroll();
-    }} else {
-    setupScrollWatcher();  // PC/iPad：横スクロール監視
-}
+        setupMobileScroll();  // スマホ：縦スクロール監視
+    } else {
+        setupScrollWatcher();  // PC/iPad：横スクロール監視
+    }
 
     setTimeout(updateNowLine, 300);
 }
 
 
-// スマホ用：スクロールで日付バナーを更新
+// スマホ用：スクロールで日付バナーを更新 + 次の日を自動追加
 function setupMobileScroll() {
     const wrap = document.getElementById('days-wrapper');
     wrap.style.gap = "15px";
@@ -257,6 +257,15 @@ function setupMobileScroll() {
             const w = d.getDay();
             navCurrent.innerHTML = `${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')} (${['日','月','火','水','木','金','土'][w]})`;
         }
+        
+        // ★ 縦スクロールで下に近づいたら次の日を追加
+        const scrollBottom = window.scrollY + window.innerHeight;
+        const docHeight = document.documentElement.scrollHeight;
+        const nearBottom = scrollBottom >= docHeight - 500;
+        
+        if (nearBottom) {
+            addNextDayColumnMobile();
+        }
     };
     
     // スクロールイベント（既存のリスナーを削除してから追加）
@@ -264,6 +273,48 @@ function setupMobileScroll() {
     wrap.removeEventListener('scroll', updateBanner);
     window.addEventListener('scroll', updateBanner);
     wrap.addEventListener('scroll', updateBanner);
+}
+
+// スマホ用：次の日のカラムを追加（縦スクロール用）
+function addNextDayColumnMobile() {
+    const wrap = document.getElementById('days-wrapper');
+    if (!wrap) return;
+    
+    // ★ 次に追加する日付 = lastDate + 1日
+    const d = new Date(lastDate);
+    d.setDate(d.getDate() + 1);
+    
+    // ★ lastDate を更新
+    lastDate = new Date(d);
+    
+    const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    
+    // 既に存在するかチェック
+    if (document.getElementById(`col-${dateStr}`)) return;
+    
+    const w = d.getDay();
+    const isClosed = (w === 1 || w === 2 || holidays.some(h => h.date === dateStr)) && !specialOpens.some(s => s.date === dateStr);
+    
+    const col = document.createElement('div');
+    col.className = 'day-column';
+    col.id = `col-${dateStr}`;
+    col.dataset.date = dateStr;
+    
+    col.innerHTML = `
+        <div style="background:#f2f2f7; padding:12px; text-align:center; border-bottom:1px solid #ddd;">
+            <b style="font-size:16px;">${dateStr} (${['日','月','火','水','木','金','土'][w]})</b>
+            <div onclick="toggleDay('${dateStr}', ${isClosed})" style="font-size:11px; text-decoration:underline; cursor:pointer; color:#007aff;">
+                ${isClosed ? '営業にする' : '休みにする'}
+            </div>
+        </div>`;
+    
+    for (let h = 10; h <= 18; h++) {
+        ['00', '30'].forEach(m => {
+            renderSlot(col, dateStr, `${String(h).padStart(2, '0')}:${m}`, isClosed);
+        });
+    }
+    
+    wrap.appendChild(col);
 }
 
 function renderSlot(col, date, time, isClosed) {
