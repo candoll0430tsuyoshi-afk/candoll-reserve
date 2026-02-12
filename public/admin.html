@@ -124,24 +124,33 @@
     text-align: center !important;
 }
 
-/* ★ pill カプセル完全復元 CSS ★ */
+/* ★ pill 完全復元 CSS ★ */
 
-/* slot の border は JS が制御するので CSS では消さない */
+/* JS の border を消さないための初期化 */
 .slot {
-    border: 1px solid transparent; /* 高さズレ防止のため透明で確保 */
+    border: 1px solid transparent !important; /* 高さズレ防止 */
     background-clip: padding-box;
+    padding: 12px 15px;
+    box-sizing: border-box;
 }
 
-/* 中の白背景を完全に消す（白い線の原因） */
+/* 中の白背景を消す（白い線の原因） */
 .slot .time-label,
 .slot .slot-info {
     background: transparent !important;
 }
 
-/* 予約中の slot は JS が背景を塗るので余計な影響を与えない */
+/* 空き slot の border を JS が消せるようにする */
 .day-column .slot {
-    box-shadow: none !important;
+    border-color: transparent !important;
 }
+
+/* 予約 slot の border は JS が付けるので邪魔しない */
+.day-column .slot[style*="background: rgb(229, 229, 234)"],
+.day-column .slot[style*="#e5e5ea"] {
+    border-color: transparent !important;
+}
+
 
 
     </style>
