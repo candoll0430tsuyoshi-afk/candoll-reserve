@@ -764,7 +764,7 @@ function addNextDayColumn() {
             headerRow.appendChild(headerCell);
         }
     }
-}
+
 
 
     // ★★★ PC の場合：ヘッダーも 320px 幅で追加（render と完全同期）★★★
