@@ -106,9 +106,9 @@ function render() {
         isMobile: isMobile
     });
 
-    // ★★★ 最重要：毎回 lastDate を baseDate + 2 にリセット ★★★
+    // ★ lastDateをリセット（render = baseDateが変わった時）
     lastDate = new Date(baseDate);
-    lastDate.setDate(lastDate.getDate() + 2);
+    lastDate.setDate(lastDate.getDate() + 2); // 初期表示の3日目
 
     wrap.style.display = "flex";
     wrap.style.flexDirection = isMobile ? "column" : "row";
