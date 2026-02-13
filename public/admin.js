@@ -95,6 +95,38 @@ headers: {
 
 const toMin = t => { const [h, m] = t.split(':').map(Number); return h * 60 + m; };
 
+// 第1・第3火曜日かどうかを判定
+function isFirstOrThirdTuesday(date) {
+    const d = new Date(date);
+    const dayOfWeek = d.getDay();
+    
+    // 火曜日でなければfalse
+    if (dayOfWeek !== 2) return false;
+    
+    // その月の何日目か
+    const dayOfMonth = d.getDate();
+    
+    // 第何週かを計算（1-7日=第1週、8-14日=第2週...）
+    const weekOfMonth = Math.ceil(dayOfMonth / 7);
+    
+    // 第1週または第3週ならtrue
+    return weekOfMonth === 1 || weekOfMonth === 3;
+}
+
+// 定休日かどうかを判定
+function isRegularHoliday(date) {
+    const d = new Date(date);
+    const dayOfWeek = d.getDay();
+    
+    // 月曜日は毎週休み
+    if (dayOfWeek === 1) return true;
+    
+    // 火曜日は第1・第3週のみ休み
+    if (isFirstOrThirdTuesday(date)) return true;
+    
+    return false;
+}
+
 function render() {
     const wrap = document.getElementById('days-wrapper');
     if (!wrap) return;
@@ -182,7 +214,7 @@ function render() {
 
         const w = d.getDay();
         const isClosed =
-            (w === 1 || w === 2 || holidays.some(h => h.date === dateStr)) &&
+            (isRegularHoliday(dateStr) || holidays.some(h => h.date === dateStr)) &&
             !specialOpens.some(s => s.date === dateStr);
 
         if (isMobile) {
@@ -215,10 +247,8 @@ function render() {
 
     // ★★★ 正しい位置はここ！ ★★★
     if (isMobile) {
-        console.log("setupMobileScroll を呼び出します");
         setupMobileScroll();  // スマホ：縦スクロール監視
     } else {
-        console.log("setupScrollWatcher を呼び出します");
         setupScrollWatcher();  // PC/iPad：横スクロール監視
     }
 
@@ -294,7 +324,7 @@ function addNextDayColumnMobile() {
     if (document.getElementById(`col-${dateStr}`)) return;
     
     const w = d.getDay();
-    const isClosed = (w === 1 || w === 2 || holidays.some(h => h.date === dateStr)) && !specialOpens.some(s => s.date === dateStr);
+    const isClosed = (isRegularHoliday(dateStr) || holidays.some(h => h.date === dateStr)) && !specialOpens.some(s => s.date === dateStr);
     
     const col = document.createElement('div');
     col.className = 'day-column';
@@ -804,7 +834,7 @@ function addNextDayColumn() {
     const isMobile = window.innerWidth < 600;
 
     const isClosed =
-        (w === 1 || w === 2 || holidays.some(h => h.date === dateStr)) &&
+        (isRegularHoliday(dateStr) || holidays.some(h => h.date === dateStr)) &&
         !specialOpens.some(s => s.date === dateStr);
 
     // ★ カラム生成（320px 固定）
