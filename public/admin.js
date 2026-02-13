@@ -506,7 +506,10 @@ headers: {
         // ------------------
 
         await fetchData(); 
+        // 現在表示している日付を保持
+        const currentDate = new Date(baseDate);
         render();
+        baseDate = currentDate;
     } catch (err) {
         console.error("送信エラー:", err);
         alert("設定の保存に失敗しました。");
@@ -647,7 +650,12 @@ headers: {
             password: password 
         })
     });
-    closeModal(); await fetchData(); render();
+    closeModal(); 
+    await fetchData(); 
+    // 現在表示している日付を保持
+    const currentDate = new Date(baseDate);
+    render();
+    baseDate = currentDate;
 };
 async function addManual(date, time) {
     const name = document.getElementById('manual-name').value;
@@ -682,7 +690,10 @@ headers: {
     });
     closeModal(); 
     await fetchData(); 
+    // 現在表示している日付を保持
+    const currentDate = new Date(baseDate);
     render();
+    baseDate = currentDate;
 }
 async function toggleDay(date, isClosed) {
     const password = localStorage.getItem('admin_password'), mode = isClosed ? "delHoliday" : "addHoliday";
@@ -696,7 +707,11 @@ headers: {
 },
         body: JSON.stringify({ mode: mode, date: date, password: password })
     });
-    await fetchData(); render();
+    await fetchData(); 
+    // 現在表示している日付を保持
+    const currentDate = new Date(baseDate);
+    render();
+    baseDate = currentDate;
 }
 async function addReservation() {
     const name = document.getElementById('res-name').value;
@@ -748,7 +763,10 @@ headers: {
         alert("予約を保存しました");
         closeModal();
         await fetchData();
+        // 現在表示している日付を保持
+        const currentDate = new Date(baseDate);
         render();
+        baseDate = currentDate;
 
     } catch (err) {
         alert("保存に失敗しました。パスワードを確認してください。");
@@ -767,7 +785,12 @@ headers: {
 },
         body: JSON.stringify({ mode: "delete", id: id, password: password })
     });
-    closeModal(); await fetchData(); render();
+    closeModal(); 
+    await fetchData(); 
+    // 現在表示している日付を保持
+    const currentDate = new Date(baseDate);
+    render();
+    baseDate = currentDate;
 }
 window.handleCalendarChange = v => { if(v) { baseDate = new Date(v.replace(/-/g, '/')); render(); } };
 window.moveDate = n => { baseDate.setDate(baseDate.getDate() + n); render(); };
