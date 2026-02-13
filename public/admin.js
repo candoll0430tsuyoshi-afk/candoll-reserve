@@ -100,11 +100,6 @@ function render() {
     if (!wrap) return;
     wrap.innerHTML = '';
     const isMobile = window.innerWidth < 600;
-    
-    console.log("render関数呼び出し:", {
-        windowWidth: window.innerWidth,
-        isMobile: isMobile
-    });
 
     // ★ lastDateをリセット（render = baseDateが変わった時）
     lastDate = new Date(baseDate);
@@ -767,16 +762,7 @@ lastDate.setDate(lastDate.getDate() + 2); // baseDate + 2日 = 3日目
 
 function setupScrollWatcher() {
     const container = document.getElementById("days-wrapper");
-    if (!container) {
-        console.log("setupScrollWatcher: container not found");
-        return;
-    }
-
-    console.log("setupScrollWatcher: 初期化", {
-        scrollWidth: container.scrollWidth,
-        clientWidth: container.clientWidth,
-        canScroll: container.scrollWidth > container.clientWidth
-    });
+    if (!container) return;
 
     // ★ 既存のリスナーを削除（重複防止）
     if (container._scrollHandler) {
@@ -785,31 +771,18 @@ function setupScrollWatcher() {
 
     // ★ スクロールハンドラを作成
     const scrollHandler = () => {
-        console.log("scroll event:", {
-            scrollLeft: container.scrollLeft,
-            clientWidth: container.clientWidth,
-            scrollWidth: container.scrollWidth
-        });
-
         const headerRow = document.getElementById("date-header-row");
         if (headerRow) headerRow.scrollLeft = container.scrollLeft;
 
         const nearRight =
             container.scrollLeft + container.clientWidth >= container.scrollWidth - 200;
 
-        console.log("nearRight:", nearRight);
-
-        if (nearRight) {
-            console.log("addNextDayColumn 呼び出し");
-            addNextDayColumn();
-        }
+        if (nearRight) addNextDayColumn();
     };
 
     // ★ ハンドラを保存して登録
     container._scrollHandler = scrollHandler;
     container.addEventListener("scroll", scrollHandler);
-    
-    console.log("setupScrollWatcher: イベントリスナー登録完了");
 }
 
 function addNextDayColumn() {
@@ -826,14 +799,6 @@ function addNextDayColumn() {
 
     const dateStr =
         `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-    
-    console.log("addNextDayColumn:", {
-        date: dateStr,
-        dayOfWeek: d.getDay(),
-        lastDate: lastDate.toISOString(),
-        reservationsForDate: reservations.filter(r => r.date === dateStr),
-        allReservationDates: reservations.map(r => r.date)
-    });
     
     const w = d.getDay();
     const isMobile = window.innerWidth < 600;
@@ -892,35 +857,6 @@ function addNextDayColumn() {
             headerCell.style.minWidth = "320px";
             headerCell.style.maxWidth = "320px";
             headerCell.style.flex = "none";
-            headerCell.style.textAlign = "center";
-            headerCell.style.fontWeight = "bold";
-            headerCell.style.fontSize = "16px";
-            headerCell.style.padding = "0";
-            headerCell.style.background = "#f2f2f7";
-            headerCell.style.borderRadius = "8px";
-
-            headerCell.innerHTML =
-                `${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')} (${['日','月','火','水','木','金','土'][w]})`;
-
-            headerRow.appendChild(headerCell);
-        }
-    }
-
-
-
-    // ★★★ PC の場合：ヘッダーも 320px 幅で追加（render と完全同期）★★★
-    if (!isMobile) {
-        const headerRow = document.getElementById('date-header-row');
-        if (headerRow) {
-            const headerCell = document.createElement('div');
-
-            headerCell.style.minWidth = "320px";
-            headerCell.style.maxWidth = "320px";
-            headerCell.style.flex = "none";
-            col.style.padding = "0";
-            col.style.margin = "0";
-            col.style.boxSizing = "border-box";
-
             headerCell.style.textAlign = "center";
             headerCell.style.fontWeight = "bold";
             headerCell.style.fontSize = "16px";
