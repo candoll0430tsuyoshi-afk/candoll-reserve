@@ -165,7 +165,7 @@ function render() {
 
     // ★ lastDateをリセット（render = baseDateが変わった時）
     lastDate = new Date(baseDate);
-    lastDate.setDate(lastDate.getDate() + 2); // 初期表示の3日目
+    lastDate.setDate(lastDate.getDate() + 3); // 初期表示の4日目
 
     wrap.style.display = "flex";
     wrap.style.flexDirection = isMobile ? "column" : "row";
@@ -193,8 +193,8 @@ function render() {
         headerRow.style.overflowX = "hidden";
         headerRow.style.whiteSpace = "nowrap";
 
-        // ★ 最初の3日分のヘッダー
-        for (let i = 0; i < 3; i++) {
+        // ★ 最初の4日分のヘッダー
+        for (let i = 0; i < 4; i++) {
             const d = new Date(baseDate);
             d.setDate(d.getDate() + i);
             const w = d.getDay();
@@ -225,8 +225,8 @@ function render() {
             `${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')} (${['日','月','火','水','木','金','土'][w]})`;
     }
 
-    // ★ カラム生成（最初の3日）
-    for (let i = 0; i < 3; i++) {
+    // ★ カラム生成（最初の4日）
+    for (let i = 0; i < 4; i++) {
         const d = new Date(baseDate);
         d.setDate(d.getDate() + i);
         const dateStr =
@@ -815,9 +815,9 @@ function updateNowLine() {
         col.appendChild(line);
     }
 }
-// ★ 今表示している最後の日付を覚えておく（最初は3日目）
+// ★ 今表示している最後の日付を覚えておく（最初は4日目）
 let lastDate = new Date(baseDate);
-lastDate.setDate(lastDate.getDate() + 2); // baseDate + 2日 = 3日目
+lastDate.setDate(lastDate.getDate() + 3); // baseDate + 3日 = 4日目
 
 function setupScrollWatcher() {
     const container = document.getElementById("days-wrapper");
