@@ -127,6 +127,36 @@ function isRegularHoliday(date) {
     return false;
 }
 
+// データを再読み込みして表示位置を保持したままリロード
+async function reloadWithPosition() {
+    await fetchData();
+    
+    // 既存のカラムをすべて再描画（render()を使わない）
+    const columns = document.querySelectorAll('.day-column');
+    columns.forEach(col => {
+        const dateStr = col.dataset.date;
+        if (!dateStr) return;
+        
+        const d = new Date(dateStr);
+        const w = d.getDay();
+        const isClosed = (isRegularHoliday(dateStr) || holidays.some(h => h.date === dateStr)) && !specialOpens.some(s => s.date === dateStr);
+        
+        // スロットを全削除して再生成
+        const slots = col.querySelectorAll('.slot');
+        slots.forEach(slot => slot.remove());
+        
+        // スロットを再生成
+        for (let h = 10; h <= 18; h++) {
+            ['00', '30'].forEach(m => {
+                renderSlot(col, dateStr, `${String(h).padStart(2, '0')}:${m}`, isClosed);
+            });
+        }
+    });
+    
+    // now-lineを更新
+    setTimeout(updateNowLine, 300);
+}
+
 function render() {
     const wrap = document.getElementById('days-wrapper');
     if (!wrap) return;
@@ -505,11 +535,7 @@ headers: {
         }
         // ------------------
 
-        await fetchData(); 
-        // 現在表示している日付を保持
-        const currentDate = new Date(baseDate);
-        render();
-        baseDate = currentDate;
+        await reloadWithPosition();
     } catch (err) {
         console.error("送信エラー:", err);
         alert("設定の保存に失敗しました。");
@@ -651,11 +677,7 @@ headers: {
         })
     });
     closeModal(); 
-    await fetchData(); 
-    // 現在表示している日付を保持
-    const currentDate = new Date(baseDate);
-    render();
-    baseDate = currentDate;
+    await reloadWithPosition();
 };
 async function addManual(date, time) {
     const name = document.getElementById('manual-name').value;
@@ -689,11 +711,7 @@ headers: {
         })
     });
     closeModal(); 
-    await fetchData(); 
-    // 現在表示している日付を保持
-    const currentDate = new Date(baseDate);
-    render();
-    baseDate = currentDate;
+    await reloadWithPosition();
 }
 async function toggleDay(date, isClosed) {
     const password = localStorage.getItem('admin_password'), mode = isClosed ? "delHoliday" : "addHoliday";
@@ -707,11 +725,7 @@ headers: {
 },
         body: JSON.stringify({ mode: mode, date: date, password: password })
     });
-    await fetchData(); 
-    // 現在表示している日付を保持
-    const currentDate = new Date(baseDate);
-    render();
-    baseDate = currentDate;
+    await reloadWithPosition();
 }
 async function addReservation() {
     const name = document.getElementById('res-name').value;
@@ -762,11 +776,7 @@ headers: {
 
         alert("予約を保存しました");
         closeModal();
-        await fetchData();
-        // 現在表示している日付を保持
-        const currentDate = new Date(baseDate);
-        render();
-        baseDate = currentDate;
+        await reloadWithPosition();
 
     } catch (err) {
         alert("保存に失敗しました。パスワードを確認してください。");
@@ -786,11 +796,7 @@ headers: {
         body: JSON.stringify({ mode: "delete", id: id, password: password })
     });
     closeModal(); 
-    await fetchData(); 
-    // 現在表示している日付を保持
-    const currentDate = new Date(baseDate);
-    render();
-    baseDate = currentDate;
+    await reloadWithPosition();
 }
 window.handleCalendarChange = v => { if(v) { baseDate = new Date(v.replace(/-/g, '/')); render(); } };
 window.moveDate = n => { baseDate.setDate(baseDate.getDate() + n); render(); };
