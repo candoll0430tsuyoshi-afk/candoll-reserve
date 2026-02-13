@@ -648,10 +648,16 @@ window.addEventListener("load", async () => {
     await miniappReady; 
     if (!customerUserId) return;
 
+    // 今日の日付を取得（時刻は00:00:00）
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const todayStr = today.toISOString().split('T')[0];
+
     const { data } = await supabaseClient.from("reservations")
       .select("*")
       .eq("customer_user_id", customerUserId)
-      .order("created_at", { ascending: false })
+      .gte("date", todayStr)  // 今日以降の予約のみ取得
+      .order("date", { ascending: true })  // 日付の近い順に並べる
       .limit(1);
 
     if (data && data.length > 0) {
@@ -741,7 +747,7 @@ window.addEventListener("load", async () => {
         }
       };
     } else {
-      document.getElementById("cancel-info").innerText = "有効な予約が見つかりませんでした。";
+      document.getElementById("cancel-info").innerText = "キャンセル可能な予約が見つかりませんでした。\n来店日を過ぎた予約はキャンセルできません。";
       document.getElementById("executeCancelBtn").style.display = "none";
     }
   }
