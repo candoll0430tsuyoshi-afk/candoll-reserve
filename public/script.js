@@ -747,7 +747,7 @@ window.addEventListener("load", async () => {
         }
       };
     } else {
-      document.getElementById("cancel-info").innerText = "キャンセル可能な予約が見つかりませんでした。\n来店日を過ぎた予約はキャンセルできません。";
+      document.getElementById("cancel-info").innerText = "キャンセル可能な予約が見つかりませんでした。";
       document.getElementById("executeCancelBtn").style.display = "none";
     }
   }
