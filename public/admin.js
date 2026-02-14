@@ -141,9 +141,15 @@ async function reloadWithPosition() {
         const w = d.getDay();
         const isClosed = (isRegularHoliday(dateStr) || holidays.some(h => h.date === dateStr)) && !specialOpens.some(s => s.date === dateStr);
         
-        // スロットを全削除して再生成
+        // ★ ヘッダー以外のスロットのみ削除
         const slots = col.querySelectorAll('.slot');
         slots.forEach(slot => slot.remove());
+        
+        // ★ 休み設定ボタンのテキストを更新
+        const toggleBtn = col.querySelector('[onclick*="toggleDay"]');
+        if (toggleBtn) {
+            toggleBtn.textContent = isClosed ? '営業にする' : '休みにする';
+        }
         
         // スロットを再生成
         for (let h = 10; h <= 18; h++) {
@@ -238,9 +244,14 @@ function render() {
         col.dataset.index = i;
         col.dataset.date = dateStr;
 
+        // ★ iPhone Safari対策：スタイルを明示的に設定
         col.style.minWidth = "320px";
         col.style.maxWidth = "320px";
-        col.style.flex = "none";
+        col.style.width = "320px";
+        col.style.flex = "0 0 auto";
+        col.style.padding = "0";
+        col.style.margin = "0";
+        col.style.boxSizing = "border-box";
 
         const w = d.getDay();
         const isClosed =
@@ -360,6 +371,12 @@ function addNextDayColumnMobile() {
     col.className = 'day-column';
     col.id = `col-${dateStr}`;
     col.dataset.date = dateStr;
+    
+    // ★ スタイル設定
+    col.style.width = "100%";
+    col.style.padding = "0";
+    col.style.margin = "0";
+    col.style.boxSizing = "border-box";
     
     col.innerHTML = `
         <div style="background:#f2f2f7; padding:12px; text-align:center; border-bottom:1px solid #ddd;">
@@ -872,9 +889,11 @@ function addNextDayColumn() {
     col.id = `col-${dateStr}`;
     col.dataset.date = dateStr;
 
+    // ★ iPhone Safari対策：スタイルを明示的に設定
     col.style.minWidth = "320px";
     col.style.maxWidth = "320px";
-    col.style.flex = "none";
+    col.style.width = "320px";
+    col.style.flex = "0 0 auto";
     col.style.padding = "0";
     col.style.margin = "0";
     col.style.boxSizing = "border-box";
