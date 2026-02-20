@@ -10,6 +10,7 @@
             font-family: "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", "Hiragino Sans", Meiryo, sans-serif; 
             margin: 0; background: #f4f4f9; color: #333;
         }
+        
         /* ナビゲーション */
         .admin-nav { 
             display: flex; 
@@ -69,78 +70,146 @@
             cursor: pointer;
         }
         
-        button.nav-btn { background:#eee; border:none; padding:10px 15px; border-radius:8px; cursor:pointer; font-weight:bold; }
-        
-        .admin-container { max-width: 1000px; margin: 0 auto; }
-       #days-wrapper {
-    overflow-x: auto;
-    display: flex;
-}
-
-        
-        .day-column { 
-            margin-bottom: 20px; background: #fff; border-radius: 12px; 
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05); overflow: hidden; position: relative; 
+        button.nav-btn { 
+            background: #eee; 
+            border: none; 
+            padding: 10px 15px; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            font-weight: bold; 
         }
         
-        .time-label { font-size: 16px; font-weight: bold; color: #222; width: 55px; flex-shrink: 0; }
-        .slot-info { flex-grow: 1; text-align: center; font-size: 16px; font-weight: bold; }
-        .menu-label { font-size: 14px; font-weight: normal; color: #555; display: block; margin-top: 3px; }
+        .admin-container { 
+            max-width: 1000px; 
+            margin: 0 auto; 
+        }
+        
+        #days-wrapper {
+            overflow-x: auto;
+            display: flex;
+        }
+        
+        /* ★ day-column を1箇所に統合 */
+        .day-column { 
+            background: #fff; 
+            border-radius: 12px; 
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05); 
+            overflow: hidden; 
+            position: relative;
+            padding: 0;
+            margin: 0;
+            box-sizing: border-box;
+        }
+        
+        #date-header-row > div {
+            padding: 0;
+            margin: 0;
+            box-sizing: border-box;
+            text-align: center;
+        }
+        
+        .time-label { 
+            font-size: 16px; 
+            font-weight: bold; 
+            color: #222; 
+            width: 55px; 
+            flex-shrink: 0; 
+        }
+        
+        .slot-info { 
+            flex-grow: 1; 
+            text-align: center; 
+            font-size: 16px; 
+            font-weight: bold; 
+        }
+        
+        .menu-label { 
+            font-size: 14px; 
+            font-weight: normal; 
+            color: #555; 
+            display: block; 
+            margin-top: 3px; 
+        }
         
         .now-line {
-            position: absolute; left: 0; right: 0; height: 2px; background: #ff3b30; z-index: 50; pointer-events: none;
+            position: absolute; 
+            left: 0; 
+            right: 0; 
+            height: 2px; 
+            background: #ff3b30; 
+            z-index: 50; 
+            pointer-events: none;
         }
+        
         .now-line::after {
-            content: ""; position: absolute; left: 0; top: -4px; width: 10px; height: 10px; background: #ff3b30; border-radius: 50%;
+            content: ""; 
+            position: absolute; 
+            left: 0; 
+            top: -4px; 
+            width: 10px; 
+            height: 10px; 
+            background: #ff3b30; 
+            border-radius: 50%;
         }
 
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: none; justify-content: center; align-items: center; z-index: 1000; }
-        .modal-content { background: #fff; padding: 25px; border-radius: 20px; width: 90%; max-width: 400px; }
-        textarea { width: 100%; height: 80px; padding: 10px; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box; font-size: 16px; margin-top: 5px; }
-        input, select { font-size: 16px; padding: 12px; border: 1px solid #ddd; border-radius: 10px; width: 100%; box-sizing: border-box; margin-top: 5px; }
-  
-#days-wrapper {
-    overflow-x: auto;
-    display: flex;
-}
+        .modal-overlay { 
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%; 
+            background: rgba(0,0,0,0.6); 
+            display: none; 
+            justify-content: center; 
+            align-items: center; 
+            z-index: 1000; 
+        }
+        
+        .modal-content { 
+            background: #fff; 
+            padding: 25px; 
+            border-radius: 20px; 
+            width: 90%; 
+            max-width: 400px; 
+        }
+        
+        textarea { 
+            width: 100%; 
+            height: 80px; 
+            padding: 10px; 
+            border: 1px solid #ddd; 
+            border-radius: 10px; 
+            box-sizing: border-box; 
+            font-size: 16px; 
+            margin-top: 5px; 
+        }
+        
+        input, select { 
+            font-size: 16px; 
+            padding: 12px; 
+            border: 1px solid #ddd; 
+            border-radius: 10px; 
+            width: 100%; 
+            box-sizing: border-box; 
+            margin-top: 5px; 
+        }
 
+        /* ★ slot の基本形（border は JS が制御する） */
+        .slot {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            padding: 12px 15px;
+            min-height: 65px;
+            box-sizing: border-box;
+            background-clip: padding-box;
+        }
 
-.day-column {
-    padding: 0;
-    margin: 0;
-    box-sizing: border-box;
-}
-
-#date-header-row > div {
-    padding: 0 !important;
-    margin: 0 !important;
-    box-sizing: border-box;
-    text-align: center !important;
-}
-
-/* ★ slot の基本形（border は JS が制御する） */
-.slot {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    padding: 12px 15px;
-    min-height: 65px;
-    box-sizing: border-box;
-    background-clip: padding-box;
-}
-
-/* ★ 中の白背景を完全に消す（白い線の原因） */
-.slot .time-label,
-.slot .slot-info {
-    background: transparent !important;
-}
-
-
-
-
-
-
-
+        /* ★ 中の白背景を完全に消す（白い線の原因） */
+        .slot .time-label,
+        .slot .slot-info {
+            background: transparent !important;
+        }
     </style>
 </head>
 <body>
