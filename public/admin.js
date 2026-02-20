@@ -245,10 +245,19 @@ function render() {
         col.dataset.date = dateStr;
 
         // ★ iPhone Safari対策：スタイルを明示的に設定
-        col.style.minWidth = "320px";
-        col.style.maxWidth = "320px";
-        col.style.width = "320px";
-        col.style.flex = "0 0 auto";
+        if (isMobile) {
+            // モバイル縦向き時は画面幅いっぱい
+            col.style.width = "100%";
+            col.style.minWidth = "auto";
+            col.style.maxWidth = "none";
+            col.style.flex = "0 0 auto";
+        } else {
+            // PC/iPad横向き時は320px固定
+            col.style.minWidth = "320px";
+            col.style.maxWidth = "320px";
+            col.style.width = "320px";
+            col.style.flex = "0 0 auto";
+        }
         col.style.padding = "0";
         col.style.margin = "0";
         col.style.boxSizing = "border-box";
