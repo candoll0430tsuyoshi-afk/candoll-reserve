@@ -322,7 +322,7 @@ function setupMobileScroll() {
         // 画面上部に最も近いカラムを見つける
         columns.forEach((col, index) => {
             const rect = col.getBoundingClientRect();
-            const distance = Math.abs(rect.top - 60); // ナビゲーションバーの高さを考慮
+            const distance = Math.abs(rect.top - 200); // ナビゲーションバーの高さを考慮
             
             if (distance < minDistance) {
                 minDistance = distance;
