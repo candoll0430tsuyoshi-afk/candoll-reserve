@@ -319,11 +319,10 @@ function setupMobileScroll() {
         let currentIndex = 0;
         let minDistance = Infinity;
         
-        // 画面中央に最も近いカラムを見つける
+        // 画面上部に最も近いカラムを見つける
         columns.forEach((col, index) => {
             const rect = col.getBoundingClientRect();
-            const screenCenter = window.innerHeight / 2; // 画面の中央
-            const distance = Math.abs(rect.top - screenCenter);
+            const distance = Math.abs(rect.top - 60); // ナビゲーションバーの高さを考慮
             
             if (distance < minDistance) {
                 minDistance = distance;
