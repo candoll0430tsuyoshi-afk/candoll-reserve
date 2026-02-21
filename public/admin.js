@@ -568,6 +568,27 @@ headers: {
         alert("設定の保存に失敗しました。");
     }
 }
+async function fetchVisitHistory(name) {
+    const password = localStorage.getItem('admin_password');
+    try {
+        const response = await fetch("https://bcahztzetpfuklipjmxx.supabase.co/functions/v1/admin-service", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "apikey": window.CONFIG?.SUPABASE_KEY,
+                "Authorization": `Bearer ${window.CONFIG?.SUPABASE_KEY}`
+            },
+            body: JSON.stringify({ mode: "history", name: name, password: password })
+        });
+        if (!response.ok) return [];
+        const data = await response.json();
+        return data.history || [];
+    } catch (e) {
+        console.error("履歴取得エラー:", e);
+        return [];
+    }
+}
+
 async function openSlotModal(date, time, res, isOff) {
     const body = document.getElementById('modal-body');
     const dayOfWeek = ['日','月','火','水','木','金','土'][new Date(date.replace(/-/g, '/')).getDay()];
@@ -586,7 +607,37 @@ async function openSlotModal(date, time, res, isOff) {
                 </select>
                 <button onclick="saveChanges('${res.id}')" style="background:#34c759; color:white; border:none; height:50px; width:100%; border-radius:10px; font-weight:bold; font-size:16px; cursor:pointer; margin-top:20px;">変更を保存</button>
             </div>
+            <div id="visit-history-section" style="background:#f9f9f9; padding:15px; border-radius:15px; margin-bottom:15px;">
+                <div style="font-size:14px; font-weight:bold; color:#666; margin-bottom:8px;">📋 過去の来店履歴</div>
+                <div id="visit-history-list" style="font-size:14px; color:#888; text-align:center;">読み込み中...</div>
+            </div>
             <button onclick="deleteRes('${res.id}')" style="background:none; color:#ff3b30; border:none; width:100%; padding:10px; cursor:pointer; font-size:14px;">この予約を削除する</button>`;
+
+        // モーダル表示後に履歴を非同期で読み込む
+        body.innerHTML = html;
+        document.getElementById('slot-modal').style.display = 'flex';
+
+        const history = await fetchVisitHistory(res.name);
+        const historyEl = document.getElementById('visit-history-list');
+        if (!historyEl) return;
+
+        // 今日の予約を除いた過去の来店のみ表示
+        const today = new Date().toISOString().slice(0, 10);
+        const past = history.filter(h => h.date < today || (h.date === date && h.time === time ? false : h.date <= today));
+
+        if (past.length === 0) {
+            historyEl.innerHTML = `<span style="color:#aaa;">来店履歴はありません</span>`;
+        } else {
+            historyEl.innerHTML = past.slice(0, 10).map(h => {
+                const d = new Date(h.date.replace(/-/g, '/'));
+                const dow = ['日','月','火','水','木','金','土'][d.getDay()];
+                return `<div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid #eee;">
+                    <span style="color:#333;">${h.date}(${dow}) ${h.time}</span>
+                    <span style="color:#555; font-size:13px;">${h.menus}</span>
+                </div>`;
+            }).join('') + (past.length > 10 ? `<div style="text-align:center; color:#aaa; font-size:12px; margin-top:6px;">他 ${past.length - 10} 件</div>` : '');
+        }
+        return; // 下の body.innerHTML = html を実行しないようにreturn
     } else {
         html += `
             <div style="display:flex; flex-direction:column; gap:12px; background:#f2f2f7; padding:20px; border-radius:15px; margin-bottom:15px;">
