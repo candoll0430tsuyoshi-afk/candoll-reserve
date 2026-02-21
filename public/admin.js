@@ -592,7 +592,11 @@ async function fetchVisitHistory(name) {
 async function openSlotModal(date, time, res, isOff) {
     const body = document.getElementById('modal-body');
     const dayOfWeek = ['日','月','火','水','木','金','土'][new Date(date.replace(/-/g, '/')).getDay()];
-    let html = `<h3 style="margin:0 0 20px 0; text-align:center; color:#333; font-size:18px;">${date}(${dayOfWeek}) ${time}</h3>`;
+    let html = `
+        <div style="position:relative;">
+            <button onclick="closeModal()" style="position:absolute; top:-10px; right:-10px; background:none; border:none; font-size:22px; cursor:pointer; color:#999; line-height:1;">✕</button>
+        </div>
+        <h3 style="margin:0 0 20px 0; text-align:center; color:#333; font-size:18px;">${date}(${dayOfWeek}) ${time}</h3>`;
 
     if (res) {
         const currentDur = res.manual_duration || MENU_DURATION[res.menus.split(',')[0].trim()] || 60;
