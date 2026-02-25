@@ -7,6 +7,14 @@ let HOLIDAYS = [];
 let OFF_TIMES = [];
 let SPECIAL_OPENS = [];
 
+// ===== 段階的入力の状態管理 =====
+const stepState = {
+    name: false,
+    menu: false,
+    date: false,
+    time: false
+};
+
 // LINE LIFF 初期化
 const miniappReady = (async () => {
   try {
@@ -56,6 +64,47 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   } catch (err) {
     console.error("データ取得エラー:", err);
+  }
+
+  // ===== 段階的入力UIの初期化 =====
+  initializeStepwiseUI();
+  
+  // ★ updateDateOptionsを拡張して、日付チップ再生成時にリスナーを再設定
+  const originalUpdateDateOptions = window.updateDateOptions;
+  window.updateDateOptions = function() {
+    if (originalUpdateDateOptions) originalUpdateDateOptions();
+    // 日付が再生成されたら、メニューが選択済みならリスナーを再設定
+    if (stepState.menu) {
+      setTimeout(() => {
+        attachDateChipListeners();
+      }, 100);
+    }
+  };
+  
+  // 名前入力欄を光らせる（初回のみ、5秒間）
+  const nameInput = document.getElementById('name');
+  if (nameInput) {
+    nameInput.style.animation = 'glow 5s ease-in-out';
+    setTimeout(() => nameInput.style.animation = '', 5000);
+    
+    // 名前入力欄をラッパーで囲む
+    if (!nameInput.parentElement.classList.contains('hint-wrapper')) {
+      const wrapper = document.createElement('div');
+      wrapper.className = 'hint-wrapper';
+      nameInput.parentNode.insertBefore(wrapper, nameInput);
+      wrapper.appendChild(nameInput);
+    }
+    
+    // ★ 吹き出しヒントを右上に表示（5秒で消える）- 重複削除
+    const existingHint = document.getElementById('name-hint');
+    if (existingHint) existingHint.remove();
+    
+    const hint = document.createElement('div');
+    hint.id = 'name-hint';
+    hint.className = 'hint-bubble hint-bubble-top-right';
+    hint.innerHTML = '漢字フルネームで入力';
+    nameInput.parentElement.appendChild(hint);
+    setTimeout(() => hint.remove(), 5000);
   }
 
   // モーダル閉じる（共通）
@@ -752,3 +801,246 @@ window.addEventListener("load", async () => {
     }
   }
 });
+
+// ===== 段階的入力UI の実装 =====
+
+function initializeStepwiseUI() {
+  // 初期状態：メニュー・日付・時間を無効化
+  disableMenuSelects();
+  disableDateSelection();
+  disableTimeSelection();
+  
+  // 名前入力リスナー（blurイベント = フォーカスが外れたとき）
+  const nameInput = document.getElementById('name');
+  if (nameInput) {
+    nameInput.addEventListener('blur', handleNameBlur);  // inputからblurに変更
+  }
+}
+
+function handleNameBlur(e) {
+  const value = e.target.value.trim();
+  if (value.length > 0 && !stepState.name) {
+    stepState.name = true;
+    enableMenuSelects();
+  } else if (value.length === 0) {
+    // ★ 名前が空の場合は完全リセット
+    if (stepState.name || stepState.menu || stepState.date || stepState.time) {
+      stepState.name = false;
+      stepState.menu = false;
+      stepState.date = false;
+      stepState.time = false;
+      
+      // 全てのヒントを削除
+      const hints = ['menu-hint', 'date-hint', 'date-slide-hint', 'time-hint'];
+      hints.forEach(id => {
+        const hint = document.getElementById(id);
+        if (hint) hint.remove();
+      });
+      
+      // メニュー・日付・時間を無効化
+      disableMenuSelects();
+      disableDateSelection();
+      disableTimeSelection();
+    }
+  }
+}
+
+function disableMenuSelects() {
+  document.querySelectorAll('.menu-select').forEach(select => {
+    select.disabled = true;
+    select.style.opacity = '0.3';  // より薄いグレーに
+    select.style.pointerEvents = 'none';
+  });
+  const addBtn = document.getElementById('addMenu');
+  if (addBtn) {
+    addBtn.style.opacity = '0.3';  // より薄いグレーに
+    addBtn.style.pointerEvents = 'none';
+  }
+}
+
+function enableMenuSelects() {
+  const menuContainer = document.getElementById('menuContainer');
+  
+  // メニューコンテナをラッパーで囲む（重複チェック）
+  if (menuContainer && !menuContainer.parentElement.classList.contains('hint-wrapper')) {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'hint-wrapper';
+    menuContainer.parentNode.insertBefore(wrapper, menuContainer);
+    wrapper.appendChild(menuContainer);
+  }
+  
+  document.querySelectorAll('.menu-select').forEach(select => {
+    select.disabled = false;
+    select.style.opacity = '1';
+    select.style.pointerEvents = 'auto';
+    select.style.animation = 'glow 5s ease-in-out';
+    setTimeout(() => select.style.animation = '', 5000);
+  });
+  
+  const addBtn = document.getElementById('addMenu');
+  if (addBtn) {
+    addBtn.style.opacity = '1';
+    addBtn.style.pointerEvents = 'auto';
+  }
+  
+  // 吹き出しヒントを右上に表示（5秒で消える）- 重複削除
+  if (menuContainer) {
+    const existingHint = document.getElementById('menu-hint');
+    if (existingHint) existingHint.remove();
+    
+    const hint = document.createElement('div');
+    hint.id = 'menu-hint';
+    hint.className = 'hint-bubble hint-bubble-top-right';
+    hint.innerHTML = 'メニューを選択';
+    menuContainer.parentElement.appendChild(hint);
+    setTimeout(() => hint.remove(), 5000);
+  }
+  
+  // ★ 全てのメニュー選択にリスナーを設定（重複回避）
+  attachMenuListeners();
+  
+  // ★ メニュー追加ボタンにもリスナーを設定
+  if (addBtn && !addBtn.dataset.stepwiseListener) {
+    addBtn.dataset.stepwiseListener = 'true';
+    addBtn.addEventListener('click', () => {
+      setTimeout(() => {
+        attachMenuListeners(); // 新しく追加されたメニューにもリスナーを設定
+      }, 100);
+    });
+  }
+}
+
+// ★ メニューリスナーを安全に追加する関数
+function attachMenuListeners() {
+  document.querySelectorAll('.menu-select').forEach(select => {
+    if (!select.dataset.stepwiseListener) {
+      select.dataset.stepwiseListener = 'true';
+      select.addEventListener('change', checkMenuSelection);
+    }
+  });
+}
+
+function checkMenuSelection() {
+  const menus = Array.from(document.querySelectorAll('.menu-select'))
+    .map(s => s.value)
+    .filter(v => v !== "");
+  
+  if (menus.length > 0 && !stepState.menu) {
+    stepState.menu = true;
+    enableDateSelection();
+  } else if (menus.length === 0 && stepState.menu) {
+    stepState.menu = false;
+    stepState.date = false;
+    stepState.time = false;
+    disableDateSelection();
+    disableTimeSelection();
+  }
+}
+
+function disableDateSelection() {
+  const dateChips = document.getElementById('dateChips');
+  if (dateChips) {
+    dateChips.style.opacity = '0.4';
+    dateChips.style.pointerEvents = 'none';
+  }
+  const hint = document.getElementById('date-slide-hint');
+  if (hint) hint.remove();
+}
+
+function enableDateSelection() {
+  const dateChips = document.getElementById('dateChips');
+  
+  if (dateChips) {
+    // 日付チップをラッパーで囲む（重複チェック）
+    if (!dateChips.parentElement.classList.contains('hint-wrapper')) {
+      const wrapper = document.createElement('div');
+      wrapper.className = 'hint-wrapper';
+      dateChips.parentNode.insertBefore(wrapper, dateChips);
+      wrapper.appendChild(dateChips);
+    }
+    
+    dateChips.style.opacity = '1';
+    dateChips.style.pointerEvents = 'auto';
+    dateChips.style.animation = 'glow 5s ease-in-out';
+    setTimeout(() => dateChips.style.animation = '', 5000);
+    
+    // 吹き出しヒント1: 右上に「日付を選択」（5秒で消える）- 重複削除
+    const existingDateHint = document.getElementById('date-hint');
+    if (existingDateHint) existingDateHint.remove();
+    
+    const hint = document.createElement('div');
+    hint.id = 'date-hint';
+    hint.className = 'hint-bubble hint-bubble-top-right';
+    hint.innerHTML = '日付を選択';
+    dateChips.parentElement.appendChild(hint);
+    setTimeout(() => hint.remove(), 5000);
+    
+    // 吹き出しヒント2: 中央下に「スライドできます」（5秒で消える）- 重複削除
+    const existingSlideHint = document.getElementById('date-slide-hint');
+    if (existingSlideHint) existingSlideHint.remove();
+    
+    const slideHint = document.createElement('div');
+    slideHint.id = 'date-slide-hint';
+    slideHint.className = 'hint-bubble hint-bubble-center hint-bubble-slide';
+    slideHint.innerHTML = '← 左右にスライドできます →';
+    slideHint.style.cssText = 'margin: -15px auto 20px; text-align:center; display:block;';
+    dateChips.parentNode.insertBefore(slideHint, dateChips.nextSibling);
+    setTimeout(() => slideHint.remove(), 5000);
+  }
+  
+  // ★ 日付チップクリックリスナーを設定（再生成対応）
+  attachDateChipListeners();
+}
+
+// ★ 日付チップのリスナーを安全に追加する関数
+function attachDateChipListeners() {
+  document.querySelectorAll('.date-chip:not(.holiday)').forEach(chip => {
+    if (!chip.dataset.stepwiseListener) {
+      chip.dataset.stepwiseListener = 'true';
+      chip.addEventListener('click', function() {
+        if (!stepState.date && stepState.menu) {  // メニューが選択済みの時のみ
+          stepState.date = true;
+          enableTimeSelection();
+        }
+      });
+    }
+  });
+}
+
+function disableTimeSelection() {
+  const timeGrid = document.getElementById('timeGrid');
+  if (timeGrid) {
+    timeGrid.style.opacity = '0.4';
+    timeGrid.style.pointerEvents = 'none';
+  }
+}
+
+function enableTimeSelection() {
+  const timeGrid = document.getElementById('timeGrid');
+  
+  if (timeGrid) {
+    // タイムグリッドをラッパーで囲む（重複チェック）
+    if (!timeGrid.parentElement.classList.contains('hint-wrapper')) {
+      const wrapper = document.createElement('div');
+      wrapper.className = 'hint-wrapper';
+      timeGrid.parentNode.insertBefore(wrapper, timeGrid);
+      wrapper.appendChild(timeGrid);
+    }
+    
+    timeGrid.style.opacity = '1';
+    timeGrid.style.pointerEvents = 'auto';
+    timeGrid.style.animation = 'glow 5s ease-in-out';
+    setTimeout(() => timeGrid.style.animation = '', 5000);
+    
+    // 吹き出しヒントを右上に表示（5秒で消える）- 重複削除
+    const existingHint = document.getElementById('time-hint');
+    if (existingHint) existingHint.remove();
+    
+    const hint = document.createElement('div');
+    hint.id = 'time-hint';
+    hint.className = 'hint-bubble hint-bubble-top-right';
+    hint.innerHTML = '時間をお選びください';
+    timeGrid.parentElement.appendChild(hint);
+    setTimeout(() => hint.remove(), 5000);
+  }
+}
