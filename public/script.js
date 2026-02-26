@@ -102,7 +102,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const hint = document.createElement('div');
     hint.id = 'name-hint';
     hint.className = 'hint-bubble hint-bubble-top-right';
-    hint.innerHTML = '漢字フルネームで入力';
+    hint.innerHTML = 'お名前をフルネームで入力';
     nameInput.parentElement.appendChild(hint);
     setTimeout(() => hint.remove(), 7000);
   }
