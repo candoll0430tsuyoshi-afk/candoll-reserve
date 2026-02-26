@@ -84,8 +84,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   // 名前入力欄を光らせる（初回のみ、5秒間）
   const nameInput = document.getElementById('name');
   if (nameInput) {
-    nameInput.style.animation = 'glow 5s ease-in-out';
-    setTimeout(() => nameInput.style.animation = '', 5000);
+    nameInput.style.animation = 'glow 7s ease-in-out';
+    setTimeout(() => nameInput.style.animation = '', 7000);
     
     // 名前入力欄をラッパーで囲む
     if (!nameInput.parentElement.classList.contains('hint-wrapper')) {
@@ -104,7 +104,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     hint.className = 'hint-bubble hint-bubble-top-right';
     hint.innerHTML = '漢字フルネームで入力';
     nameInput.parentElement.appendChild(hint);
-    setTimeout(() => hint.remove(), 5000);
+    setTimeout(() => hint.remove(), 7000);
   }
 
   // モーダル閉じる（共通）
@@ -873,8 +873,8 @@ function enableMenuSelects() {
     select.disabled = false;
     select.style.opacity = '1';
     select.style.pointerEvents = 'auto';
-    select.style.animation = 'glow 5s ease-in-out';
-    setTimeout(() => select.style.animation = '', 5000);
+    select.style.animation = 'glow 7s ease-in-out';
+    setTimeout(() => select.style.animation = '', 7000);
   });
   
   const addBtn = document.getElementById('addMenu');
@@ -893,7 +893,7 @@ function enableMenuSelects() {
     hint.className = 'hint-bubble hint-bubble-top-right';
     hint.innerHTML = 'メニューを選択';
     menuContainer.parentElement.appendChild(hint);
-    setTimeout(() => hint.remove(), 5000);
+    setTimeout(() => hint.remove(), 7000);
   }
   
   // ★ 全てのメニュー選択にリスナーを設定（重複回避）
@@ -961,8 +961,8 @@ function enableDateSelection() {
     
     dateChips.style.opacity = '1';
     dateChips.style.pointerEvents = 'auto';
-    dateChips.style.animation = 'glow 5s ease-in-out';
-    setTimeout(() => dateChips.style.animation = '', 5000);
+    dateChips.style.animation = 'glow 7s ease-in-out';
+    setTimeout(() => dateChips.style.animation = '', 7000);
     
     // 吹き出しヒント1: 右上に「日付を選択」（5秒で消える）- 重複削除
     const existingDateHint = document.getElementById('date-hint');
@@ -973,7 +973,7 @@ function enableDateSelection() {
     hint.className = 'hint-bubble hint-bubble-top-right';
     hint.innerHTML = '日付を選択';
     dateChips.parentElement.appendChild(hint);
-    setTimeout(() => hint.remove(), 5000);
+    setTimeout(() => hint.remove(), 7000);
     
     // 吹き出しヒント2: 中央下に「スライドできます」（5秒で消える）- 重複削除
     const existingSlideHint = document.getElementById('date-slide-hint');
@@ -985,7 +985,7 @@ function enableDateSelection() {
     slideHint.innerHTML = '← 左右にスライドできます →';
     slideHint.style.cssText = 'margin: -15px auto 20px; text-align:center; display:block;';
     dateChips.parentNode.insertBefore(slideHint, dateChips.nextSibling);
-    setTimeout(() => slideHint.remove(), 5000);
+    setTimeout(() => slideHint.remove(), 7000);
   }
   
   // ★ 日付チップクリックリスナーを設定（再生成対応）
@@ -1029,8 +1029,8 @@ function enableTimeSelection() {
     
     timeGrid.style.opacity = '1';
     timeGrid.style.pointerEvents = 'auto';
-    timeGrid.style.animation = 'glow 5s ease-in-out';
-    setTimeout(() => timeGrid.style.animation = '', 5000);
+    timeGrid.style.animation = 'glow 7s ease-in-out';
+    setTimeout(() => timeGrid.style.animation = '', 7000);
     
     // 吹き出しヒントを右上に表示（5秒で消える）- 重複削除
     const existingHint = document.getElementById('time-hint');
@@ -1041,6 +1041,6 @@ function enableTimeSelection() {
     hint.className = 'hint-bubble hint-bubble-top-right';
     hint.innerHTML = '時間をお選びください';
     timeGrid.parentElement.appendChild(hint);
-    setTimeout(() => hint.remove(), 5000);
+    setTimeout(() => hint.remove(), 7000);
   }
 }
