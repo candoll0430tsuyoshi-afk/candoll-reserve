@@ -846,14 +846,29 @@ window.closeModal = () => document.getElementById('slot-modal').style.display = 
 
 function updateNowLine() {
     document.querySelectorAll('.now-line').forEach(el => el.remove());
-    const now = new Date(), dateStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`, col = document.getElementById(`col-${dateStr}`);
+    const now = new Date();
+    const dateStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+    const col = document.getElementById(`col-${dateStr}`);
     if (!col) return;
-    const currentMins = now.getHours()*60 + now.getMinutes(), startMins = 10*60;
+    
+    const currentMins = now.getHours() * 60 + now.getMinutes();
+    const startMins = 10 * 60; // 10:00 = 600分
+    
+    // 10時より前なら表示しない
+    if (currentMins < startMins) return;
+    
     const slots = col.querySelectorAll('.slot');
     if (slots.length > 0) {
         const line = document.createElement('div');
         line.className = 'now-line';
-        line.style.top = `${((currentMins - startMins) / 30) * slots[0].offsetHeight + slots[0].offsetTop}px`;
+        
+        // 修正：最初のスロットの上端を基準に計算
+        const firstSlot = slots[0];
+        const slotHeight = firstSlot.offsetHeight;
+        const offsetFromStart = (currentMins - startMins) / 30; // 30分単位でのオフセット
+        const topPosition = firstSlot.offsetTop + (offsetFromStart * slotHeight);
+        
+        line.style.top = `${topPosition}px`;
         col.appendChild(line);
     }
 }
