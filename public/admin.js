@@ -854,22 +854,31 @@ function updateNowLine() {
     const currentMins = now.getHours() * 60 + now.getMinutes();
     const startMins = 10 * 60; // 10:00 = 600分
     
-    // 10時より前なら表示しない
-    if (currentMins < startMins) return;
+    // 10時より前または19時より後なら表示しない
+    if (currentMins < startMins || currentMins > 19 * 60) return;
     
     const slots = col.querySelectorAll('.slot');
     if (slots.length > 0) {
         const line = document.createElement('div');
         line.className = 'now-line';
         
-        // 修正：最初のスロットの上端を基準に計算
+        // 修正：1分単位でピクセル位置を計算
         const firstSlot = slots[0];
-        const slotHeight = firstSlot.offsetHeight;
-        const offsetFromStart = (currentMins - startMins) / 30; // 30分単位でのオフセット
-        const topPosition = firstSlot.offsetTop + (offsetFromStart * slotHeight);
+        const slotHeight = firstSlot.offsetHeight; // 1スロット（30分）の高さ
+        const minutesFromStart = currentMins - startMins; // 10:00からの経過分
+        const pixelPerMinute = slotHeight / 30; // 1分あたりのピクセル数
+        const topPosition = firstSlot.offsetTop + (minutesFromStart * pixelPerMinute);
         
         line.style.top = `${topPosition}px`;
         col.appendChild(line);
+        
+        console.log('⏰ now-line debug:', {
+            現在時刻: `${now.getHours()}:${now.getMinutes()}`,
+            経過分: minutesFromStart,
+            スロット高さ: slotHeight,
+            '1分のピクセル': pixelPerMinute,
+            計算位置: topPosition
+        });
     }
 }
 // ★ 今表示している最後の日付を覚えておく（最初は4日目）
