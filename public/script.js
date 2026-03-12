@@ -625,12 +625,13 @@ function showCompleteScreen() {
       </div>
       <h2 style="font-size:22px; margin-top:25px; font-weight:600;">予約を承りました</h2>
       <p style="color:#86868b; font-size:15px; line-height:1.6;">ご来店お待ちしております。</p>
+      ${customerUserId ? `
       <div style="margin: 20px auto; max-width: 280px; background:#f5f5f7; border-radius:14px; padding:16px; text-align:left;">
         <label style="display:flex; align-items:center; gap:12px; cursor:pointer; font-size:15px; color:#333;">
           <input type="checkbox" id="remindCheck" checked style="width:20px; height:20px; accent-color:#000; cursor:pointer; flex-shrink:0;">
           「予約日のお知らせ」を前日にLINEで受け取る
         </label>
-      </div>
+      </div>` : ''}
       <button id="closeBtn" style="margin-top:20px; padding:16px; width:100%; border-radius:14px; background:#000; color:#fff; border:none; font-size:17px; font-weight:600; cursor:pointer;">閉じる</button>
     </div>
     <style>
@@ -644,14 +645,16 @@ function showCompleteScreen() {
     </style>
   `;
 
-  // チェックボックスの変更をDBに保存
-  document.getElementById("remindCheck").addEventListener("change", async (e) => {
-    if (!reservationId) return;
-    await supabaseClient
-      .from("reservations")
-      .update({ remind: e.target.checked })
-      .eq("id", reservationId);
-  });
+  // チェックボックスの変更をDBに保存（LINEユーザーのみ）
+  if (customerUserId) {
+    document.getElementById("remindCheck")?.addEventListener("change", async (e) => {
+      if (!reservationId) return;
+      await supabaseClient
+        .from("reservations")
+        .update({ remind: e.target.checked })
+        .eq("id", reservationId);
+    });
+  }
 
   document.getElementById("closeBtn").onclick = async () => {
     // 閉じる前にチェック状態を保存
