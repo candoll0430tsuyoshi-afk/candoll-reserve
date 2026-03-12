@@ -629,7 +629,7 @@ function showCompleteScreen() {
       <div style="margin: 20px auto; max-width: 280px; background:#f5f5f7; border-radius:14px; padding:16px; text-align:left;">
         <label style="display:flex; align-items:center; gap:12px; cursor:pointer; font-size:15px; color:#333;">
           <input type="checkbox" id="remindCheck" checked style="width:20px; height:20px; accent-color:#000; cursor:pointer; flex-shrink:0;">
-          「予約日のお知らせ」を前日にLINEで受け取る
+          「予約日のお知らせ」を前日に LINEで受け取る
         </label>
       </div>` : ''}
       <button id="closeBtn" style="margin-top:20px; padding:16px; width:100%; border-radius:14px; background:#000; color:#fff; border:none; font-size:17px; font-weight:600; cursor:pointer;">閉じる</button>
