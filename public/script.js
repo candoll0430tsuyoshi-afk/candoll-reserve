@@ -558,12 +558,14 @@ document.getElementById("reserveForm").onsubmit = async e => {
         date: dateValue, 
         time, 
         end_time,
-        customer_user_id: customerUserId 
+        customer_user_id: customerUserId,
+        remind: true
       }]).select();
 
       if (error) throw error;
       
-      // 以降、成功時の処理（完了画面表示など）へ続く...
+      // 予約IDを保存（完了画面でremind更新に使う）
+      if (data && data[0]) window._lastReservationId = data[0].id;
 
       // 4. LINE通知を飛ばす
       const messageText = `【ご予約内容】\n名前：${name} 様\n日時：${formattedDate} (${dow}) ${time}\n${prettyDuration}\nメニュー：${menus.join(", ")}\n\nご予約のキャンセルはこちらから\nhttps://liff.line.me/2008611644-EZd5nkl0?action=cancel`;
@@ -611,6 +613,7 @@ document.getElementById("cancelBtn").onclick = () => {
 };
 
 function showCompleteScreen() {
+  const reservationId = window._lastReservationId;
   const container = document.querySelector(".container");
   container.innerHTML = `
     <div style="padding: 60px 20px; text-align: center;">
@@ -622,7 +625,13 @@ function showCompleteScreen() {
       </div>
       <h2 style="font-size:22px; margin-top:25px; font-weight:600;">予約を承りました</h2>
       <p style="color:#86868b; font-size:15px; line-height:1.6;">ご来店お待ちしております。</p>
-      <button id="closeBtn" style="margin-top:40px; padding:16px; width:100%; border-radius:14px; background:#000; color:#fff; border:none; font-size:17px; font-weight:600; cursor:pointer;">閉じる</button>
+      <div style="margin: 20px auto; max-width: 280px; background:#f5f5f7; border-radius:14px; padding:16px; text-align:left;">
+        <label style="display:flex; align-items:center; gap:12px; cursor:pointer; font-size:15px; color:#333;">
+          <input type="checkbox" id="remindCheck" checked style="width:20px; height:20px; accent-color:#000; cursor:pointer; flex-shrink:0;">
+          「予約日のお知らせ」を前日にLINEで受け取る
+        </label>
+      </div>
+      <button id="closeBtn" style="margin-top:20px; padding:16px; width:100%; border-radius:14px; background:#000; color:#fff; border:none; font-size:17px; font-weight:600; cursor:pointer;">閉じる</button>
     </div>
     <style>
       .checkmark-wrapper { display: flex; justify-content: center; }
@@ -634,7 +643,25 @@ function showCompleteScreen() {
       @keyframes fill { 100% { box-shadow: inset 0px 0px 0px 40px #4caf50; } }
     </style>
   `;
-  document.getElementById("closeBtn").onclick = () => {
+
+  // チェックボックスの変更をDBに保存
+  document.getElementById("remindCheck").addEventListener("change", async (e) => {
+    if (!reservationId) return;
+    await supabaseClient
+      .from("reservations")
+      .update({ remind: e.target.checked })
+      .eq("id", reservationId);
+  });
+
+  document.getElementById("closeBtn").onclick = async () => {
+    // 閉じる前にチェック状態を保存
+    const remindVal = document.getElementById("remindCheck")?.checked ?? true;
+    if (reservationId) {
+      await supabaseClient
+        .from("reservations")
+        .update({ remind: remindVal })
+        .eq("id", reservationId);
+    }
     if (window.liff && liff.isInClient()) liff.closeWindow();
     else window.location.href = "https://candoll.vercel.app/";
   };
