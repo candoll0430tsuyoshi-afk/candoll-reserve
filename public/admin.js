@@ -5,7 +5,7 @@ const adminClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const urlParams = new URLSearchParams(window.location.search);
 const paramDate = urlParams.get("date");
 
-let baseDate = paramDate ? new Date(paramDate) : new Date();
+let baseDate = paramDate ? new Date(paramDate.replace(/-/g, '/')) : new Date();
 
 let reservations = [];
 let offTimes = [];
@@ -97,7 +97,7 @@ const toMin = t => { const [h, m] = t.split(':').map(Number); return h * 60 + m;
 
 // 第1・第3火曜日かどうかを判定
 function isFirstOrThirdTuesday(date) {
-    const d = new Date(date);
+    const d = new Date(date.replace(/-/g, "/"));
     const dayOfWeek = d.getDay();
     
     // 火曜日でなければfalse
@@ -115,7 +115,7 @@ function isFirstOrThirdTuesday(date) {
 
 // 定休日かどうかを判定
 function isRegularHoliday(date) {
-    const d = new Date(date);
+    const d = new Date(date.replace(/-/g, "/"));
     const dayOfWeek = d.getDay();
     
     // 月曜日は毎週休み
@@ -137,7 +137,7 @@ async function reloadWithPosition() {
         const dateStr = col.dataset.date;
         if (!dateStr) return;
         
-        const d = new Date(dateStr);
+        const d = new Date(dateStr.replace(/-/g, '/'));
         const w = d.getDay();
         const isClosed = (isRegularHoliday(dateStr) || holidays.some(h => h.date === dateStr)) && !specialOpens.some(s => s.date === dateStr);
         
@@ -575,20 +575,12 @@ async function openSlotModal(date, time, res, isOff) {
 
     if (res) {
         const currentDur = res.manual_duration || MENU_DURATION[res.menus.split(',')[0].trim()] || 60;
-        const options = [30, 45, 60, 75, 90, 105, 120, 135, 150, 165, 180, 210, 240];
-        
-        // 現在の所要時間が選択肢にない場合は追加
-        if (!options.includes(currentDur)) {
-            options.push(currentDur);
-            options.sort((a, b) => a - b);
-        }
-        
         html += `
             <div style="font-size:18px; margin-bottom:20px; text-align:center; color:#000;"><b>${res.name} 様</b></div>
             <div style="background:#f2f2f7; padding:20px; border-radius:15px; margin-bottom:15px;">
                 <label style="font-size:14px; font-weight:bold; color:#666; display:block; margin-bottom:8px;">所要時間の変更</label>
                 <select id="new-duration" style="width:100%; height:45px; font-size:16px; border:1px solid #ddd; border-radius:8px; padding:0 10px; margin-bottom:15px; background:#fff;">
-                    ${options.map(m => 
+                    ${[30, 45, 60, 75, 90, 105, 120, 135, 150, 165, 180, 210, 240].map(m => 
                         `<option value="${m}" ${currentDur == m ? 'selected' : ''}>${m}分</option>`
                     ).join('')}
                 </select>
@@ -833,52 +825,21 @@ headers: {
     closeModal(); 
     await reloadWithPosition();
 }
-window.handleCalendarChange = v => { 
-    if(v) { 
-        // 時刻を明示的に00:00:00に設定してタイムゾーン問題を回避
-        const parts = v.split('-');
-        baseDate = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]), 0, 0, 0, 0);
-        render(); 
-    } 
-};
+window.handleCalendarChange = v => { if(v) { baseDate = new Date(v.replace(/-/g, '/')); render(); } };
 window.moveDate = n => { baseDate.setDate(baseDate.getDate() + n); render(); };
 window.closeModal = () => document.getElementById('slot-modal').style.display = 'none';
 
 function updateNowLine() {
     document.querySelectorAll('.now-line').forEach(el => el.remove());
-    const now = new Date();
-    const dateStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
-    const col = document.getElementById(`col-${dateStr}`);
+    const now = new Date(), dateStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`, col = document.getElementById(`col-${dateStr}`);
     if (!col) return;
-    
-    const currentMins = now.getHours() * 60 + now.getMinutes();
-    const startMins = 10 * 60; // 10:00 = 600分
-    
-    // 10時より前または19時より後なら表示しない
-    if (currentMins < startMins || currentMins > 19 * 60) return;
-    
+    const currentMins = now.getHours()*60 + now.getMinutes(), startMins = 10*60;
     const slots = col.querySelectorAll('.slot');
     if (slots.length > 0) {
         const line = document.createElement('div');
         line.className = 'now-line';
-        
-        // 修正：1分単位でピクセル位置を計算
-        const firstSlot = slots[0];
-        const slotHeight = firstSlot.offsetHeight; // 1スロット（30分）の高さ
-        const minutesFromStart = currentMins - startMins; // 10:00からの経過分
-        const pixelPerMinute = slotHeight / 30; // 1分あたりのピクセル数
-        const topPosition = firstSlot.offsetTop + (minutesFromStart * pixelPerMinute);
-        
-        line.style.top = `${topPosition}px`;
+        line.style.top = `${((currentMins - startMins) / 30) * slots[0].offsetHeight + slots[0].offsetTop}px`;
         col.appendChild(line);
-        
-        console.log('⏰ now-line debug:', {
-            現在時刻: `${now.getHours()}:${now.getMinutes()}`,
-            経過分: minutesFromStart,
-            スロット高さ: slotHeight,
-            '1分のピクセル': pixelPerMinute,
-            計算位置: topPosition
-        });
     }
 }
 // ★ 今表示している最後の日付を覚えておく（最初は4日目）
