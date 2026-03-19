@@ -629,7 +629,7 @@ function showCompleteScreen() {
       <div style="margin: 20px auto; max-width: 280px; background:#f5f5f7; border-radius:14px; padding:16px; text-align:left;">
         <label style="display:flex; align-items:center; gap:12px; cursor:pointer; font-size:15px; color:#333;">
           <input type="checkbox" id="remindCheck" checked style="width:20px; height:20px; accent-color:#000; cursor:pointer; flex-shrink:0;">
-          「予約日のお知らせ」を前日に LINEで受け取る
+          「予約日のお知らせ」を前日にLINEで受け取る
         </label>
       </div>` : ''}
       <button id="closeBtn" style="margin-top:20px; padding:16px; width:100%; border-radius:14px; background:#000; color:#fff; border:none; font-size:17px; font-weight:600; cursor:pointer;">閉じる</button>
@@ -702,7 +702,10 @@ async function checkExistingReservation() {
         <span class="notice-title">次回の予約情報</span>
         <span class="notice-datetime">${formattedDate}(${dayOfWeek}) ${res.time}</span>
       </div>
-      <button onclick="goToCancelLink()" class="notice-cancel-btn-red">キャンセル</button>
+      <div style="display:flex; gap:6px;">
+        <button onclick="goToChangeLink()" style="background:#007aff; color:#fff; border:none; border-radius:8px; padding:6px 10px; font-size:12px; font-weight:bold; cursor:pointer;">変更</button>
+        <button onclick="goToCancelLink()" class="notice-cancel-btn-red">キャンセル</button>
+      </div>
     `;
     
     document.body.appendChild(notice);
@@ -715,9 +718,255 @@ function goToCancelLink() {
   window.location.href = cancelUrl;
 }
 
-// ===== キャンセル処理 =====
+function goToChangeLink() {
+  const changeUrl = "https://liff.line.me/2008611644-EZd5nkl0?action=change";
+  window.location.href = changeUrl;
+}
+
+// ===== 予約変更画面 =====
+function showChangeScreen(res) {
+  const container = document.querySelector(".container");
+  const dow = ["日", "月", "火", "水", "木", "金", "土"][new Date(res.date.replace(/-/g, "/")).getDay()];
+  
+  container.innerHTML = `
+    <div style="padding: 30px 20px;">
+      <h2 style="font-size:20px; font-weight:600; margin-bottom:6px;">予約を変更する</h2>
+      <p style="color:#86868b; font-size:14px; margin-bottom:20px;">現在の予約：${res.date.replace(/-/g, "/")}(${dow}) ${res.time}</p>
+
+      <div style="margin-bottom:20px;">
+        <label style="font-size:14px; font-weight:bold; color:#666; display:block; margin-bottom:8px;">メニュー</label>
+        <select id="change-menu" style="width:100%; padding:12px; font-size:16px; border:1px solid #ddd; border-radius:10px; background:#fff; box-sizing:border-box;">
+          ${Object.keys(MENU_DATA).map(m => `<option value="${m}" ${res.menus === m ? 'selected' : ''}>${m}</option>`).join('')}
+        </select>
+      </div>
+
+      <div style="margin-bottom:20px;">
+        <label style="font-size:14px; font-weight:bold; color:#666; display:block; margin-bottom:8px;">日付</label>
+        <div id="change-date-chips" style="display:flex; gap:8px; overflow-x:auto; padding-bottom:8px;"></div>
+        <input type="hidden" id="change-date" value="${res.date}">
+      </div>
+
+      <div style="margin-bottom:30px;">
+        <label style="font-size:14px; font-weight:bold; color:#666; display:block; margin-bottom:8px;">時間</label>
+        <div id="change-time-grid" style="display:grid; grid-template-columns: repeat(4,1fr); gap:8px;"></div>
+        <input type="hidden" id="change-time" value="${res.time}">
+      </div>
+
+      <button id="change-confirm-btn" style="width:100%; padding:16px; border-radius:14px; background:#000; color:#fff; border:none; font-size:17px; font-weight:600; cursor:pointer; margin-bottom:12px;">変更内容を確認する</button>
+      <button onclick="window.location.href='https://liff.line.me/2008611644-EZd5nkl0?action=cancel'" style="width:100%; padding:14px; border-radius:14px; background:none; color:#86868b; border:1px solid #ddd; font-size:15px; cursor:pointer;">戻る</button>
+    </div>
+  `;
+
+  // 日付チップ生成
+  const chipContainer = document.getElementById("change-date-chips");
+  const today = new Date();
+  today.setHours(0,0,0,0);
+  for (let i = 1; i < 31; i++) {
+    const d = new Date(today.getTime());
+    d.setDate(today.getDate() + i);
+    const y = d.getFullYear();
+    const m = String(d.getMonth()+1).padStart(2,'0');
+    const day = String(d.getDate()).padStart(2,'0');
+    const value = `${y}-${m}-${day}`;
+    const dowNum = d.getDay();
+    const dowLabel = ["日","月","火","水","木","金","土"][dowNum];
+    const isHoliday = (HOLIDAYS.includes(value) || dowNum === 1 || (dowNum === 2 && (d.getDate() <= 7 || (d.getDate() >= 15 && d.getDate() <= 21)))) && !SPECIAL_OPENS.some(s => s.date === value);
+    if (isHoliday) return;
+
+    const chip = document.createElement("div");
+    chip.style.cssText = `flex-shrink:0; width:56px; text-align:center; padding:8px 4px; border-radius:10px; border:2px solid ${value === res.date ? '#000' : '#ddd'}; background:${value === res.date ? '#000' : '#fff'}; color:${value === res.date ? '#fff' : '#333'}; cursor:pointer; font-size:13px;`;
+    chip.innerHTML = `<div>${parseInt(m)}/${parseInt(day)}</div><div>(${dowLabel})</div>`;
+    chip.onclick = () => {
+      document.getElementById("change-date").value = value;
+      document.querySelectorAll("#change-date-chips > div").forEach(c => {
+        c.style.border = "2px solid #ddd";
+        c.style.background = "#fff";
+        c.style.color = "#333";
+      });
+      chip.style.border = "2px solid #000";
+      chip.style.background = "#000";
+      chip.style.color = "#fff";
+      renderChangeTimeGrid(value, res);
+    };
+    chipContainer.appendChild(chip);
+  }
+
+  renderChangeTimeGrid(res.date, res);
+
+  document.getElementById("change-confirm-btn").onclick = () => {
+    const newDate = document.getElementById("change-date").value;
+    const newTime = document.getElementById("change-time").value;
+    const newMenu = document.getElementById("change-menu").value;
+    if (!newTime) { alert("時間を選択してください"); return; }
+    showChangeConfirm(res, newDate, newTime, newMenu);
+  };
+}
+
+async function renderChangeTimeGrid(date, res) {
+  const grid = document.getElementById("change-time-grid");
+  if (!grid) return;
+  grid.innerHTML = "<div style='color:#999; font-size:14px;'>読み込み中...</div>";
+
+  const menu = document.getElementById("change-menu").value;
+  const required = MENU_DATA[menu] || 60;
+
+  const { data } = await supabaseClient.from("reservations").select("time,end_time").eq("date", date);
+  const reserved = (data || [])
+    .filter(r => r.id !== res.id) // 自分の予約は除外
+    .map(r => ({ start: r.time.trim(), end: r.end_time.trim() }));
+
+  const slots = ["10:00","10:30","11:00","11:30","12:00","12:30","13:00","13:30","14:00","14:30","15:00","15:30","16:00","16:30","17:00","17:30","18:00"];
+  const toMin = t => { const [h,m] = t.split(":").map(Number); return h*60+m; };
+
+  grid.innerHTML = "";
+  slots.forEach(start => {
+    const [sh, sm] = start.split(":").map(Number);
+    const endD = new Date(2000,0,1,sh,sm+required);
+    const end = `${String(endD.getHours()).padStart(2,"0")}:${String(endD.getMinutes()).padStart(2,"0")}`;
+    let isDisabled = end > "19:00";
+
+    if (!isDisabled) {
+      const slotStart = toMin(start), slotEnd = toMin(end);
+      isDisabled = reserved.some(r => slotStart < toMin(r.end) && toMin(r.start) < slotEnd);
+    }
+    if (!isDisabled) {
+      isDisabled = OFF_TIMES.some(o => o.date === date && o.time === start);
+    }
+
+    const btn = document.createElement("div");
+    btn.style.cssText = `padding:10px; text-align:center; border-radius:10px; border:2px solid ${start === res.time && date === res.date ? '#000' : '#ddd'}; background:${isDisabled ? '#f2f2f7' : (start === res.time && date === res.date ? '#000' : '#fff')}; color:${isDisabled ? '#bbb' : (start === res.time && date === res.date ? '#fff' : '#333')}; font-size:14px; ${isDisabled ? '' : 'cursor:pointer;'}`;
+    btn.textContent = start;
+    if (!isDisabled) {
+      btn.onclick = () => {
+        document.getElementById("change-time").value = start;
+        document.querySelectorAll("#change-time-grid > div").forEach(b => {
+          b.style.border = "2px solid #ddd";
+          b.style.background = "#fff";
+          b.style.color = "#333";
+        });
+        btn.style.border = "2px solid #000";
+        btn.style.background = "#000";
+        btn.style.color = "#fff";
+      };
+    }
+    grid.appendChild(btn);
+  });
+}
+
+function showChangeConfirm(res, newDate, newTime, newMenu) {
+  const container = document.querySelector(".container");
+  const dow = ["日","月","火","水","木","金","土"][new Date(newDate.replace(/-/g,"/")).getDay()];
+  container.innerHTML = `
+    <div style="padding:30px 20px;">
+      <h2 style="font-size:20px; font-weight:600; margin-bottom:20px;">変更内容の確認</h2>
+      <div style="background:#f5f5f7; border-radius:14px; padding:20px; margin-bottom:24px; font-size:15px; line-height:2;">
+        <b>メニュー</b>：${newMenu}<br>
+        <b>日時</b>：${newDate.replace(/-/g,"/")}(${dow}) ${newTime}
+      </div>
+      <button id="change-execute-btn" style="width:100%; padding:16px; border-radius:14px; background:#000; color:#fff; border:none; font-size:17px; font-weight:600; cursor:pointer; margin-bottom:12px;">この内容で変更する</button>
+      <button onclick="showChangeScreen(${JSON.stringify(res).replace(/"/g,'&quot;')})" style="width:100%; padding:14px; border-radius:14px; background:none; color:#86868b; border:1px solid #ddd; font-size:15px; cursor:pointer;">戻る</button>
+    </div>
+  `;
+
+  document.getElementById("change-execute-btn").onclick = async () => {
+    const btn = document.getElementById("change-execute-btn");
+    btn.disabled = true;
+    btn.innerText = "変更中...";
+
+    const required = MENU_DATA[newMenu] || 60;
+    const [sh, sm] = newTime.split(":").map(Number);
+    const endD = new Date(2000,0,1,sh,sm+required);
+    const end_time = `${String(endD.getHours()).padStart(2,"0")}:${String(endD.getMinutes()).padStart(2,"0")}`;
+
+    const { error } = await supabaseClient.from("reservations")
+      .update({ menus: newMenu, date: newDate, time: newTime, end_time })
+      .eq("id", res.id)
+      .eq("customer_user_id", customerUserId);
+
+    if (error) {
+      alert("変更に失敗しました。");
+      btn.disabled = false;
+      btn.innerText = "この内容で変更する";
+      return;
+    }
+
+    // オーナーへ通知
+    try {
+      const dow2 = ["日","月","火","水","木","金","土"][new Date(newDate.replace(/-/g,"/")).getDay()];
+      await fetch("https://bcahztzetpfuklipjmxx.functions.supabase.co/dynamic-service", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-customer-id": customerUserId },
+        body: JSON.stringify({
+          mode: "reserve",
+          name: res.name,
+          menus: newMenu,
+          date: newDate,
+          time: newTime,
+          customerUserId,
+          customMessage: `【予約変更】\n${res.name} 様が予約を変更しました。\n\n変更後：${newDate.replace(/-/g,"/")}(${dow2}) ${newTime}\nメニュー：${newMenu}`
+        })
+      });
+    } catch(e) { console.error("通知エラー:", e); }
+
+    // 完了画面
+    container.innerHTML = `
+      <div style="padding:60px 20px; text-align:center;">
+        <div class="checkmark-wrapper">
+          <svg class="checkmark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52">
+            <circle class="checkmark__circle" cx="26" cy="26" r="25" fill="none"/>
+            <path class="checkmark__check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/>
+          </svg>
+        </div>
+        <h2 style="font-size:22px; margin-top:25px; font-weight:600;">変更が完了しました</h2>
+        <p style="color:#86868b; font-size:15px; line-height:1.6;">ご来店お待ちしております。</p>
+        <button id="change-close-btn" style="margin-top:40px; padding:16px; width:100%; border-radius:14px; background:#000; color:#fff; border:none; font-size:17px; font-weight:600; cursor:pointer;">閉じる</button>
+      </div>
+      <style>
+        .checkmark-wrapper { display:flex; justify-content:center; }
+        .checkmark { width:80px; height:80px; border-radius:50%; stroke-width:2; stroke:#fff; animation:fill .4s ease-in-out .4s forwards, scale .3s ease-in-out .9s both; }
+        .checkmark__circle { stroke-dasharray:166; stroke-dashoffset:166; stroke-width:2; stroke:#4caf50; fill:none; animation:stroke 0.6s forwards; }
+        .checkmark__check { transform-origin:50% 50%; stroke-dasharray:48; stroke-dashoffset:48; animation:stroke 0.3s forwards 0.8s; }
+        @keyframes stroke { 100% { stroke-dashoffset:0; } }
+        @keyframes scale { 0%,100% { transform:none; } 50% { transform:scale3d(1.1,1.1,1); } }
+        @keyframes fill { 100% { box-shadow:inset 0px 0px 0px 40px #4caf50; } }
+      </style>
+    `;
+    document.getElementById("change-close-btn").onclick = () => {
+      if (window.liff && liff.isInClient()) liff.closeWindow();
+      else window.location.href = "https://candoll.vercel.app/";
+    };
+  };
+}
+
+
 window.addEventListener("load", async () => {
   const urlParams = new URLSearchParams(window.location.search);
+
+  if (urlParams.get('action') === 'change') {
+    document.getElementById("reserveForm").style.display = "none";
+    if(document.querySelector(".greeting")) document.querySelector(".greeting").style.display = "none";
+
+    await miniappReady;
+    if (!customerUserId) return;
+
+    const today = new Date();
+    today.setHours(0,0,0,0);
+    const todayStr = today.toISOString().split('T')[0];
+
+    const { data } = await supabaseClient.from("reservations")
+      .select("*")
+      .eq("customer_user_id", customerUserId)
+      .gte("date", todayStr)
+      .order("date", { ascending: true })
+      .limit(1);
+
+    if (data && data.length > 0) {
+      showChangeScreen(data[0]);
+    } else {
+      const container = document.querySelector(".container");
+      container.innerHTML = `<div style="padding:60px 20px; text-align:center; color:#86868b;">変更できる予約が見つかりませんでした。</div>`;
+    }
+  }
 
   if (urlParams.get('action') === 'cancel') {
     document.getElementById("reserveForm").style.display = "none";
@@ -744,6 +993,13 @@ window.addEventListener("load", async () => {
       const dCancel = new Date(res.date.replace(/-/g, "/"));
       const dowCancel = ["日", "月", "火", "水", "木", "金", "土"][dCancel.getDay()];
       document.getElementById("cancel-info").innerHTML = `<b>お名前</b>：${res.name}<br><b>日時</b>：${res.date.replace(/-/g, "/")} (${dowCancel}) ${res.time}`;     
+
+      // ★変更ボタン
+      const changeBtn = document.createElement("button");
+      changeBtn.innerText = "予約を変更する";
+      changeBtn.style.cssText = "width:100%; padding:16px; border-radius:14px; background:#007aff; color:#fff; border:none; font-size:17px; font-weight:600; cursor:pointer; margin-bottom:12px;";
+      changeBtn.onclick = () => showChangeScreen(res);
+      document.getElementById("executeCancelBtn").parentNode.insertBefore(changeBtn, document.getElementById("executeCancelBtn"));     
 
       document.getElementById("executeCancelBtn").onclick = async () => {
         if (!confirm("本当にキャンセルしてもよろしいですか?")) return;
