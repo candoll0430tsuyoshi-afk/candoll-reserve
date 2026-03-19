@@ -678,17 +678,25 @@ async function checkExistingReservation() {
 
   const todayJST = new Date();
   const today = `${todayJST.getFullYear()}-${String(todayJST.getMonth()+1).padStart(2,'0')}-${String(todayJST.getDate()).padStart(2,'0')}`;
+  const nowMin = todayJST.getHours() * 60 + todayJST.getMinutes();
 
   const { data, error } = await supabaseClient
     .from("reservations")
     .select("id, date, time")
-    .eq("customer_user_id", customerUserId) // 自分のLINE IDだけで検索
+    .eq("customer_user_id", customerUserId)
     .gte("date", today)
     .order("date", { ascending: true })
-    .limit(1);
+    .order("time", { ascending: true });
 
-  if (data && data.length > 0) {
-    const res = data[0];
+  // 今日の場合は現在時刻より後の予約のみ表示
+  const futureRes = (data || []).find(r => {
+    if (r.date > today) return true;
+    const [h, m] = r.time.split(":").map(Number);
+    return (h * 60 + m) > nowMin;
+  });
+
+  if (futureRes) {
+    const res = futureRes;
     const dateObj = new Date(res.date.replace(/-/g, "/"));
     const dayOfWeek = ["日", "月", "火", "水", "木", "金", "土"][dateObj.getDay()];
     const formattedDate = res.date.replace(/-/g, "/");
@@ -950,19 +958,25 @@ window.addEventListener("load", async () => {
     await miniappReady;
     if (!customerUserId) return;
 
-    const today = new Date();
-    today.setHours(0,0,0,0);
-    const todayStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+    const nowJST = new Date();
+    const todayStr = `${nowJST.getFullYear()}-${String(nowJST.getMonth()+1).padStart(2,'0')}-${String(nowJST.getDate()).padStart(2,'0')}`;
+    const nowMin = nowJST.getHours() * 60 + nowJST.getMinutes();
 
     const { data } = await supabaseClient.from("reservations")
       .select("*")
       .eq("customer_user_id", customerUserId)
       .gte("date", todayStr)
       .order("date", { ascending: true })
-      .limit(1);
+      .order("time", { ascending: true });
 
-    if (data && data.length > 0) {
-      showChangeScreen(data[0]);
+    const futureRes = (data || []).find(r => {
+      if (r.date > todayStr) return true;
+      const [h, m] = r.time.split(":").map(Number);
+      return (h * 60 + m) > nowMin;
+    });
+
+    if (futureRes) {
+      showChangeScreen(futureRes);
     } else {
       const container = document.querySelector(".container");
       container.innerHTML = `<div style="padding:60px 20px; text-align:center; color:#86868b;">変更できる予約が見つかりませんでした。</div>`;
@@ -977,20 +991,26 @@ window.addEventListener("load", async () => {
     await miniappReady; 
     if (!customerUserId) return;
 
-    // 今日の日付を取得（時刻は00:00:00）
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const todayStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+    // 今日の日付を取得
+    const nowJST2 = new Date();
+    const todayStr = `${nowJST2.getFullYear()}-${String(nowJST2.getMonth()+1).padStart(2,'0')}-${String(nowJST2.getDate()).padStart(2,'0')}`;
+    const nowMin2 = nowJST2.getHours() * 60 + nowJST2.getMinutes();
 
     const { data } = await supabaseClient.from("reservations")
       .select("*")
       .eq("customer_user_id", customerUserId)
-      .gte("date", todayStr)  // 今日以降の予約のみ取得
-      .order("date", { ascending: true })  // 日付の近い順に並べる
-      .limit(1);
+      .gte("date", todayStr)
+      .order("date", { ascending: true })
+      .order("time", { ascending: true });
 
-    if (data && data.length > 0) {
-      const res = data[0];
+    // 今日の場合は現在時刻より後の予約のみ
+    const res = (data || []).find(r => {
+      if (r.date > todayStr) return true;
+      const [h, m] = r.time.split(":").map(Number);
+      return (h * 60 + m) > nowMin2;
+    });
+
+    if (res) {
       const dCancel = new Date(res.date.replace(/-/g, "/"));
       const dowCancel = ["日", "月", "火", "水", "木", "金", "土"][dCancel.getDay()];
       document.getElementById("cancel-info").innerHTML = `<b>お名前</b>：${res.name}<br><b>日時</b>：${res.date.replace(/-/g, "/")} (${dowCancel}) ${res.time}`;     
