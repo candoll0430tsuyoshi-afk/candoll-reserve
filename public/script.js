@@ -742,11 +742,11 @@ function showChangeScreen(res) {
       <h2 style="font-size:20px; font-weight:600; margin-bottom:6px;">予約を変更する</h2>
       <p style="color:#86868b; font-size:14px; margin-bottom:20px;">現在の予約：${res.date.replace(/-/g, "/")}(${dow}) ${res.time}</p>
 
-      <div style="margin-bottom:20px;">
+      <div style="margin-bottom:8px;">
         <label style="font-size:14px; font-weight:bold; color:#666; display:block; margin-bottom:8px;">メニュー</label>
-        <select id="change-menu" style="width:100%; padding:12px; font-size:16px; border:1px solid #ddd; border-radius:10px; background:#fff; box-sizing:border-box;">
-          ${Object.keys(MENU_DATA).map(m => `<option value="${m}" ${res.menus === m ? 'selected' : ''}>${m}</option>`).join('')}
-        </select>
+        <div id="change-menu-container"></div>
+        <div id="change-duration-display" style="font-size:14px; color:#666; margin-bottom:6px; text-align:left;"></div>
+        <div id="change-add-menu-btn" style="color:#007aff; font-size:14px; cursor:pointer; text-align:right; margin-bottom:16px; font-weight:500;">他のメニューを追加</div>
       </div>
 
       <div style="margin-bottom:20px;">
@@ -765,6 +765,88 @@ function showChangeScreen(res) {
       <button onclick="window.location.href='https://liff.line.me/2008611644-EZd5nkl0?action=cancel'" style="width:100%; padding:16px; border-radius:14px; background:none; color:#86868b; border:1px solid #ddd; font-size:17px; font-weight:600; cursor:pointer;">戻る</button>
     </div>
   `;
+
+  // メニューのカテゴリ定義（予約フォームと同じ）
+  const categories = {
+    "組み合わせ": ["＋", "+"],
+    "カット": ["カット"],
+    "カラー": ["カラー", "ヘナ"],
+    "パーマ": ["パーマ"],
+    "ストレート": ["ストレート"],
+    "トリートメント": ["トリートメント"],
+    "メニュー未定": ["相談"]
+  };
+
+  // メニューデータをcategories順に並べ替え
+  const menuDataArray = Object.keys(MENU_DATA).map(name => ({ name, duration: MENU_DATA[name] }));
+
+  // メニューセレクトを生成する関数
+  function createChangeMenuSelect(selectedValue = "") {
+    const select = document.createElement("select");
+    select.className = "change-menu-select";
+    select.style.width = "100%";
+    select.style.padding = "12px";
+    select.style.fontSize = "16px";
+    select.style.border = "1px solid #ddd";
+    select.style.borderRadius = "10px";
+    select.style.background = "#f5f5f7";
+    select.style.boxSizing = "border-box";
+    select.style.marginBottom = "10px";
+    select.style.appearance = "none";
+    select.style.webkitAppearance = "none";
+    select.innerHTML = '<option value="">メニューを選択</option>';
+
+    Object.keys(categories).forEach(catName => {
+      const group = document.createElement("optgroup");
+      group.label = catName;
+      const filtered = menuDataArray.filter(m => {
+        const hasPlus = m.name.includes("＋") || m.name.includes("+");
+        const hasKeyword = categories[catName].some(k => m.name.includes(k));
+        return catName === "組み合わせ" ? hasPlus : hasKeyword && !hasPlus;
+      });
+      if (filtered.length > 0) {
+        filtered.forEach(m => {
+          const op = document.createElement("option");
+          op.value = m.name;
+          op.textContent = m.name;
+          if (m.name === selectedValue) op.selected = true;
+          group.appendChild(op);
+        });
+        select.appendChild(group);
+      }
+    });
+
+    select.addEventListener("change", () => {
+      updateChangeDuration();
+      const currentDate = document.getElementById("change-date").value;
+      if (currentDate) renderChangeTimeGrid(currentDate, res);
+    });
+    return select;
+  }
+
+  // 施術時間表示を更新する関数
+  function updateChangeDuration() {
+    const selects = document.querySelectorAll(".change-menu-select");
+    const total = Array.from(selects).map(s => MENU_DATA[s.value] || 0).reduce((a, b) => a + b, 0);
+    const display = document.getElementById("change-duration-display");
+    if (display) display.innerHTML = total > 0 ? `<b>${formatDurationText(total)}</b>` : "";
+  }
+
+  // 初期メニューを設定（現在のメニューをカンマ区切りで分割）
+  const menuContainer = document.getElementById("change-menu-container");
+  const currentMenus = res.menus.split(",").map(m => m.trim()).filter(m => m);
+  currentMenus.forEach(menuName => {
+    menuContainer.appendChild(createChangeMenuSelect(menuName));
+  });
+  updateChangeDuration();
+
+  // メニュー追加ボタン
+  document.getElementById("change-add-menu-btn").onclick = () => {
+    const selects = document.querySelectorAll(".change-menu-select");
+    if (selects.length >= 3) { alert("メニューは最大3つまで選択可能です。"); return; }
+    menuContainer.appendChild(createChangeMenuSelect());
+    updateChangeDuration();
+  };
 
   // 日付チップ生成（休日はスキップせず定休日表示・31日分・横スクロール）
   const chipContainer = document.getElementById("change-date-chips");
@@ -807,19 +889,17 @@ function showChangeScreen(res) {
   }
 
   // メニュー変更時に時間グリッドを更新
-  document.getElementById("change-menu").addEventListener("change", () => {
-    const currentDate = document.getElementById("change-date").value;
-    if (currentDate) renderChangeTimeGrid(currentDate, res);
-  });
+  // ※メニューのchangeイベントはcreateChangeMenuSelect内で設定済み
 
   renderChangeTimeGrid(res.date, res);
 
   document.getElementById("change-confirm-btn").onclick = () => {
     const newDate = document.getElementById("change-date").value;
     const newTime = document.getElementById("change-time").value;
-    const newMenu = document.getElementById("change-menu").value;
+    const newMenus = Array.from(document.querySelectorAll(".change-menu-select")).map(s => s.value).filter(v => v !== "");
+    if (newMenus.length === 0) { alert("メニューを選択してください"); return; }
     if (!newTime) { alert("時間を選択してください"); return; }
-    showChangeConfirm(res, newDate, newTime, newMenu);
+    showChangeConfirm(res, newDate, newTime, newMenus.join(", "));
   };
 }
 
@@ -828,8 +908,11 @@ async function renderChangeTimeGrid(date, res) {
   if (!grid) return;
   grid.innerHTML = "<div style='color:#999; font-size:14px; grid-column:1/-1; text-align:center;'>読み込み中...</div>";
 
-  const menu = document.getElementById("change-menu")?.value || res.menus;
-  const required = MENU_DATA[menu] || 60;
+  const menuSelects = document.querySelectorAll(".change-menu-select");
+  const selectedMenus = Array.from(menuSelects).map(s => s.value).filter(v => v !== "");
+  const required = selectedMenus.length > 0
+    ? selectedMenus.reduce((sum, m) => sum + (MENU_DATA[m] || 0), 0)
+    : res.menus.split(",").map(m => m.trim()).reduce((sum, m) => sum + (MENU_DATA[m] || 0), 0) || 60;
 
   // idも取得して自分の予約を正確に除外
   const { data } = await supabaseClient.from("reservations").select("id,time,end_time").eq("date", date);
