@@ -568,7 +568,7 @@ document.getElementById("reserveForm").onsubmit = async e => {
       if (data && data[0]) window._lastReservationId = data[0].id;
 
       // 4. LINE通知を飛ばす
-      const messageText = `【ご予約内容】\n名前：${name} 様\n日時：${formattedDate} (${dow}) ${time}\n${prettyDuration}\nメニュー：${menus.join(", ")}\n\nご予約の変更、キャンセルはこちらから\nhttps://liff.line.me/2008611644-EZd5nkl0?action=cancel`;
+      const messageText = `【ご予約内容】\n名前：${name} 様\n日時：${formattedDate} (${dow}) ${time}\n${prettyDuration}\nメニュー：${menus.join(", ")}\n\nご予約のキャンセルはこちらから\nhttps://liff.line.me/2008611644-EZd5nkl0?action=cancel`;
 
       try {
         await fetch("https://bcahztzetpfuklipjmxx.functions.supabase.co/dynamic-service", {
@@ -882,6 +882,8 @@ function showChangeScreen(res) {
         chip.style.border = "2px solid #000";
         chip.style.background = "#000";
         chip.style.color = "#fff";
+        // 日付が変わったら時間選択をリセット
+        document.getElementById("change-time").value = "";
         renderChangeTimeGrid(value, res);
       };
     }
@@ -986,10 +988,13 @@ function showChangeConfirm(res, newDate, newTime, newMenu) {
 
   document.getElementById("change-execute-btn").onclick = async () => {
     const btn = document.getElementById("change-execute-btn");
+    if (btn.disabled) return; // 二重送信防止
     btn.disabled = true;
     btn.innerText = "変更中...";
 
-    const required = MENU_DATA[newMenu] || 60;
+    // 複数メニューの合計時間で end_time を計算
+    const menuList = newMenu.split(",").map(m => m.trim());
+    const required = menuList.reduce((sum, m) => sum + (MENU_DATA[m] || 0), 0) || 60;
     const [sh, sm] = newTime.split(":").map(Number);
     const endD = new Date(2000,0,1,sh,sm+required);
     const end_time = `${String(endD.getHours()).padStart(2,"0")}:${String(endD.getMinutes()).padStart(2,"0")}`;
