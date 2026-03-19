@@ -1015,17 +1015,28 @@ window.addEventListener("load", async () => {
       const dowCancel = ["日", "月", "火", "水", "木", "金", "土"][dCancel.getDay()];
       document.getElementById("cancel-info").innerHTML = `<b>お名前</b>：${res.name}<br><b>日時</b>：${res.date.replace(/-/g, "/")} (${dowCancel}) ${res.time}`;     
 
-      // ★ボタン群を縦並びに整理
+      // ★ボタン群をHTMLごと置き換えて縦並びに整理
       const btnWrapper = document.getElementById("executeCancelBtn").parentNode;
       btnWrapper.style.display = "flex";
       btnWrapper.style.flexDirection = "column";
       btnWrapper.style.gap = "12px";
 
+      // 戻るボタンのスタイルを統一
+      const backBtn = btnWrapper.querySelector(".cancel");
+      if (backBtn) {
+        backBtn.style.cssText = "width:100%; padding:16px; border-radius:14px; background:#f5f5f7; color:#000; border:none; font-size:17px; font-weight:600; cursor:pointer; margin:0;";
+      }
+
+      // キャンセルボタンのスタイルを統一
+      const cancelBtn = document.getElementById("executeCancelBtn");
+      cancelBtn.style.cssText = "width:100%; padding:16px; border-radius:14px; background:#ff3b30; color:#fff; border:none; font-size:17px; font-weight:600; cursor:pointer; margin:0;";
+
+      // 変更ボタンを追加（キャンセルボタンの前に挿入）
       const changeBtn = document.createElement("button");
       changeBtn.innerText = "予約を変更する";
       changeBtn.style.cssText = "width:100%; padding:16px; border-radius:14px; background:#007aff; color:#fff; border:none; font-size:17px; font-weight:600; cursor:pointer;";
       changeBtn.onclick = () => showChangeScreen(res);
-      document.getElementById("executeCancelBtn").parentNode.insertBefore(changeBtn, document.getElementById("executeCancelBtn"));     
+      btnWrapper.insertBefore(changeBtn, cancelBtn);     
 
       document.getElementById("executeCancelBtn").onclick = async () => {
         if (!confirm("本当にキャンセルしてもよろしいですか?")) return;
