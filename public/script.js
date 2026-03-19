@@ -676,7 +676,8 @@ async function checkExistingReservation() {
     return;
   }
 
-  const today = new Date().toISOString().split('T')[0];
+  const todayJST = new Date();
+  const today = `${todayJST.getFullYear()}-${String(todayJST.getMonth()+1).padStart(2,'0')}-${String(todayJST.getDate()).padStart(2,'0')}`;
 
   const { data, error } = await supabaseClient
     .from("reservations")
@@ -951,7 +952,7 @@ window.addEventListener("load", async () => {
 
     const today = new Date();
     today.setHours(0,0,0,0);
-    const todayStr = today.toISOString().split('T')[0];
+    const todayStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
 
     const { data } = await supabaseClient.from("reservations")
       .select("*")
@@ -979,7 +980,7 @@ window.addEventListener("load", async () => {
     // 今日の日付を取得（時刻は00:00:00）
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    const todayStr = today.toISOString().split('T')[0];
+    const todayStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
 
     const { data } = await supabaseClient.from("reservations")
       .select("*")
