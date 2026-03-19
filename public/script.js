@@ -1015,10 +1015,15 @@ window.addEventListener("load", async () => {
       const dowCancel = ["日", "月", "火", "水", "木", "金", "土"][dCancel.getDay()];
       document.getElementById("cancel-info").innerHTML = `<b>お名前</b>：${res.name}<br><b>日時</b>：${res.date.replace(/-/g, "/")} (${dowCancel}) ${res.time}`;     
 
-      // ★変更ボタン
+      // ★ボタン群を縦並びに整理
+      const btnWrapper = document.getElementById("executeCancelBtn").parentNode;
+      btnWrapper.style.display = "flex";
+      btnWrapper.style.flexDirection = "column";
+      btnWrapper.style.gap = "12px";
+
       const changeBtn = document.createElement("button");
       changeBtn.innerText = "予約を変更する";
-      changeBtn.style.cssText = "width:100%; padding:16px; border-radius:14px; background:#007aff; color:#fff; border:none; font-size:17px; font-weight:600; cursor:pointer; margin-bottom:12px;";
+      changeBtn.style.cssText = "width:100%; padding:16px; border-radius:14px; background:#007aff; color:#fff; border:none; font-size:17px; font-weight:600; cursor:pointer;";
       changeBtn.onclick = () => showChangeScreen(res);
       document.getElementById("executeCancelBtn").parentNode.insertBefore(changeBtn, document.getElementById("executeCancelBtn"));     
 
