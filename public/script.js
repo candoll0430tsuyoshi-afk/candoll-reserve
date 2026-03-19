@@ -751,13 +751,13 @@ function showChangeScreen(res) {
 
       <div style="margin-bottom:20px;">
         <label style="font-size:14px; font-weight:bold; color:#666; display:block; margin-bottom:8px;">日付</label>
-        <div id="change-date-chips" style="display:flex; gap:8px; overflow-x:auto; padding-bottom:8px;"></div>
+        <div id="change-date-chips" style="display:flex; gap:12px; overflow-x:auto; white-space:nowrap; padding:10px 5px 15px; -webkit-overflow-scrolling:touch;"></div>
         <input type="hidden" id="change-date" value="${res.date}">
       </div>
 
       <div style="margin-bottom:30px;">
         <label style="font-size:14px; font-weight:bold; color:#666; display:block; margin-bottom:8px;">時間</label>
-        <div id="change-time-grid" style="display:grid; grid-template-columns: repeat(4,1fr); gap:8px;"></div>
+        <div id="change-time-grid" style="display:grid; grid-template-columns: repeat(3,1fr); gap:10px;"></div>
         <input type="hidden" id="change-time" value="${res.time}">
       </div>
 
@@ -766,39 +766,51 @@ function showChangeScreen(res) {
     </div>
   `;
 
-  // 日付チップ生成
+  // 日付チップ生成（休日はスキップせず定休日表示・31日分・横スクロール）
   const chipContainer = document.getElementById("change-date-chips");
   const today = new Date();
   today.setHours(0,0,0,0);
-  for (let i = 1; i < 31; i++) {
+  for (let i = 1; i <= 31; i++) {
     const d = new Date(today.getTime());
     d.setDate(today.getDate() + i);
     const y = d.getFullYear();
-    const m = String(d.getMonth()+1).padStart(2,'0');
+    const mo = String(d.getMonth()+1).padStart(2,'0');
     const day = String(d.getDate()).padStart(2,'0');
-    const value = `${y}-${m}-${day}`;
+    const value = `${y}-${mo}-${day}`;
     const dowNum = d.getDay();
     const dowLabel = ["日","月","火","水","木","金","土"][dowNum];
     const isHoliday = (HOLIDAYS.includes(value) || dowNum === 1 || (dowNum === 2 && (d.getDate() <= 7 || (d.getDate() >= 15 && d.getDate() <= 21)))) && !SPECIAL_OPENS.some(s => s.date === value);
-    if (isHoliday) return;
+    const isSelected = value === res.date;
+    const dayColor = dowNum === 0 ? '#ff3b30' : dowNum === 6 ? '#007aff' : '#333';
 
     const chip = document.createElement("div");
-    chip.style.cssText = `flex-shrink:0; width:56px; text-align:center; padding:8px 4px; border-radius:10px; border:2px solid ${value === res.date ? '#000' : '#ddd'}; background:${value === res.date ? '#000' : '#fff'}; color:${value === res.date ? '#fff' : '#333'}; cursor:pointer; font-size:13px;`;
-    chip.innerHTML = `<div>${parseInt(m)}/${parseInt(day)}</div><div>(${dowLabel})</div>`;
-    chip.onclick = () => {
-      document.getElementById("change-date").value = value;
-      document.querySelectorAll("#change-date-chips > div").forEach(c => {
-        c.style.border = "2px solid #ddd";
-        c.style.background = "#fff";
-        c.style.color = "#333";
-      });
-      chip.style.border = "2px solid #000";
-      chip.style.background = "#000";
-      chip.style.color = "#fff";
-      renderChangeTimeGrid(value, res);
-    };
+    chip.style.cssText = `flex:0 0 64px; height:88px; display:flex; flex-direction:column; align-items:center; justify-content:center; border-radius:14px; border:2px solid ${isSelected ? '#000' : isHoliday ? '#f0f0f0' : '#e0e0e0'}; background:${isSelected ? '#000' : isHoliday ? '#f5f5f7' : '#fff'}; color:${isSelected ? '#fff' : isHoliday ? '#d2d2d7' : dayColor}; cursor:${isHoliday ? 'not-allowed' : 'pointer'}; font-size:13px; gap:2px; box-sizing:border-box;`;
+    chip.dataset.dow = dowNum;
+    chip.innerHTML = `<div style="font-size:10px; opacity:0.7;">${parseInt(mo)}月</div><div style="font-size:22px; font-weight:300;">${parseInt(day)}</div><div style="font-size:11px;">(${dowLabel})</div>${isHoliday ? '<div style="font-size:9px; margin-top:2px;">定休日</div>' : ''}`;
+
+    if (!isHoliday) {
+      chip.onclick = () => {
+        document.getElementById("change-date").value = value;
+        document.querySelectorAll("#change-date-chips > div").forEach(c => {
+          const cd = parseInt(c.dataset.dow);
+          c.style.border = "2px solid #e0e0e0";
+          c.style.background = "#fff";
+          c.style.color = cd === 0 ? '#ff3b30' : cd === 6 ? '#007aff' : '#333';
+        });
+        chip.style.border = "2px solid #000";
+        chip.style.background = "#000";
+        chip.style.color = "#fff";
+        renderChangeTimeGrid(value, res);
+      };
+    }
     chipContainer.appendChild(chip);
   }
+
+  // メニュー変更時に時間グリッドを更新
+  document.getElementById("change-menu").addEventListener("change", () => {
+    const currentDate = document.getElementById("change-date").value;
+    if (currentDate) renderChangeTimeGrid(currentDate, res);
+  });
 
   renderChangeTimeGrid(res.date, res);
 
@@ -814,20 +826,23 @@ function showChangeScreen(res) {
 async function renderChangeTimeGrid(date, res) {
   const grid = document.getElementById("change-time-grid");
   if (!grid) return;
-  grid.innerHTML = "<div style='color:#999; font-size:14px;'>読み込み中...</div>";
+  grid.innerHTML = "<div style='color:#999; font-size:14px; grid-column:1/-1; text-align:center;'>読み込み中...</div>";
 
-  const menu = document.getElementById("change-menu").value;
+  const menu = document.getElementById("change-menu")?.value || res.menus;
   const required = MENU_DATA[menu] || 60;
 
-  const { data } = await supabaseClient.from("reservations").select("time,end_time").eq("date", date);
+  // idも取得して自分の予約を正確に除外
+  const { data } = await supabaseClient.from("reservations").select("id,time,end_time").eq("date", date);
   const reserved = (data || [])
-    .filter(r => r.id !== res.id) // 自分の予約は除外
+    .filter(r => String(r.id) !== String(res.id))
     .map(r => ({ start: r.time.trim(), end: r.end_time.trim() }));
 
   const slots = ["10:00","10:30","11:00","11:30","12:00","12:30","13:00","13:30","14:00","14:30","15:00","15:30","16:00","16:30","17:00","17:30","18:00"];
   const toMin = t => { const [h,m] = t.split(":").map(Number); return h*60+m; };
 
   grid.innerHTML = "";
+  const currentTime = document.getElementById("change-time").value;
+
   slots.forEach(start => {
     const [sh, sm] = start.split(":").map(Number);
     const endD = new Date(2000,0,1,sh,sm+required);
@@ -842,18 +857,19 @@ async function renderChangeTimeGrid(date, res) {
       isDisabled = OFF_TIMES.some(o => o.date === date && o.time === start);
     }
 
+    const isSelected = start === currentTime;
     const btn = document.createElement("div");
-    btn.style.cssText = `padding:10px; text-align:center; border-radius:10px; border:2px solid ${start === res.time && date === res.date ? '#000' : '#ddd'}; background:${isDisabled ? '#f2f2f7' : (start === res.time && date === res.date ? '#000' : '#fff')}; color:${isDisabled ? '#bbb' : (start === res.time && date === res.date ? '#fff' : '#333')}; font-size:14px; ${isDisabled ? '' : 'cursor:pointer;'}`;
+    btn.style.cssText = `padding:15px 5px; text-align:center; border-radius:12px; border:1px solid ${isDisabled ? '#f5f5f7' : isSelected ? '#000' : '#e0e0e0'}; background:${isDisabled ? '#f5f5f7' : isSelected ? '#000' : '#fff'}; color:${isDisabled ? '#d2d2d7' : isSelected ? '#fff' : '#333'}; font-size:16px; ${isDisabled ? 'cursor:not-allowed;' : 'cursor:pointer;'}`;
     btn.textContent = start;
     if (!isDisabled) {
       btn.onclick = () => {
         document.getElementById("change-time").value = start;
         document.querySelectorAll("#change-time-grid > div").forEach(b => {
-          b.style.border = "2px solid #ddd";
+          b.style.border = "1px solid #e0e0e0";
           b.style.background = "#fff";
           b.style.color = "#333";
         });
-        btn.style.border = "2px solid #000";
+        btn.style.border = "1px solid #000";
         btn.style.background = "#000";
         btn.style.color = "#fff";
       };
