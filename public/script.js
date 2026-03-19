@@ -865,6 +865,7 @@ async function renderChangeTimeGrid(date, res) {
       btn.onclick = () => {
         document.getElementById("change-time").value = start;
         document.querySelectorAll("#change-time-grid > div").forEach(b => {
+          if (b.style.cursor === 'not-allowed') return; // 無効ボタンはスキップ
           b.style.border = "1px solid #e0e0e0";
           b.style.background = "#fff";
           b.style.color = "#333";
