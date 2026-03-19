@@ -854,7 +854,14 @@ async function renderChangeTimeGrid(date, res) {
       isDisabled = reserved.some(r => slotStart < toMin(r.end) && toMin(r.start) < slotEnd);
     }
     if (!isDisabled) {
-      isDisabled = OFF_TIMES.some(o => o.date === date && o.time === start);
+      // OFF_TIMESとの重なりチェック（開始時間の完全一致ではなく範囲で判定）
+      isDisabled = OFF_TIMES.some(o => {
+        if (o.date !== date) return false;
+        const offStart = toMin(o.time);
+        const offEnd = offStart + 30;
+        const slotStart = toMin(start), slotEnd = toMin(end);
+        return slotStart < offEnd && offStart < slotEnd;
+      });
     }
 
     const isSelected = start === currentTime;
