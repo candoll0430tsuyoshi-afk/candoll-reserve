@@ -712,8 +712,8 @@ async function checkExistingReservation() {
         <span class="notice-datetime">${formattedDate}(${dayOfWeek}) ${res.time}</span>
       </div>
       <div style="display:flex; gap:6px;">
-        <button onclick="goToChangeLink()" style="background:#007aff; color:#fff; border:none; border-radius:8px; padding:6px 10px; font-size:12px; font-weight:bold; cursor:pointer;">変更</button>
-        <button onclick="goToCancelLink()" class="notice-cancel-btn-red">キャンセル</button>
+        <button onclick="goToChangeLink()" style="background:#007aff; color:#fff; border:none; border-radius:8px; padding:8px 14px; font-size:14px; font-weight:bold; cursor:pointer;">変更</button>
+        <button onclick="goToCancelLink()" class="notice-cancel-btn-red" style="padding:8px 14px; font-size:14px; font-weight:bold;">キャンセル</button>
       </div>
     `;
     
@@ -762,7 +762,7 @@ function showChangeScreen(res) {
       </div>
 
       <button id="change-confirm-btn" style="width:100%; padding:16px; border-radius:14px; background:#000; color:#fff; border:none; font-size:17px; font-weight:600; cursor:pointer; margin-bottom:12px;">変更内容を確認する</button>
-      <button onclick="window.location.href='https://liff.line.me/2008611644-EZd5nkl0?action=cancel'" style="width:100%; padding:14px; border-radius:14px; background:none; color:#86868b; border:1px solid #ddd; font-size:15px; cursor:pointer;">戻る</button>
+      <button onclick="window.location.href='https://liff.line.me/2008611644-EZd5nkl0?action=cancel'" style="width:100%; padding:16px; border-radius:14px; background:none; color:#86868b; border:1px solid #ddd; font-size:17px; font-weight:600; cursor:pointer;">戻る</button>
     </div>
   `;
 
@@ -873,7 +873,7 @@ function showChangeConfirm(res, newDate, newTime, newMenu) {
         <b>日時</b>：${newDate.replace(/-/g,"/")}(${dow}) ${newTime}
       </div>
       <button id="change-execute-btn" style="width:100%; padding:16px; border-radius:14px; background:#000; color:#fff; border:none; font-size:17px; font-weight:600; cursor:pointer; margin-bottom:12px;">この内容で変更する</button>
-      <button onclick="showChangeScreen(${JSON.stringify(res).replace(/"/g,'&quot;')})" style="width:100%; padding:14px; border-radius:14px; background:none; color:#86868b; border:1px solid #ddd; font-size:15px; cursor:pointer;">戻る</button>
+      <button onclick="showChangeScreen(${JSON.stringify(res).replace(/"/g,'&quot;')})" style="width:100%; padding:16px; border-radius:14px; background:none; color:#86868b; border:1px solid #ddd; font-size:17px; font-weight:600; cursor:pointer;">戻る</button>
     </div>
   `;
 
