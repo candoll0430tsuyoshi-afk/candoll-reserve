@@ -195,8 +195,6 @@ function render() {
         headerRow.style.display = "flex";
         headerRow.style.gap = "15px";
         headerRow.style.marginBottom = "10px";
-        headerRow.style.padding = "0";
-        headerRow.style.overflowX = "hidden";
         headerRow.style.whiteSpace = "nowrap";
 
         // ★ 最初の4日分のヘッダー
