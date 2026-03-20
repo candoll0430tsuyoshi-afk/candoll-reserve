@@ -221,6 +221,12 @@ function render() {
         }
 
         wrap.parentElement.insertBefore(headerRow, wrap);
+
+        // admin-navの実際の高さに合わせてstickyのtopを動的に設定
+        const navEl = document.querySelector('.admin-nav');
+        if (navEl) {
+            headerRow.style.top = navEl.offsetHeight + 'px';
+        }
     } else {
         // スマホは初期表示（1日目）
         const d = new Date(baseDate);
