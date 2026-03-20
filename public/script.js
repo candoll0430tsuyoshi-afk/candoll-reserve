@@ -568,7 +568,7 @@ document.getElementById("reserveForm").onsubmit = async e => {
       if (data && data[0]) window._lastReservationId = data[0].id;
 
       // 4. LINE通知を飛ばす
-      const messageText = `【ご予約内容】\n名前：${name} 様\n日時：${formattedDate} (${dow}) ${time}\n${prettyDuration}\nメニュー：${menus.join(", ")}\n\nご予約のキャンセルはこちらから\nhttps://liff.line.me/2008611644-EZd5nkl0?action=cancel`;
+      const messageText = `【ご予約内容】\n名前：${name} 様\n日時：${formattedDate} (${dow}) ${time}\n${prettyDuration}\nメニュー：${menus.join(", ")}\n\nご予約の変更、キャンセルはこちらから\nhttps://liff.line.me/2008611644-EZd5nkl0?action=cancel`;
 
       try {
         await fetch("https://bcahztzetpfuklipjmxx.functions.supabase.co/dynamic-service", {
