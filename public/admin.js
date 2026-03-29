@@ -195,6 +195,8 @@ function render() {
         headerRow.style.display = "flex";
         headerRow.style.gap = "15px";
         headerRow.style.marginBottom = "10px";
+        headerRow.style.padding = "0";
+        headerRow.style.overflowX = "hidden";
         headerRow.style.whiteSpace = "nowrap";
 
         // ★ 最初の4日分のヘッダー
@@ -221,12 +223,6 @@ function render() {
         }
 
         wrap.parentElement.insertBefore(headerRow, wrap);
-
-        // admin-navの実際の高さに合わせてstickyのtopを動的に設定
-        const navEl = document.querySelector('.admin-nav');
-        if (navEl) {
-            headerRow.style.top = navEl.offsetHeight + 'px';
-        }
     } else {
         // スマホは初期表示（1日目）
         const d = new Date(baseDate);
@@ -664,11 +660,23 @@ headers: {
 }
 function setupTouchEvents(div, exactRes, date, time) {
     let touchTimer; 
-    div.ontouchstart = () => { touchTimer = setTimeout(() => { div.style.opacity = "0.4"; window.draggingId = exactRes.id; }, 500); };
+    div.ontouchstart = () => {
+      touchTimer = setTimeout(() => {
+        // バイブレーション（対応機種のみ）
+        if (navigator.vibrate) navigator.vibrate(50);
+        // 移動モードをわかりやすく表示
+        div.style.opacity = "0.5";
+        div.style.outline = "3px solid #007aff";
+        div.style.boxShadow = "0 0 12px rgba(0,122,255,0.5)";
+        window.draggingId = exactRes.id;
+      }, 800); // 500ms → 800msに延長
+    };
     div.ontouchend = (e) => {
         clearTimeout(touchTimer);
         if (window.draggingId) {
             div.style.opacity = "1";
+            div.style.outline = "";
+            div.style.boxShadow = "";
             const touch = e.changedTouches[0];
             const target = document.elementFromPoint(touch.clientX, touch.clientY)?.closest('.slot');
             if (target && window.draggingId) {
