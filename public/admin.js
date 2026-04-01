@@ -568,42 +568,167 @@ headers: {
         alert("設定の保存に失敗しました。");
     }
 }
+async function fetchVisitHistory(name) {
+    const password = localStorage.getItem('admin_password');
+    try {
+        const response = await fetch("https://bcahztzetpfuklipjmxx.supabase.co/functions/v1/admin-service", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "apikey": window.CONFIG?.SUPABASE_KEY,
+                "Authorization": `Bearer ${window.CONFIG?.SUPABASE_KEY}`
+            },
+            body: JSON.stringify({ mode: "history", name: name, password: password })
+        });
+        if (!response.ok) return [];
+        const data = await response.json();
+        return data.history || [];
+    } catch (e) {
+        console.error("履歴取得エラー:", e);
+        return [];
+    }
+}
+
 async function openSlotModal(date, time, res, isOff) {
     const body = document.getElementById('modal-body');
     const dayOfWeek = ['日','月','火','水','木','金','土'][new Date(date.replace(/-/g, '/')).getDay()];
-    let html = `<h3 style="margin:0 0 20px 0; text-align:center; color:#333; font-size:18px;">${date}(${dayOfWeek}) ${time}</h3>`;
+
+    // ★ 共通スタイル定数
+    const S = {
+        label: 'font-size:13px; font-weight:bold; color:#888; display:block; margin-bottom:6px; text-transform:uppercase; letter-spacing:0.5px;',
+        input: 'width:100%; height:48px; font-size:15px; border:1px solid #ddd; border-radius:10px; padding:0 12px; box-sizing:border-box; background:#fff;',
+        btnPrimary: 'background:#007aff; color:#fff; border:none; height:48px; width:100%; border-radius:10px; font-weight:bold; font-size:15px; cursor:pointer;',
+        btnGreen: 'background:#34c759; color:#fff; border:none; height:48px; width:100%; border-radius:10px; font-weight:bold; font-size:15px; cursor:pointer;',
+        btnGray: 'background:#8e8e93; color:#fff; border:none; height:48px; width:100%; border-radius:10px; font-weight:bold; font-size:15px; cursor:pointer;',
+        btnDanger: 'background:none; color:#ff3b30; border:none; width:100%; padding:12px; cursor:pointer; font-size:15px;',
+        btnClose: 'background:none; color:#007aff; border:none; width:100%; padding:12px; cursor:pointer; font-size:15px;',
+        section: 'background:#f2f2f7; padding:16px; border-radius:12px; margin-bottom:12px;',
+    };
 
     if (res) {
-        const currentDur = res.manual_duration || MENU_DURATION[res.menus.split(',')[0].trim()] || 60;
-        html += `
-            <div style="font-size:18px; margin-bottom:20px; text-align:center; color:#000;"><b>${res.name} 様</b></div>
-            <div style="background:#f2f2f7; padding:20px; border-radius:15px; margin-bottom:15px;">
-                <label style="font-size:14px; font-weight:bold; color:#666; display:block; margin-bottom:8px;">所要時間の変更</label>
-                <select id="new-duration" style="width:100%; height:45px; font-size:16px; border:1px solid #ddd; border-radius:8px; padding:0 10px; margin-bottom:15px; background:#fff;">
-                    ${[30, 45, 60, 75, 90, 105, 120, 135, 150, 165, 180, 210, 240].map(m => 
-                        `<option value="${m}" ${currentDur == m ? 'selected' : ''}>${m}分</option>`
-                    ).join('')}
-                </select>
-                <button onclick="saveChanges('${res.id}')" style="background:#34c759; color:white; border:none; height:50px; width:100%; border-radius:10px; font-weight:bold; font-size:16px; cursor:pointer; margin-top:20px;">変更を保存</button>
+        const currentDur = res.manual_duration || (() => {
+            let d = 0;
+            res.menus.split(',').map(m => m.trim()).forEach(m => d += MENU_DURATION[m] || 60);
+            return d;
+        })();
+
+        // タブUI
+        let html = `
+            <div style="position:relative; margin-bottom:16px;">
+                <button onclick="closeModal()" style="position:absolute; top:-8px; right:-8px; background:none; border:none; font-size:20px; cursor:pointer; color:#999; line-height:1;">✕</button>
             </div>
-            <button onclick="deleteRes('${res.id}')" style="background:none; color:#ff3b30; border:none; width:100%; padding:10px; cursor:pointer; font-size:14px;">この予約を削除する</button>`;
+            <div style="text-align:center; margin-bottom:16px;">
+                <div style="font-size:20px; font-weight:bold; color:#000;">${res.name} 様</div>
+                <div style="font-size:13px; color:#888; margin-top:4px;">${date}(${dayOfWeek}) ${time}</div>
+            </div>
+
+            <!-- タブ -->
+            <div style="display:flex; border-bottom:2px solid #e0e0e0; margin-bottom:16px;">
+                <button id="tab-edit" onclick="switchTab('edit')" style="flex:1; padding:10px; border:none; background:none; font-size:14px; font-weight:bold; color:#007aff; border-bottom:2px solid #007aff; margin-bottom:-2px; cursor:pointer;">予約変更</button>
+                <button id="tab-history" onclick="switchTab('history')" style="flex:1; padding:10px; border:none; background:none; font-size:14px; font-weight:bold; color:#aaa; cursor:pointer;">来店履歴</button>
+            </div>
+
+            <!-- 予約変更タブ -->
+            <div id="panel-edit">
+                <div style="${S.section}">
+                    <label style="${S.label}">メニュー</label>
+                    <select id="new-menu" style="${S.input}">
+                        ${Object.keys(MENU_DURATION).map(m => `<option value="${m}" ${res.menus.trim() === m ? 'selected' : ''}>${m}</option>`).join('')}
+                    </select>
+                </div>
+                <div style="${S.section}">
+                    <label style="${S.label}">日付・時間</label>
+                    <div style="display:flex; gap:8px;">
+                        <input type="date" id="new-date" value="${date}" style="${S.input}">
+                        <select id="new-time" style="${S.input}">
+                            ${['10:00','10:30','11:00','11:30','12:00','12:30','13:00','13:30','14:00','14:30','15:00','15:30','16:00','16:30','17:00','17:30','18:00'].map(t =>
+                                `<option value="${t}" ${time === t ? 'selected' : ''}>${t}</option>`
+                            ).join('')}
+                        </select>
+                    </div>
+                </div>
+                <div style="${S.section}">
+                    <label style="${S.label}">所要時間</label>
+                    <select id="new-duration" style="${S.input}">
+                        ${[30, 45, 60, 75, 90, 105, 120, 135, 150, 165, 180, 210, 240].map(m =>
+                            `<option value="${m}" ${currentDur == m ? 'selected' : ''}>${m}分</option>`
+                        ).join('')}
+                    </select>
+                </div>
+                <button onclick="saveAllChanges('${res.id}')" style="${S.btnGreen}">変更を保存</button>
+                <button onclick="deleteRes('${res.id}')" style="${S.btnDanger}">この予約を削除する</button>
+            </div>
+
+            <!-- 来店履歴タブ -->
+            <div id="panel-history" style="display:none;">
+                <div id="visit-history-list" style="font-size:14px; color:#888; text-align:center; padding:20px 0;">読み込み中...</div>
+            </div>
+        `;
+
+        body.innerHTML = html;
+        document.getElementById('slot-modal').style.display = 'flex';
+
+        // タブ切り替え関数
+        window.switchTab = (tab) => {
+            const isEdit = tab === 'edit';
+            document.getElementById('panel-edit').style.display = isEdit ? 'block' : 'none';
+            document.getElementById('panel-history').style.display = isEdit ? 'none' : 'block';
+            document.getElementById('tab-edit').style.color = isEdit ? '#007aff' : '#aaa';
+            document.getElementById('tab-edit').style.borderBottom = isEdit ? '2px solid #007aff' : 'none';
+            document.getElementById('tab-history').style.color = isEdit ? '#aaa' : '#007aff';
+            document.getElementById('tab-history').style.borderBottom = isEdit ? 'none' : '2px solid #007aff';
+
+            // 履歴タブを開いた時に読み込む
+            if (!isEdit) loadHistoryPanel(res.name, date);
+        };
+
+        // 履歴読み込み
+        async function loadHistoryPanel(name, currentDate) {
+            const el = document.getElementById('visit-history-list');
+            if (!el || el.dataset.loaded) return;
+            el.dataset.loaded = '1';
+            const history = await fetchVisitHistory(name);
+            const past = history.filter(h => h.date < currentDate || (h.date === currentDate ? false : true));
+            if (past.length === 0) {
+                el.innerHTML = '<span style="color:#aaa;">来店履歴はありません</span>';
+            } else {
+                el.innerHTML = past.slice(0, 10).map(h => {
+                    const d = new Date(h.date.replace(/-/g, '/'));
+                    const dow = ['日','月','火','水','木','金','土'][d.getDay()];
+                    return `<div style="display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid #eee;">
+                        <span style="color:#333; font-size:14px;">${h.date}(${dow}) ${h.time}</span>
+                        <span style="color:#666; font-size:13px;">${h.menus}</span>
+                    </div>`;
+                }).join('') + (past.length > 10 ? `<div style="text-align:center; color:#aaa; font-size:12px; margin-top:8px;">他 ${past.length - 10} 件</div>` : '');
+            }
+        }
+
+        return;
+
     } else {
-        html += `
-            <div style="display:flex; flex-direction:column; gap:12px; background:#f2f2f7; padding:20px; border-radius:15px; margin-bottom:15px;">
-                <label style="font-size:14px; font-weight:bold; color:#666; display:block;">新規予約の追加</label>
-                <input type="text" id="manual-name" placeholder="お客様名" style="width:100%; height:45px; font-size:16px; border:1px solid #ddd; border-radius:8px; padding:0 10px; box-sizing:border-box;">
-                <select id="manual-menu" style="width:100%; height:45px; font-size:16px; border:1px solid #ddd; border-radius:8px; padding:0 10px; box-sizing:border-box; background:#fff;">
+        let html = `
+            <div style="position:relative; margin-bottom:16px;">
+                <button onclick="closeModal()" style="position:absolute; top:-8px; right:-8px; background:none; border:none; font-size:20px; cursor:pointer; color:#999; line-height:1;">✕</button>
+            </div>
+            <div style="text-align:center; margin-bottom:16px;">
+                <div style="font-size:15px; color:#888;">${date}(${dayOfWeek}) ${time}</div>
+            </div>
+            <div style="${S.section}; display:flex; flex-direction:column; gap:10px;">
+                <label style="${S.label}">新規予約の追加</label>
+                <input type="text" id="manual-name" placeholder="お客様名" style="${S.input}">
+                <select id="manual-menu" style="${S.input}">
                     ${Object.keys(MENU_DURATION).map(m => `<option value="${m}">${m}</option>`).join('')}
                 </select>
-                <button onclick="addManual('${date}', '${time}')" style="background:#007aff; color:white; border:none; height:50px; width:100%; border-radius:10px; font-weight:bold; font-size:16px; margin-top:10px; cursor:pointer;">予約を追加</button>
+                <button onclick="addManual('${date}', '${time}')" style="${S.btnPrimary}; margin-top:4px;">予約を追加</button>
             </div>
-            <button onclick="toggleOffTime('${date}', '${time}', ${isOff})" style="background:${isOff ? '#ff9500' : '#8e8e93'}; color:white; border:none; height:45px; width:100%; border-radius:10px; font-weight:bold; font-size:15px; cursor:pointer;">
+            <button onclick="toggleOffTime('${date}', '${time}', ${isOff})" style="background:${isOff ? '#ff9500' : '#8e8e93'}; color:white; border:none; height:48px; width:100%; border-radius:10px; font-weight:bold; font-size:15px; cursor:pointer;">
                 ${isOff ? '予約可能に戻す' : '予約不可にする'}
-            </button>`;
+            </button>
+            <button onclick="closeModal()" style="${S.btnClose}; margin-top:8px;">閉じる</button>
+        `;
+        body.innerHTML = html;
+        document.getElementById('slot-modal').style.display = 'flex';
     }
-    html += `<button onclick="closeModal()" style="margin-top:15px; width:100%; padding:10px; border:none; background:none; color:#007aff; font-size:16px; cursor:pointer;">閉じる</button>`;
-    body.innerHTML = html;
-    document.getElementById('slot-modal').style.display = 'flex';
 }
 
 // 補助関数
@@ -687,35 +812,38 @@ function setupTouchEvents(div, exactRes, date, time) {
         }
     };
 }
-window.saveChanges = async function(id) {
+window.saveAllChanges = async function(id) {
     const dur = document.getElementById('new-duration').value;
+    const newMenu = document.getElementById('new-menu').value;
+    const newDate = document.getElementById('new-date').value;
+    const newTime = document.getElementById('new-time').value;
     const password = localStorage.getItem('admin_password');
 
-    // --- 修正：既存の予約データから時間を取得 ---
-    const res = reservations.find(r => r.id == id);
-    if (!res) return alert("予約が見つかりません");
-    
-    const [h, m] = res.time.split(':').map(Number);
+    if (!newDate || !newTime) return alert("日付・時間を入力してください");
+
+    const [h, m] = newTime.split(':').map(Number);
     const endD = new Date(2000, 0, 1, h, m + Number(dur));
     const end_time = `${String(endD.getHours()).padStart(2, '0')}:${String(endD.getMinutes()).padStart(2, '0')}`;
-    // -------------------------
 
     await fetch("https://bcahztzetpfuklipjmxx.supabase.co/functions/v1/admin-service", {
         method: "POST",
-headers: { 
-    "Content-Type": "application/json",
-    "apikey": window.CONFIG?.SUPABASE_KEY, 
-    "Authorization": `Bearer ${window.CONFIG?.SUPABASE_KEY}` 
-},
-        body: JSON.stringify({ 
-            mode: "edit", 
-            id: Number(id), 
-            manual_duration: Number(dur), 
+        headers: {
+            "Content-Type": "application/json",
+            "apikey": window.CONFIG?.SUPABASE_KEY,
+            "Authorization": `Bearer ${window.CONFIG?.SUPABASE_KEY}`
+        },
+        body: JSON.stringify({
+            mode: "edit",
+            id: Number(id),
+            menus: newMenu,
+            date: newDate,
+            time: newTime,
             end_time: end_time,
-            password: password 
+            manual_duration: Number(dur),
+            password: password
         })
     });
-    closeModal(); 
+    closeModal();
     await reloadWithPosition();
 };
 async function addManual(date, time) {
