@@ -1099,3 +1099,63 @@ function addNextDayColumn() {
         }
     }
 }
+
+// ===== プルトゥリフレッシュ =====
+(function setupPullToRefresh() {
+    let startY = 0;
+    let isPulling = false;
+    let indicator = null;
+
+    // インジケーター作成
+    function createIndicator() {
+        const el = document.createElement('div');
+        el.id = 'ptr-indicator';
+        el.style.cssText = 'position:fixed; top:0; left:0; right:0; height:0; background:#007aff; display:flex; align-items:flex-end; justify-content:center; overflow:hidden; z-index:9999; transition:height 0.1s; padding-bottom:0;';
+        el.innerHTML = '<span id="ptr-text" style="color:#fff; font-size:13px; font-weight:bold; padding-bottom:8px; opacity:0; transition:opacity 0.2s;">↓ 引っ張って更新</span>';
+        document.body.appendChild(el);
+        return el;
+    }
+
+    document.addEventListener('touchstart', (e) => {
+        // ページ最上部かつモーダルが開いていない時のみ
+        if (window.scrollY === 0 && document.getElementById('slot-modal').style.display !== 'flex') {
+            startY = e.touches[0].clientY;
+            isPulling = true;
+            if (!indicator) indicator = createIndicator();
+        }
+    }, { passive: true });
+
+    document.addEventListener('touchmove', (e) => {
+        if (!isPulling) return;
+        const diff = e.touches[0].clientY - startY;
+        if (diff < 0) { isPulling = false; return; }
+
+        const height = Math.min(diff * 0.4, 60);
+        indicator.style.height = height + 'px';
+
+        const text = document.getElementById('ptr-text');
+        if (height > 40) {
+            text.style.opacity = '1';
+            text.textContent = '✓ 離して更新';
+        } else {
+            text.style.opacity = height > 15 ? '1' : '0';
+            text.textContent = '↓ 引っ張って更新';
+        }
+    }, { passive: true });
+
+    document.addEventListener('touchend', async (e) => {
+        if (!isPulling || !indicator) return;
+        isPulling = false;
+
+        const height = parseFloat(indicator.style.height);
+        if (height > 40) {
+            // 更新実行
+            indicator.style.height = '44px';
+            document.getElementById('ptr-text').textContent = '更新中...';
+            await reloadWithPosition();
+            indicator.style.height = '0';
+        } else {
+            indicator.style.height = '0';
+        }
+    });
+})();
