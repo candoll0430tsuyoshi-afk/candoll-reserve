@@ -195,8 +195,6 @@ function render() {
         headerRow.style.display = "flex";
         headerRow.style.gap = "15px";
         headerRow.style.marginBottom = "10px";
-        headerRow.style.padding = "0";
-        headerRow.style.overflowX = "hidden";
         headerRow.style.whiteSpace = "nowrap";
 
         // ★ 最初の4日分のヘッダー
@@ -223,6 +221,12 @@ function render() {
         }
 
         wrap.parentElement.insertBefore(headerRow, wrap);
+
+        // admin-navの実際の高さに合わせてstickyのtopを動的に設定
+        const navEl = document.querySelector('.admin-nav');
+        if (navEl) {
+            headerRow.style.top = navEl.offsetHeight + 'px';
+        }
     } else {
         // スマホは初期表示（1日目）
         const d = new Date(baseDate);
