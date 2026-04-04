@@ -719,7 +719,11 @@ async function openSlotModal(date, time, res, isOff) {
             </div>
             <div style="${S.section}; display:flex; flex-direction:column; gap:10px;">
                 <label style="${S.label}">新規予約の追加</label>
-                <input type="text" id="manual-name" placeholder="お客様名" style="${S.input}">
+                <div style="position:relative;">
+                    <input type="text" id="manual-name" placeholder="お客様名" style="${S.input}" autocomplete="off" oninput="suggestCustomer(this.value)">
+                    <div id="suggest-list" style="position:absolute; top:50px; left:0; right:0; background:#fff; border:1px solid #ddd; border-radius:10px; z-index:100; display:none; max-height:180px; overflow-y:auto; box-shadow:0 4px 12px rgba(0,0,0,0.1);"></div>
+                </div>
+                <input type="hidden" id="manual-customer-id">
                 <select id="manual-menu" style="${S.input}">
                     ${Object.keys(MENU_DURATION).map(m => `<option value="${m}">${m}</option>`).join('')}
                 </select>
@@ -853,11 +857,11 @@ window.saveAllChanges = async function(id) {
 async function addManual(date, time) {
     const name = document.getElementById('manual-name').value;
     const menus = document.getElementById('manual-menu').value;
+    const customerId = document.getElementById('manual-customer-id')?.value || null;
     const password = localStorage.getItem('admin_password');
     
     if (!name) return alert("名前を入力してください");
     
-    // ★ end_timeを計算（この部分を追加）
     const duration = MENU_DURATION[menus] || 60;
     const [h, m] = time.split(':').map(Number);
     const endD = new Date(2000, 0, 1, h, m + duration);
@@ -865,25 +869,71 @@ async function addManual(date, time) {
     
     await fetch("https://bcahztzetpfuklipjmxx.supabase.co/functions/v1/admin-service", {
         method: "POST",
-// headers の中を修正
-headers: { 
-    "Content-Type": "application/json",
-    "apikey": window.CONFIG?.SUPABASE_KEY, 
-    "Authorization": `Bearer ${window.CONFIG?.SUPABASE_KEY}` 
-},
+        headers: { 
+            "Content-Type": "application/json",
+            "apikey": window.CONFIG?.SUPABASE_KEY, 
+            "Authorization": `Bearer ${window.CONFIG?.SUPABASE_KEY}` 
+        },
         body: JSON.stringify({ 
             mode: "add", 
             name, 
             date, 
             time, 
             menus, 
-            end_time,  // ← これを追加
+            end_time,
+            customer_user_id: customerId,
             password: password 
         })
     });
     closeModal(); 
     await reloadWithPosition();
 }
+
+// お客様名サジェスト
+window.suggestCustomer = function(val) {
+    const list = document.getElementById('suggest-list');
+    const customerIdInput = document.getElementById('manual-customer-id');
+    if (!list) return;
+
+    // 入力が空またはLINE IDをリセット
+    customerIdInput.value = '';
+
+    if (!val || val.length < 1) {
+        list.style.display = 'none';
+        return;
+    }
+
+    // reservationsから名前でフィルタ（部分一致・重複なし）
+    const seen = new Set();
+    const matches = reservations
+        .filter(r => r.name && r.name.includes(val) && r.customer_user_id)
+        .filter(r => {
+            if (seen.has(r.name)) return false;
+            seen.add(r.name);
+            return true;
+        })
+        .slice(0, 5);
+
+    if (matches.length === 0) {
+        list.style.display = 'none';
+        return;
+    }
+
+    list.innerHTML = matches.map(r => `
+        <div onclick="selectCustomer('${r.name.replace(/'/g, "\\'")}', '${r.customer_user_id}')"
+            style="padding:12px 15px; font-size:15px; cursor:pointer; border-bottom:1px solid #f0f0f0; color:#333;">
+            ${r.name}
+            <span style="font-size:12px; color:#aaa; margin-left:8px;">LINE連携済み ✓</span>
+        </div>
+    `).join('');
+    list.style.display = 'block';
+};
+
+window.selectCustomer = function(name, customerId) {
+    document.getElementById('manual-name').value = name;
+    document.getElementById('manual-customer-id').value = customerId;
+    document.getElementById('suggest-list').style.display = 'none';
+};
 async function toggleDay(date, isClosed) {
     const password = localStorage.getItem('admin_password'), mode = isClosed ? "delHoliday" : "addHoliday";
     await fetch("https://bcahztzetpfuklipjmxx.supabase.co/functions/v1/admin-service", {
