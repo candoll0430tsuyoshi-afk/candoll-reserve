@@ -1220,14 +1220,11 @@ function showCancelScreen(res) {
       </div>
       <p style="font-size:14px; color:#86868b; margin-bottom:20px;">この予約をキャンセルしてもよろしいですか？</p>
       <div style="display:flex; flex-direction:column; gap:12px;">
-        <button id="do-change-btn" style="width:100%; padding:16px; border-radius:14px; background:#007aff; color:#fff; border:none; font-size:17px; font-weight:600; cursor:pointer;">予約を変更する</button>
         <button id="do-cancel-btn" style="width:100%; padding:16px; border-radius:14px; background:#ff3b30; color:#fff; border:none; font-size:17px; font-weight:600; cursor:pointer;">キャンセルする</button>
         <button onclick="window.location.href='https://liff.line.me/2008611644-EZd5nkl0'" style="width:100%; padding:14px; border-radius:14px; background:#f5f5f7; color:#000; border:none; font-size:16px; font-weight:600; cursor:pointer;">戻る</button>
       </div>
     </div>
   `;
-
-  document.getElementById("do-change-btn").onclick = () => showChangeScreen(res);
 
   document.getElementById("do-cancel-btn").onclick = async () => {
     if (!confirm("本当にキャンセルしてもよろしいですか?")) return;
