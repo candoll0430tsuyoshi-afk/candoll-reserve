@@ -671,6 +671,10 @@ function showCompleteScreen() {
 }
 
 async function checkExistingReservation() {
+  // トップ画面以外（change/cancel画面）はバナー表示しない
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('action')) return;
+
   // ★重要：LINEのユーザーIDがない（PCブラウザなど）場合は、バナーを出さずに終了する
   if (!customerUserId || customerUserId === "web-user" || customerUserId === "anonymous") {
     return;
