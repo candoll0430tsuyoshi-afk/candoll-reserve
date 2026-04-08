@@ -727,6 +727,56 @@ function goToCancelLink() {
   window.location.href = cancelUrl;
 }
 
+// 複数予約の選択画面
+function showReservationSelect(reservations, mode) {
+  const container = document.querySelector(".container");
+  const label = mode === 'change' ? '変更する予約を選んでください' : 'キャンセルする予約を選んでください';
+  const btnColor = mode === 'change' ? '#007aff' : '#ff3b30';
+  const btnLabel = mode === 'change' ? '変更する' : 'キャンセルする';
+
+  let html = `
+    <div style="padding: 30px 20px;">
+      <h2 style="font-size:20px; font-weight:600; margin-bottom:6px;">${label}</h2>
+      <p style="color:#86868b; font-size:14px; margin-bottom:20px;">予約が複数あります。選んでください。</p>
+      <div style="display:flex; flex-direction:column; gap:12px;">
+  `;
+
+  reservations.forEach((res, i) => {
+    const d = new Date(res.date.replace(/-/g, '/'));
+    const dow = ['日','月','火','水','木','金','土'][d.getDay()];
+    html += `
+      <div style="background:#f5f5f7; border-radius:14px; padding:16px; display:flex; justify-content:space-between; align-items:center;">
+        <div>
+          <div style="font-size:15px; font-weight:600; color:#000; margin-bottom:4px;">${res.date.replace(/-/g,'/')}(${dow}) ${res.time}</div>
+          <div style="font-size:13px; color:#86868b;">${res.menus}</div>
+        </div>
+        <button id="select-btn-${i}" style="padding:10px 16px; border-radius:10px; background:${btnColor}; color:#fff; border:none; font-size:14px; font-weight:600; cursor:pointer; flex-shrink:0; margin-left:12px;">${btnLabel}</button>
+      </div>
+    `;
+  });
+
+  html += `
+      </div>
+      <button onclick="window.location.href='https://liff.line.me/2008611644-EZd5nkl0'" style="margin-top:20px; width:100%; padding:14px; border-radius:14px; background:none; color:#86868b; border:1px solid #ddd; font-size:16px; font-weight:600; cursor:pointer;">戻る</button>
+    </div>
+  `;
+
+  container.innerHTML = html;
+
+  // ボタンにイベント設定
+  reservations.forEach((res, i) => {
+    document.getElementById(`select-btn-${i}`).onclick = () => {
+      if (mode === 'change') {
+        showChangeScreen(res);
+      } else {
+        showCancelScreen(res);
+      }
+    };
+  });
+}
+
+
+
 function goToChangeLink() {
   const changeUrl = "https://liff.line.me/2008611644-EZd5nkl0?action=change";
   window.location.href = changeUrl;
@@ -1081,24 +1131,26 @@ window.addEventListener("load", async () => {
       .order("date", { ascending: true })
       .order("time", { ascending: true });
 
-    const futureRes = (data || []).find(r => {
+    // 現在時刻より後の予約のみ
+    const futureList = (data || []).filter(r => {
       if (r.date > todayStr) return true;
       const [h, m] = r.time.split(":").map(Number);
       return (h * 60 + m) > nowMin;
     });
 
-    if (futureRes) {
-      showChangeScreen(futureRes);
-    } else {
+    if (futureList.length === 0) {
       const container = document.querySelector(".container");
       container.innerHTML = `<div style="padding:60px 20px; text-align:center; color:#86868b;">変更できる予約が見つかりませんでした。</div>`;
+    } else if (futureList.length === 1) {
+      showChangeScreen(futureList[0]);
+    } else {
+      showReservationSelect(futureList, 'change');
     }
   }
 
   if (urlParams.get('action') === 'cancel') {
     document.getElementById("reserveForm").style.display = "none";
     if(document.querySelector(".greeting")) document.querySelector(".greeting").style.display = "none";
-    document.getElementById("cancel-screen").style.display = "block";
 
     await miniappReady; 
     if (!customerUserId) return;
@@ -1116,128 +1168,117 @@ window.addEventListener("load", async () => {
       .order("time", { ascending: true });
 
     // 今日の場合は現在時刻より後の予約のみ
-    const res = (data || []).find(r => {
+    const futureList2 = (data || []).filter(r => {
       if (r.date > todayStr) return true;
       const [h, m] = r.time.split(":").map(Number);
       return (h * 60 + m) > nowMin2;
     });
 
-    if (res) {
-      const dCancel = new Date(res.date.replace(/-/g, "/"));
-      const dowCancel = ["日", "月", "火", "水", "木", "金", "土"][dCancel.getDay()];
-      document.getElementById("cancel-info").innerHTML = `<b>お名前</b>：${res.name}<br><b>日時</b>：${res.date.replace(/-/g, "/")} (${dowCancel}) ${res.time}`;     
-
-      // ★ボタン群をHTMLごと置き換えて縦並びに整理
-      const btnWrapper = document.getElementById("executeCancelBtn").parentNode;
-      btnWrapper.style.display = "flex";
-      btnWrapper.style.flexDirection = "column";
-      btnWrapper.style.gap = "12px";
-
-      // 戻るボタンのスタイルを統一
-      const backBtn = btnWrapper.querySelector(".cancel");
-      if (backBtn) {
-        backBtn.style.cssText = "width:100%; padding:16px; border-radius:14px; background:#f5f5f7; color:#000; border:none; font-size:17px; font-weight:600; cursor:pointer; margin:0;";
-      }
-
-      // キャンセルボタンのスタイルを統一
-      const cancelBtn = document.getElementById("executeCancelBtn");
-      cancelBtn.style.cssText = "width:100%; padding:16px; border-radius:14px; background:#ff3b30; color:#fff; border:none; font-size:17px; font-weight:600; cursor:pointer; margin:0;";
-
-      // 変更ボタンを追加（キャンセルボタンの前に挿入）
-      const changeBtn = document.createElement("button");
-      changeBtn.innerText = "予約を変更する";
-      changeBtn.style.cssText = "width:100%; padding:16px; border-radius:14px; background:#007aff; color:#fff; border:none; font-size:17px; font-weight:600; cursor:pointer;";
-      changeBtn.onclick = () => showChangeScreen(res);
-      btnWrapper.insertBefore(changeBtn, cancelBtn);     
-
-      document.getElementById("executeCancelBtn").onclick = async () => {
-        if (!confirm("本当にキャンセルしてもよろしいですか?")) return;
-
-        const btn = document.getElementById("executeCancelBtn");
-        btn.disabled = true;
-        btn.innerText = "キャンセル処理中...";
-
-        const { error } = await supabaseClient.from("reservations").delete().eq("id", res.id).eq("customer_user_id", customerUserId);
-        
-        if (!error) {
-          const topNotice = document.querySelector(".sticky-reservation-notice-top");
-          if (topNotice) {
-            topNotice.remove();
-            document.body.style.paddingTop = "0px";
-          }
-
-          // 通知送信（必ず実行）
-          try {
-            const dForCancelMsg = new Date(res.date.replace(/-/g, "/"));
-            const dowForCancelMsg = ["日", "月", "火", "水", "木", "金", "土"][dForCancelMsg.getDay()];
-            const cancelMessage = `【予約キャンセル】\n${res.name} 様の予約がキャンセルされました。\n日時：${res.date.replace(/-/g, "/")} (${dowForCancelMsg}) ${res.time}`;
-
-            const response = await fetch("https://bcahztzetpfuklipjmxx.functions.supabase.co/dynamic-service", {
-              method: "POST", 
-              headers: { 
-                "Content-Type": "application/json",
-                "x-customer-id": customerUserId || "web-user"
-              },
-              body: JSON.stringify({ 
-                mode: "cancel", 
-                name: res.name, 
-                menus: res.menus, 
-                date: res.date, 
-                time: res.time, 
-                customerUserId: customerUserId || "web-user", 
-                customMessage: cancelMessage 
-              })
-            });
-            
-            console.log("キャンセル通知送信ステータス:", response.status);
-            const responseData = await response.json();
-            console.log("キャンセル通知送信成功:", responseData);
-          } catch (e) {
-            console.error("通知エラー:", e);
-          }
-
-          const container = document.querySelector(".container");
-          container.innerHTML = `
-            <div style="padding: 60px 20px; text-align: center;">
-              <div class="checkmark-wrapper">
-                <svg class="checkmark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52">
-                  <circle class="checkmark__circle" cx="26" cy="26" r="25" fill="none" style="stroke: #ff3b30;"/>
-                  <path class="checkmark__check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8" style="stroke: #fff;"/>
-                </svg>
-              </div>
-              <h2 style="font-size:22px; margin-top:25px; font-weight:600;">キャンセルを完了しました</h2>
-              <p style="color:#86868b; font-size:15px; line-height:1.6;">またのご利用をお待ちしております。</p>
-              <button id="finalCloseBtn" style="margin-top:40px; padding:16px; width:100%; border-radius:14px; background:#000; color:#fff; border:none; font-size:17px; font-weight:600; cursor:pointer;">閉じる</button>
-            </div>
-            <style>
-              .checkmark-wrapper { display: flex; justify-content: center; }
-              .checkmark { width: 80px; height: 80px; border-radius: 50%; stroke-width: 2; stroke: #fff; animation: fill-red .4s ease-in-out .4s forwards, scale .3s ease-in-out .9s both; }
-              .checkmark__circle { stroke-dasharray: 166; stroke-dashoffset: 166; stroke-width: 2; stroke: #ff3b30; fill: none; animation: stroke 0.6s forwards; }
-              .checkmark__check { transform-origin: 50% 50%; stroke-dasharray: 48; stroke-dashoffset: 48; animation: stroke 0.3s forwards 0.8s; }
-              @keyframes stroke { 100% { stroke-dashoffset: 0; } }
-              @keyframes scale { 0%, 100% { transform: none; } 50% { transform: scale3d(1.1, 1.1, 1); } }
-              @keyframes fill-red { 100% { box-shadow: inset 0px 0px 0px 40px #ff3b30; } }
-            </style>
-          `;
-
-          document.getElementById("finalCloseBtn").onclick = () => {
-            window.location.href = "https://candoll.vercel.app/?rev=" + Date.now();
-          };
-
-        } else {
-          alert("キャンセルに失敗しました。");
-          btn.disabled = false;
-          btn.innerText = "予約をキャンセルする";
-        }
-      };
-    } else {
+    if (futureList2.length === 0) {
+      document.getElementById("cancel-screen").style.display = "block";
       document.getElementById("cancel-info").innerText = "キャンセル可能な予約が見つかりませんでした。";
       document.getElementById("executeCancelBtn").style.display = "none";
+    } else if (futureList2.length >= 2) {
+      showReservationSelect(futureList2, 'cancel');
+    } else {
+      showCancelScreen(futureList2[0]);
     }
   }
 });
 
 // ===== 段階的入力UI の実装 =====
+
+// キャンセル画面を表示する関数（選択画面からも呼べるように切り出し）
+function showCancelScreen(res) {
+  // cancel-screenを表示
+  document.getElementById("reserveForm").style.display = "none";
+  if(document.querySelector(".greeting")) document.querySelector(".greeting").style.display = "none";
+  document.getElementById("cancel-screen").style.display = "block";
+
+  const dCancel = new Date(res.date.replace(/-/g, "/"));
+  const dowCancel = ["日", "月", "火", "水", "木", "金", "土"][dCancel.getDay()];
+  document.getElementById("cancel-info").innerHTML = `<b>お名前</b>：${res.name}<br><b>日時</b>：${res.date.replace(/-/g, "/")} (${dowCancel}) ${res.time}`;
+
+  const btnWrapper = document.getElementById("executeCancelBtn").parentNode;
+  btnWrapper.style.display = "flex";
+  btnWrapper.style.flexDirection = "column";
+  btnWrapper.style.gap = "12px";
+
+  const backBtn = btnWrapper.querySelector(".cancel");
+  if (backBtn) {
+    backBtn.style.cssText = "width:100%; padding:16px; border-radius:14px; background:#f5f5f7; color:#000; border:none; font-size:17px; font-weight:600; cursor:pointer; margin:0;";
+  }
+
+  const cancelBtn = document.getElementById("executeCancelBtn");
+  cancelBtn.style.cssText = "width:100%; padding:16px; border-radius:14px; background:#ff3b30; color:#fff; border:none; font-size:17px; font-weight:600; cursor:pointer; margin:0;";
+
+  const changeBtn = document.createElement("button");
+  changeBtn.innerText = "予約を変更する";
+  changeBtn.style.cssText = "width:100%; padding:16px; border-radius:14px; background:#007aff; color:#fff; border:none; font-size:17px; font-weight:600; cursor:pointer;";
+  changeBtn.onclick = () => showChangeScreen(res);
+  // 既に追加済みの場合は追加しない
+  if (!btnWrapper.querySelector('[data-change-btn]')) {
+    changeBtn.dataset.changeBtn = '1';
+    btnWrapper.insertBefore(changeBtn, cancelBtn);
+  }
+
+  const execBtn = document.getElementById("executeCancelBtn");
+  execBtn.onclick = async () => {
+    if (!confirm("本当にキャンセルしてもよろしいですか?")) return;
+    if (execBtn.disabled) return;
+    execBtn.disabled = true;
+    execBtn.innerText = "キャンセル処理中...";
+
+    const { error } = await supabaseClient.from("reservations").delete().eq("id", res.id).eq("customer_user_id", customerUserId);
+
+    if (!error) {
+      const topNotice = document.querySelector(".sticky-reservation-notice-top");
+      if (topNotice) { topNotice.remove(); document.body.style.paddingTop = "0px"; }
+
+      try {
+        const dMsg = new Date(res.date.replace(/-/g, "/"));
+        const dowMsg = ["日", "月", "火", "水", "木", "金", "土"][dMsg.getDay()];
+        const cancelMessage = `【予約キャンセル】\n${res.name} 様の予約がキャンセルされました。\n日時：${res.date.replace(/-/g, "/")} (${dowMsg}) ${res.time}`;
+        await fetch("https://bcahztzetpfuklipjmxx.functions.supabase.co/dynamic-service", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "x-customer-id": customerUserId || "web-user" },
+          body: JSON.stringify({ mode: "cancel", name: res.name, menus: res.menus, date: res.date, time: res.time, customerUserId: customerUserId || "web-user", customMessage: cancelMessage })
+        });
+      } catch (e) { console.error("通知エラー:", e); }
+
+      const container = document.querySelector(".container");
+      container.innerHTML = `
+        <div style="padding: 60px 20px; text-align: center;">
+          <div class="checkmark-wrapper">
+            <svg class="checkmark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52">
+              <circle class="checkmark__circle" cx="26" cy="26" r="25" fill="none" style="stroke: #ff3b30;"/>
+              <path class="checkmark__check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8" style="stroke: #fff;"/>
+            </svg>
+          </div>
+          <h2 style="font-size:22px; margin-top:25px; font-weight:600;">キャンセルを完了しました</h2>
+          <p style="color:#86868b; font-size:15px; line-height:1.6;">またのご利用をお待ちしております。</p>
+          <button id="finalCloseBtn" style="margin-top:40px; padding:16px; width:100%; border-radius:14px; background:#000; color:#fff; border:none; font-size:17px; font-weight:600; cursor:pointer;">閉じる</button>
+        </div>
+        <style>
+          .checkmark-wrapper { display: flex; justify-content: center; }
+          .checkmark { width: 80px; height: 80px; border-radius: 50%; stroke-width: 2; stroke: #fff; animation: fill-red .4s ease-in-out .4s forwards, scale .3s ease-in-out .9s both; }
+          .checkmark__circle { stroke-dasharray: 166; stroke-dashoffset: 166; stroke-width: 2; stroke: #ff3b30; fill: none; animation: stroke 0.6s forwards; }
+          .checkmark__check { transform-origin: 50% 50%; stroke-dasharray: 48; stroke-dashoffset: 48; animation: stroke 0.3s forwards 0.8s; }
+          @keyframes stroke { 100% { stroke-dashoffset: 0; } }
+          @keyframes scale { 0%, 100% { transform: none; } 50% { transform: scale3d(1.1, 1.1, 1); } }
+          @keyframes fill-red { 100% { box-shadow: inset 0px 0px 0px 40px #ff3b30; } }
+        </style>
+      `;
+      document.getElementById("finalCloseBtn").onclick = () => {
+        window.location.href = "https://candoll.vercel.app/?rev=" + Date.now();
+      };
+    } else {
+      alert("キャンセルに失敗しました。");
+      execBtn.disabled = false;
+      execBtn.innerText = "予約をキャンセルする";
+    }
+  };
+}
 
 function initializeStepwiseUI() {
   // 初期状態：メニュー・日付・時間を無効化
