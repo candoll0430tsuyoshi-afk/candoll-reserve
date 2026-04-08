@@ -1206,44 +1206,35 @@ window.addEventListener("load", async () => {
 
 // キャンセル画面を表示する関数（選択画面からも呼べるように切り出し）
 function showCancelScreen(res) {
-  // cancel-screenを表示
-  document.getElementById("reserveForm").style.display = "none";
-  if(document.querySelector(".greeting")) document.querySelector(".greeting").style.display = "none";
-  document.getElementById("cancel-screen").style.display = "block";
-
+  const container = document.querySelector(".container");
   const dCancel = new Date(res.date.replace(/-/g, "/"));
   const dowCancel = ["日", "月", "火", "水", "木", "金", "土"][dCancel.getDay()];
-  document.getElementById("cancel-info").innerHTML = `<b>お名前</b>：${res.name}<br><b>日時</b>：${res.date.replace(/-/g, "/")} (${dowCancel}) ${res.time}`;
 
-  const btnWrapper = document.getElementById("executeCancelBtn").parentNode;
-  btnWrapper.style.display = "flex";
-  btnWrapper.style.flexDirection = "column";
-  btnWrapper.style.gap = "12px";
+  container.innerHTML = `
+    <div style="padding: 20px;">
+      <h2 style="font-size:20px; font-weight:600; margin-bottom:16px;">予約のキャンセル</h2>
+      <div style="line-height:1.8; text-align:left; background:#fff1f0; padding:20px; border-radius:12px; border:1px solid #ffa39e; margin-bottom:16px; font-size:15px;">
+        <b>お名前</b>：${res.name}<br>
+        <b>日時</b>：${res.date.replace(/-/g, "/")} (${dowCancel}) ${res.time}<br>
+        <b>メニュー</b>：${res.menus}
+      </div>
+      <p style="font-size:14px; color:#86868b; margin-bottom:20px;">この予約をキャンセルしてもよろしいですか？</p>
+      <div style="display:flex; flex-direction:column; gap:12px;">
+        <button id="do-change-btn" style="width:100%; padding:16px; border-radius:14px; background:#007aff; color:#fff; border:none; font-size:17px; font-weight:600; cursor:pointer;">予約を変更する</button>
+        <button id="do-cancel-btn" style="width:100%; padding:16px; border-radius:14px; background:#ff3b30; color:#fff; border:none; font-size:17px; font-weight:600; cursor:pointer;">キャンセルする</button>
+        <button onclick="window.location.href='https://liff.line.me/2008611644-EZd5nkl0'" style="width:100%; padding:14px; border-radius:14px; background:#f5f5f7; color:#000; border:none; font-size:16px; font-weight:600; cursor:pointer;">戻る</button>
+      </div>
+    </div>
+  `;
 
-  const backBtn = btnWrapper.querySelector(".cancel");
-  if (backBtn) {
-    backBtn.style.cssText = "width:100%; padding:16px; border-radius:14px; background:#f5f5f7; color:#000; border:none; font-size:17px; font-weight:600; cursor:pointer; margin:0;";
-  }
+  document.getElementById("do-change-btn").onclick = () => showChangeScreen(res);
 
-  const cancelBtn = document.getElementById("executeCancelBtn");
-  cancelBtn.style.cssText = "width:100%; padding:16px; border-radius:14px; background:#ff3b30; color:#fff; border:none; font-size:17px; font-weight:600; cursor:pointer; margin:0;";
-
-  const changeBtn = document.createElement("button");
-  changeBtn.innerText = "予約を変更する";
-  changeBtn.style.cssText = "width:100%; padding:16px; border-radius:14px; background:#007aff; color:#fff; border:none; font-size:17px; font-weight:600; cursor:pointer;";
-  changeBtn.onclick = () => showChangeScreen(res);
-  // 既に追加済みの場合は追加しない
-  if (!btnWrapper.querySelector('[data-change-btn]')) {
-    changeBtn.dataset.changeBtn = '1';
-    btnWrapper.insertBefore(changeBtn, cancelBtn);
-  }
-
-  const execBtn = document.getElementById("executeCancelBtn");
-  execBtn.onclick = async () => {
+  document.getElementById("do-cancel-btn").onclick = async () => {
     if (!confirm("本当にキャンセルしてもよろしいですか?")) return;
-    if (execBtn.disabled) return;
-    execBtn.disabled = true;
-    execBtn.innerText = "キャンセル処理中...";
+    const btn = document.getElementById("do-cancel-btn");
+    if (btn.disabled) return;
+    btn.disabled = true;
+    btn.innerText = "キャンセル処理中...";
 
     const { error } = await supabaseClient.from("reservations").delete().eq("id", res.id).eq("customer_user_id", customerUserId);
 
@@ -1262,7 +1253,6 @@ function showCancelScreen(res) {
         });
       } catch (e) { console.error("通知エラー:", e); }
 
-      const container = document.querySelector(".container");
       container.innerHTML = `
         <div style="padding: 60px 20px; text-align: center;">
           <div class="checkmark-wrapper">
@@ -1290,8 +1280,8 @@ function showCancelScreen(res) {
       };
     } else {
       alert("キャンセルに失敗しました。");
-      execBtn.disabled = false;
-      execBtn.innerText = "予約をキャンセルする";
+      btn.disabled = false;
+      btn.innerText = "キャンセルする";
     }
   };
 }
