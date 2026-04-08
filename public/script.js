@@ -682,33 +682,36 @@ async function checkExistingReservation() {
 
   const { data, error } = await supabaseClient
     .from("reservations")
-    .select("id, date, time")
+    .select("id, date, time, menus")
     .eq("customer_user_id", customerUserId)
     .gte("date", today)
     .order("date", { ascending: true })
     .order("time", { ascending: true });
 
-  // 今日の場合は現在時刻より後の予約のみ表示
-  const futureRes = (data || []).find(r => {
+  // 今日の場合は現在時刻より後の予約のみ
+  const futureList = (data || []).filter(r => {
     if (r.date > today) return true;
     const [h, m] = r.time.split(":").map(Number);
     return (h * 60 + m) > nowMin;
   });
 
-  if (futureRes) {
-    const res = futureRes;
+  if (futureList.length === 0) return;
+
+  // 既存バナーを削除
+  document.querySelectorAll(".sticky-reservation-notice-top").forEach(el => el.remove());
+
+  // 予約の数だけバナーを追加
+  futureList.forEach((res, index) => {
     const dateObj = new Date(res.date.replace(/-/g, "/"));
     const dayOfWeek = ["日", "月", "火", "水", "木", "金", "土"][dateObj.getDay()];
     const formattedDate = res.date.replace(/-/g, "/");
 
-    const oldNotice = document.querySelector(".sticky-reservation-notice-top");
-    if (oldNotice) oldNotice.remove();
-
     const notice = document.createElement("div");
     notice.className = "sticky-reservation-notice-top";
+    notice.style.top = `${index * 60}px`; // 縦に積み上げる
     notice.innerHTML = `
       <div class="notice-content">
-        <span class="notice-title">次回の予約情報</span>
+        <span class="notice-title">${futureList.length > 1 ? `予約${index + 1}` : '次回の予約情報'}</span>
         <span class="notice-datetime">${formattedDate}(${dayOfWeek}) ${res.time}</span>
       </div>
       <div style="display:flex; gap:6px;">
@@ -716,10 +719,11 @@ async function checkExistingReservation() {
         <button onclick="goToCancelLink()" class="notice-cancel-btn-red" style="padding:8px 14px; font-size:14px; font-weight:bold;">キャンセル</button>
       </div>
     `;
-    
     document.body.appendChild(notice);
-    document.body.style.paddingTop = "60px";
-  }
+  });
+
+  // バナーの高さ分だけpaddingTopを調整
+  document.body.style.paddingTop = `${futureList.length * 60}px`;
 }
 
 function goToCancelLink() {
@@ -730,9 +734,7 @@ function goToCancelLink() {
 // 複数予約の選択画面
 function showReservationSelect(reservations, mode) {
   const container = document.querySelector(".container");
-  const label = mode === 'change' ? '変更する予約を選んでください' : 'キャンセルする予約を選んでください';
-  const btnColor = mode === 'change' ? '#007aff' : '#ff3b30';
-  const btnLabel = mode === 'change' ? '変更する' : 'キャンセルする';
+  const label = mode === 'change' ? '変更する予約を選んでください' : 'キャンセル・変更する予約を選んでください';
 
   let html = `
     <div style="padding: 30px 20px;">
@@ -745,12 +747,13 @@ function showReservationSelect(reservations, mode) {
     const d = new Date(res.date.replace(/-/g, '/'));
     const dow = ['日','月','火','水','木','金','土'][d.getDay()];
     html += `
-      <div style="background:#f5f5f7; border-radius:14px; padding:16px; display:flex; justify-content:space-between; align-items:center;">
-        <div>
-          <div style="font-size:15px; font-weight:600; color:#000; margin-bottom:4px;">${res.date.replace(/-/g,'/')}(${dow}) ${res.time}</div>
-          <div style="font-size:13px; color:#86868b;">${res.menus}</div>
+      <div style="background:#f5f5f7; border-radius:14px; padding:16px;">
+        <div style="font-size:15px; font-weight:600; color:#000; margin-bottom:4px;">${res.date.replace(/-/g,'/')}(${dow}) ${res.time}</div>
+        <div style="font-size:13px; color:#86868b; margin-bottom:12px;">${res.menus}</div>
+        <div style="display:flex; gap:8px;">
+          <button id="change-btn-${i}" style="flex:1; padding:10px; border-radius:10px; background:#007aff; color:#fff; border:none; font-size:14px; font-weight:600; cursor:pointer;">変更</button>
+          <button id="cancel-btn-${i}" style="flex:1; padding:10px; border-radius:10px; background:#ff3b30; color:#fff; border:none; font-size:14px; font-weight:600; cursor:pointer;">キャンセル</button>
         </div>
-        <button id="select-btn-${i}" style="padding:10px 16px; border-radius:10px; background:${btnColor}; color:#fff; border:none; font-size:14px; font-weight:600; cursor:pointer; flex-shrink:0; margin-left:12px;">${btnLabel}</button>
       </div>
     `;
   });
@@ -765,13 +768,8 @@ function showReservationSelect(reservations, mode) {
 
   // ボタンにイベント設定
   reservations.forEach((res, i) => {
-    document.getElementById(`select-btn-${i}`).onclick = () => {
-      if (mode === 'change') {
-        showChangeScreen(res);
-      } else {
-        showCancelScreen(res);
-      }
-    };
+    document.getElementById(`change-btn-${i}`).onclick = () => showChangeScreen(res);
+    document.getElementById(`cancel-btn-${i}`).onclick = () => showCancelScreen(res);
   });
 }
 
