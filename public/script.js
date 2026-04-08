@@ -715,8 +715,8 @@ async function checkExistingReservation() {
         <span class="notice-datetime">${formattedDate}(${dayOfWeek}) ${res.time}</span>
       </div>
       <div style="display:flex; gap:6px;">
-        <button onclick="goToChangeLink()" style="background:#007aff; color:#fff; border:none; border-radius:8px; padding:8px 14px; font-size:14px; font-weight:bold; cursor:pointer;">変更</button>
-        <button onclick="goToCancelLink()" class="notice-cancel-btn-red" style="padding:8px 14px; font-size:14px; font-weight:bold;">キャンセル</button>
+        <button onclick="goToChangeLink('${res.id}')" style="background:#007aff; color:#fff; border:none; border-radius:8px; padding:8px 14px; font-size:14px; font-weight:bold; cursor:pointer;">変更</button>
+        <button onclick="goToCancelLink('${res.id}')" class="notice-cancel-btn-red" style="padding:8px 14px; font-size:14px; font-weight:bold;">キャンセル</button>
       </div>
     `;
     document.body.appendChild(notice);
@@ -726,9 +726,11 @@ async function checkExistingReservation() {
   document.body.style.paddingTop = `${futureList.length * 60}px`;
 }
 
-function goToCancelLink() {
-  const cancelUrl = "https://liff.line.me/2008611644-EZd5nkl0?action=cancel";
-  window.location.href = cancelUrl;
+function goToCancelLink(id) {
+  const url = id
+    ? `https://liff.line.me/2008611644-EZd5nkl0?action=cancel&id=${id}`
+    : `https://liff.line.me/2008611644-EZd5nkl0?action=cancel`;
+  window.location.href = url;
 }
 
 // 複数予約の選択画面
@@ -775,9 +777,11 @@ function showReservationSelect(reservations, mode) {
 
 
 
-function goToChangeLink() {
-  const changeUrl = "https://liff.line.me/2008611644-EZd5nkl0?action=change";
-  window.location.href = changeUrl;
+function goToChangeLink(id) {
+  const url = id
+    ? `https://liff.line.me/2008611644-EZd5nkl0?action=change&id=${id}`
+    : `https://liff.line.me/2008611644-EZd5nkl0?action=change`;
+  window.location.href = url;
 }
 
 // ===== 予約変更画面 =====
@@ -1121,6 +1125,7 @@ window.addEventListener("load", async () => {
     const nowJST = new Date();
     const todayStr = `${nowJST.getFullYear()}-${String(nowJST.getMonth()+1).padStart(2,'0')}-${String(nowJST.getDate()).padStart(2,'0')}`;
     const nowMin = nowJST.getHours() * 60 + nowJST.getMinutes();
+    const targetId = urlParams.get('id');
 
     const { data } = await supabaseClient.from("reservations")
       .select("*")
@@ -1139,6 +1144,10 @@ window.addEventListener("load", async () => {
     if (futureList.length === 0) {
       const container = document.querySelector(".container");
       container.innerHTML = `<div style="padding:60px 20px; text-align:center; color:#86868b;">変更できる予約が見つかりませんでした。</div>`;
+    } else if (targetId) {
+      // IDが指定されている場合は直接その予約を表示
+      const target = futureList.find(r => String(r.id) === String(targetId));
+      target ? showChangeScreen(target) : showChangeScreen(futureList[0]);
     } else if (futureList.length === 1) {
       showChangeScreen(futureList[0]);
     } else {
@@ -1157,6 +1166,7 @@ window.addEventListener("load", async () => {
     const nowJST2 = new Date();
     const todayStr = `${nowJST2.getFullYear()}-${String(nowJST2.getMonth()+1).padStart(2,'0')}-${String(nowJST2.getDate()).padStart(2,'0')}`;
     const nowMin2 = nowJST2.getHours() * 60 + nowJST2.getMinutes();
+    const targetId2 = urlParams.get('id');
 
     const { data } = await supabaseClient.from("reservations")
       .select("*")
@@ -1176,6 +1186,10 @@ window.addEventListener("load", async () => {
       document.getElementById("cancel-screen").style.display = "block";
       document.getElementById("cancel-info").innerText = "キャンセル可能な予約が見つかりませんでした。";
       document.getElementById("executeCancelBtn").style.display = "none";
+    } else if (targetId2) {
+      // IDが指定されている場合は直接その予約を表示
+      const target2 = futureList2.find(r => String(r.id) === String(targetId2));
+      target2 ? showCancelScreen(target2) : showCancelScreen(futureList2[0]);
     } else if (futureList2.length >= 2) {
       showReservationSelect(futureList2, 'cancel');
     } else {
