@@ -861,6 +861,14 @@ async function addManual(date, time) {
     const password = localStorage.getItem('admin_password');
     
     if (!name) return alert("名前を入力してください");
+
+    // ★ 二重送信防止
+    const addBtn = document.querySelector(`button[onclick="addManual('${date}', '${time}')"]`);
+    if (addBtn) {
+        if (addBtn.disabled) return;
+        addBtn.disabled = true;
+        addBtn.innerText = "追加中...";
+    }
     
     const duration = MENU_DURATION[menus] || 60;
     const [h, m] = time.split(':').map(Number);
@@ -1170,19 +1178,28 @@ function addNextDayColumn() {
         return el;
     }
 
+    // iPad対応：scrollYとscrollTopの両方をチェック
+    function getScrollTop() {
+        return window.scrollY || document.documentElement.scrollTop || document.body.scrollTop || 0;
+    }
+
     document.addEventListener('touchstart', (e) => {
         // ページ最上部かつモーダルが開いていない時のみ
-        if (window.scrollY === 0 && document.getElementById('slot-modal').style.display !== 'flex') {
+        if (getScrollTop() === 0 && document.getElementById('slot-modal').style.display !== 'flex') {
             startY = e.touches[0].clientY;
-            isPulling = true;
+            isPulling = false; // touchmoveで判定する
             if (!indicator) indicator = createIndicator();
         }
     }, { passive: true });
 
     document.addEventListener('touchmove', (e) => {
-        if (!isPulling) return;
+        if (getScrollTop() > 0) { isPulling = false; return; }
+        if (document.getElementById('slot-modal').style.display === 'flex') return;
+
         const diff = e.touches[0].clientY - startY;
-        if (diff < 0) { isPulling = false; return; }
+        if (diff <= 0) { isPulling = false; return; }
+
+        isPulling = true;
 
         const height = Math.min(diff * 0.4, 60);
         indicator.style.height = height + 'px';
@@ -1198,11 +1215,10 @@ function addNextDayColumn() {
     }, { passive: true });
 
     document.addEventListener('touchend', async (e) => {
-        if (!isPulling || !indicator) return;
-        isPulling = false;
+        if (!indicator) return;
 
-        const height = parseFloat(indicator.style.height);
-        if (height > 40) {
+        const height = parseFloat(indicator.style.height) || 0;
+        if (isPulling && height > 40) {
             // 更新実行
             indicator.style.height = '44px';
             document.getElementById('ptr-text').textContent = '更新中...';
@@ -1211,5 +1227,6 @@ function addNextDayColumn() {
         } else {
             indicator.style.height = '0';
         }
+        isPulling = false;
     });
 })();
