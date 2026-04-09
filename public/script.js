@@ -908,6 +908,24 @@ function showChangeScreen(res) {
   const chipContainer = document.getElementById("change-date-chips");
   const today = new Date();
   today.setHours(0,0,0,0);
+
+  // 初期選択日：明日（定休日の場合は最初の営業日）
+  let defaultDate = '';
+  for (let i = 1; i <= 31; i++) {
+    const d = new Date(today.getTime());
+    d.setDate(today.getDate() + i);
+    const y = d.getFullYear();
+    const mo = String(d.getMonth()+1).padStart(2,'0');
+    const day = String(d.getDate()).padStart(2,'0');
+    const value = `${y}-${mo}-${day}`;
+    const dowNum = d.getDay();
+    const isHoliday = (HOLIDAYS.includes(value) || dowNum === 1 || (dowNum === 2 && (d.getDate() <= 7 || (d.getDate() >= 15 && d.getDate() <= 21)))) && !SPECIAL_OPENS.some(s => s.date === value);
+    if (!isHoliday) { defaultDate = value; break; }
+  }
+  // hidden inputの初期値を明日に設定
+  document.getElementById("change-date").value = defaultDate;
+  document.getElementById("change-time").value = "";
+
   for (let i = 1; i <= 31; i++) {
     const d = new Date(today.getTime());
     d.setDate(today.getDate() + i);
@@ -918,7 +936,7 @@ function showChangeScreen(res) {
     const dowNum = d.getDay();
     const dowLabel = ["日","月","火","水","木","金","土"][dowNum];
     const isHoliday = (HOLIDAYS.includes(value) || dowNum === 1 || (dowNum === 2 && (d.getDate() <= 7 || (d.getDate() >= 15 && d.getDate() <= 21)))) && !SPECIAL_OPENS.some(s => s.date === value);
-    const isSelected = value === res.date;
+    const isSelected = value === defaultDate; // 明日を初期選択
     const dayColor = dowNum === 0 ? '#ff3b30' : dowNum === 6 ? '#007aff' : '#333';
 
     const chip = document.createElement("div");
@@ -949,7 +967,7 @@ function showChangeScreen(res) {
   // メニュー変更時に時間グリッドを更新
   // ※メニューのchangeイベントはcreateChangeMenuSelect内で設定済み
 
-  renderChangeTimeGrid(res.date, res);
+  renderChangeTimeGrid(defaultDate, res);
 
   document.getElementById("change-confirm-btn").onclick = () => {
     const newDate = document.getElementById("change-date").value;
