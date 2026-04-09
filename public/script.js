@@ -1209,13 +1209,14 @@ window.addEventListener("load", async () => {
       document.getElementById("cancel-info").innerText = "キャンセル可能な予約が見つかりませんでした。";
       document.getElementById("executeCancelBtn").style.display = "none";
     } else if (targetId2) {
-      // IDが指定されている場合は直接その予約を表示
+      // IDが指定されている場合は直接その予約を表示（バナーから→変更ボタンなし）
       const target2 = futureList2.find(r => String(r.id) === String(targetId2));
-      target2 ? showCancelScreen(target2) : showCancelScreen(futureList2[0]);
+      target2 ? showCancelScreen(target2, false) : showCancelScreen(futureList2[0], false);
     } else if (futureList2.length >= 2) {
       showReservationSelect(futureList2, 'cancel');
     } else {
-      showCancelScreen(futureList2[0]);
+      // 1件のみ→変更ボタンあり
+      showCancelScreen(futureList2[0], true);
     }
   }
 });
@@ -1223,7 +1224,7 @@ window.addEventListener("load", async () => {
 // ===== 段階的入力UI の実装 =====
 
 // キャンセル画面を表示する関数（選択画面からも呼べるように切り出し）
-function showCancelScreen(res) {
+function showCancelScreen(res, showChange = false) {
   const container = document.querySelector(".container");
   const dCancel = new Date(res.date.replace(/-/g, "/"));
   const dowCancel = ["日", "月", "火", "水", "木", "金", "土"][dCancel.getDay()];
@@ -1238,11 +1239,16 @@ function showCancelScreen(res) {
       </div>
       <p style="font-size:14px; color:#86868b; margin-bottom:20px;">この予約をキャンセルしてもよろしいですか？</p>
       <div style="display:flex; flex-direction:column; gap:12px;">
+        ${showChange ? `<button id="do-change-btn" style="width:100%; padding:16px; border-radius:14px; background:#007aff; color:#fff; border:none; font-size:17px; font-weight:600; cursor:pointer;">予約を変更する</button>` : ''}
         <button id="do-cancel-btn" style="width:100%; padding:16px; border-radius:14px; background:#ff3b30; color:#fff; border:none; font-size:17px; font-weight:600; cursor:pointer;">キャンセルする</button>
         <button onclick="window.location.href='https://liff.line.me/2008611644-EZd5nkl0'" style="width:100%; padding:14px; border-radius:14px; background:#f5f5f7; color:#000; border:none; font-size:16px; font-weight:600; cursor:pointer;">戻る</button>
       </div>
     </div>
   `;
+
+  if (showChange) {
+    document.getElementById("do-change-btn").onclick = () => showChangeScreen(res);
+  }
 
   document.getElementById("do-cancel-btn").onclick = async () => {
     if (!confirm("本当にキャンセルしてもよろしいですか?")) return;
