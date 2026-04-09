@@ -1064,13 +1064,88 @@ function setupScrollWatcher() {
 
         const nearRight =
             container.scrollLeft + container.clientWidth >= container.scrollWidth - 200;
-
         if (nearRight) addNextDayColumn();
+
+        // ★ 左端に近づいたら前の日を追加
+        const nearLeft = container.scrollLeft <= 100;
+        if (nearLeft) addPrevDayColumn();
     };
 
     // ★ ハンドラを保存して登録
     container._scrollHandler = scrollHandler;
     container.addEventListener("scroll", scrollHandler);
+}
+
+function addPrevDayColumn() {
+    const wrap = document.getElementById('days-wrapper');
+    if (!wrap) return;
+
+    // baseDateの1日前を計算
+    const d = new Date(baseDate);
+    d.setDate(d.getDate() - 1);
+    const dateStr = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+
+    // 既に存在する場合はスキップ
+    if (document.getElementById(`col-${dateStr}`)) return;
+
+    const w = d.getDay();
+    const isMobile = window.innerWidth < 600;
+    const isClosed = (isRegularHoliday(dateStr) || holidays.some(h => h.date === dateStr)) && !specialOpens.some(s => s.date === dateStr);
+
+    // カラム生成
+    const col = document.createElement('div');
+    col.className = 'day-column';
+    col.id = `col-${dateStr}`;
+    col.dataset.date = dateStr;
+    col.style.minWidth = "320px";
+    col.style.maxWidth = "320px";
+    col.style.width = "320px";
+    col.style.flex = "0 0 auto";
+    col.style.padding = "0";
+    col.style.margin = "0";
+    col.style.boxSizing = "border-box";
+
+    col.innerHTML = `
+        <div style="background:#f2f2f7; padding:8px; text-align:center; border-bottom:1px solid #ddd;">
+            <div onclick="toggleDay('${dateStr}', ${isClosed})"
+                style="font-size:11px; text-decoration:underline; cursor:pointer; color:#007aff;">
+                ${isClosed ? '営業にする' : '休みにする'}
+            </div>
+        </div>`;
+
+    for (let h = 10; h <= 18; h++) {
+        ['00', '30'].forEach(m => {
+            renderSlot(col, dateStr, `${String(h).padStart(2, '0')}:${m}`, isClosed);
+        });
+    }
+
+    // ★ 先頭に挿入
+    wrap.insertBefore(col, wrap.firstChild);
+
+    // ★ baseDateを1日戻す
+    baseDate.setDate(baseDate.getDate() - 1);
+
+    // ★ スクロール位置を維持（挿入した分だけ右にずらす）
+    const container = document.getElementById("days-wrapper");
+    container.scrollLeft += 320 + 15; // カラム幅 + gap
+
+    // ★ ヘッダーも先頭に追加
+    const headerRow = document.getElementById('date-header-row');
+    if (headerRow && !isMobile) {
+        const headerCell = document.createElement('div');
+        headerCell.style.minWidth = "320px";
+        headerCell.style.maxWidth = "320px";
+        headerCell.style.flex = "none";
+        headerCell.style.textAlign = "center";
+        headerCell.style.fontWeight = "bold";
+        headerCell.style.fontSize = "16px";
+        headerCell.style.padding = "0";
+        headerCell.style.background = "#f2f2f7";
+        headerCell.style.borderRadius = "8px";
+        headerCell.innerHTML = `${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')} (${['日','月','火','水','木','金','土'][w]})`;
+        headerRow.insertBefore(headerCell, headerRow.firstChild);
+        headerRow.scrollLeft = container.scrollLeft;
+    }
 }
 
 function addNextDayColumn() {
