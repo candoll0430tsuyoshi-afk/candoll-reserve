@@ -1085,9 +1085,11 @@ function showChangeConfirm(res, newDate, newTime, newMenu) {
       return;
     }
 
-    // オーナーへ通知
+    // オーナー・お客様へ通知
     try {
       const dow2 = ["日","月","火","水","木","金","土"][new Date(newDate.replace(/-/g,"/")).getDay()];
+      const prettyDuration = formatDurationText(required);
+      const customerMessage = `【ご予約変更内容】\n名前：${res.name} 様\n日時：${newDate.replace(/-/g,"/")} (${dow2}) ${newTime}\n${prettyDuration}\nメニュー：${newMenu}\n\nご予約の変更、キャンセルはこちらから\nhttps://liff.line.me/2008611644-EZd5nkl0?action=cancel`;
       await fetch("https://bcahztzetpfuklipjmxx.functions.supabase.co/dynamic-service", {
         method: "POST",
         headers: { "Content-Type": "application/json", "x-customer-id": customerUserId },
@@ -1098,7 +1100,7 @@ function showChangeConfirm(res, newDate, newTime, newMenu) {
           date: newDate,
           time: newTime,
           customerUserId,
-          customMessage: `【予約変更】\n${res.name} 様が予約を変更しました。\n\n変更後：${newDate.replace(/-/g,"/")}(${dow2}) ${newTime}\nメニュー：${newMenu}`
+          customMessage: customerMessage
         })
       });
     } catch(e) { console.error("通知エラー:", e); }
