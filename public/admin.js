@@ -1297,7 +1297,9 @@ function addNextDayColumn() {
             // 更新実行
             indicator.style.height = '44px';
             document.getElementById('ptr-text').textContent = '更新中...';
-            await reloadWithPosition();
+            await fetchData();
+            baseDate = new Date(); // 今日に戻す
+            render();
             indicator.style.height = '0';
         } else {
             indicator.style.height = '0';
