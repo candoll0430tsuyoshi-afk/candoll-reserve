@@ -1088,8 +1088,15 @@ function showChangeConfirm(res, newDate, newTime, newMenu) {
     // オーナー・お客様へ通知
     try {
       const dow2 = ["日","月","火","水","木","金","土"][new Date(newDate.replace(/-/g,"/")).getDay()];
+      const dowOld = ["日","月","火","水","木","金","土"][new Date(res.date.replace(/-/g,"/")).getDay()];
       const prettyDuration = formatDurationText(required);
+
+      // オーナー向け：変更前後がわかる文章
+      const ownerMessage = `【予約変更】\n\n${res.name} 様が予約を変更しました。\n\n変更前：${res.date.replace(/-/g,"/")} (${dowOld}) ${res.time}\n　　　　${res.menus}\n\n変更後：${newDate.replace(/-/g,"/")} (${dow2}) ${newTime}\n　　　　${newMenu}`;
+
+      // お客様向け：変更後の内容確認
       const customerMessage = `【ご予約変更内容】\n名前：${res.name} 様\n日時：${newDate.replace(/-/g,"/")} (${dow2}) ${newTime}\n${prettyDuration}\nメニュー：${newMenu}\n\nご予約の変更、キャンセルはこちらから\nhttps://liff.line.me/2008611644-EZd5nkl0?action=cancel`;
+
       await fetch("https://bcahztzetpfuklipjmxx.functions.supabase.co/dynamic-service", {
         method: "POST",
         headers: { "Content-Type": "application/json", "x-customer-id": customerUserId },
@@ -1100,7 +1107,8 @@ function showChangeConfirm(res, newDate, newTime, newMenu) {
           date: newDate,
           time: newTime,
           customerUserId,
-          customMessage: customerMessage
+          customMessage: customerMessage,
+          adminMessage: ownerMessage
         })
       });
     } catch(e) { console.error("通知エラー:", e); }
