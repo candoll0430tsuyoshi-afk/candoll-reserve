@@ -521,7 +521,9 @@ function renderSlot(col, date, time, isClosed) {
 
     div.onclick = (e) => {
         if (div.style.opacity === "0.4") return;
-        openSlotModal(date, time, exactRes || overlappingRes, isOff);
+        // overlappingResがある場合は予約の開始時間を渡す（スロットの時間ではなく）
+        const modalTime = (exactRes || overlappingRes) ? (exactRes || overlappingRes).time : time;
+        openSlotModal(date, modalTime, exactRes || overlappingRes, isOff);
     };
 
     col.appendChild(div);
