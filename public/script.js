@@ -1241,13 +1241,13 @@ function showCancelScreen(res, showChange = false) {
 
   container.innerHTML = `
     <div style="padding: 20px;">
-      <h2 style="font-size:20px; font-weight:600; margin-bottom:16px;">予約のキャンセル</h2>
+      <h2 style="font-size:20px; font-weight:600; margin-bottom:16px;">予約の変更、キャンセルをする</h2>
       <div style="line-height:1.8; text-align:left; background:#fff1f0; padding:20px; border-radius:12px; border:1px solid #ffa39e; margin-bottom:16px; font-size:15px;">
         <b>お名前</b>：${res.name}<br>
         <b>日時</b>：${res.date.replace(/-/g, "/")} (${dowCancel}) ${res.time}<br>
         <b>メニュー</b>：${res.menus}
       </div>
-      <p style="font-size:14px; color:#86868b; margin-bottom:20px;">この予約をキャンセルしてもよろしいですか？</p>
+      <p style="font-size:14px; color:#86868b; margin-bottom:20px;">この予約の変更、キャンセルをしますか？</p>
       <div style="display:flex; flex-direction:column; gap:12px;">
         ${showChange ? `<button id="do-change-btn" style="width:100%; padding:16px; border-radius:14px; background:#007aff; color:#fff; border:none; font-size:17px; font-weight:600; cursor:pointer;">予約を変更する</button>` : ''}
         <button id="do-cancel-btn" style="width:100%; padding:16px; border-radius:14px; background:#ff3b30; color:#fff; border:none; font-size:17px; font-weight:600; cursor:pointer;">キャンセルする</button>
