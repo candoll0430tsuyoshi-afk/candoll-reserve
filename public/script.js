@@ -1074,7 +1074,7 @@ function showChangeConfirm(res, newDate, newTime, newMenu) {
     const end_time = `${String(endD.getHours()).padStart(2,"0")}:${String(endD.getMinutes()).padStart(2,"0")}`;
 
     const { error } = await supabaseClient.from("reservations")
-      .update({ menus: newMenu, date: newDate, time: newTime, end_time })
+      .update({ menus: newMenu, date: newDate, time: newTime, end_time, manual_duration: required })
       .eq("id", res.id)
       .eq("customer_user_id", customerUserId);
 
