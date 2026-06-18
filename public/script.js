@@ -687,9 +687,36 @@ async function autoFillName() {
       const nameInput = document.getElementById("name");
       if (nameInput && !nameInput.value) {
         nameInput.value = data[0].name;
-        // 段階的UIのトリガーを発火させる
+
+        // 名前の吹き出しを削除（自動入力なので不要）
+        const nameHint = document.getElementById('name-hint');
+        if (nameHint) nameHint.remove();
+
+        // 段階的UIを名前入力済み状態に進める
         nameInput.dispatchEvent(new Event("input"));
         nameInput.dispatchEvent(new Event("blur"));
+
+        // メニュー欄の吹き出しを表示
+        setTimeout(() => {
+          const menuHint = document.getElementById('menu-hint');
+          if (!menuHint) {
+            const menuContainer = document.getElementById('menuContainer');
+            if (menuContainer) {
+              if (!menuContainer.parentElement.classList.contains('hint-wrapper')) {
+                const wrapper = document.createElement('div');
+                wrapper.className = 'hint-wrapper';
+                menuContainer.parentNode.insertBefore(wrapper, menuContainer);
+                wrapper.appendChild(menuContainer);
+              }
+              const hint = document.createElement('div');
+              hint.id = 'menu-hint';
+              hint.className = 'hint-bubble hint-bubble-top-right';
+              hint.innerHTML = 'メニューを選択';
+              menuContainer.parentElement.appendChild(hint);
+              setTimeout(() => hint.remove(), 7000);
+            }
+          }
+        }, 500);
       }
     }
   } catch (e) {
