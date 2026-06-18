@@ -61,6 +61,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     // 3. LINEユーザーのみバナーを表示
     if (customerUserId && customerUserId !== "web-user") {
       checkExistingReservation();
+
+      // 4. 過去の予約から名前を自動入力
+      autoFillName();
     }
   } catch (err) {
     console.error("データ取得エラー:", err);
@@ -668,6 +671,30 @@ function showCompleteScreen() {
     if (window.liff && liff.isInClient()) liff.closeWindow();
     else window.location.href = "https://candoll.vercel.app/";
   };
+}
+
+// 過去の予約から名前を自動入力
+async function autoFillName() {
+  try {
+    const { data } = await supabaseClient
+      .from("reservations")
+      .select("name")
+      .eq("customer_user_id", customerUserId)
+      .order("date", { ascending: false })
+      .limit(1);
+
+    if (data && data.length > 0 && data[0].name) {
+      const nameInput = document.getElementById("name");
+      if (nameInput && !nameInput.value) {
+        nameInput.value = data[0].name;
+        // 段階的UIのトリガーを発火させる
+        nameInput.dispatchEvent(new Event("input"));
+        nameInput.dispatchEvent(new Event("blur"));
+      }
+    }
+  } catch (e) {
+    console.error("名前自動入力エラー:", e);
+  }
 }
 
 async function checkExistingReservation() {
