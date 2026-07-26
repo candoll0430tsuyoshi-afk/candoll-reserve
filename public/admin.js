@@ -638,9 +638,17 @@ async function openSlotModal(date, time, res, isOff) {
             <div id="panel-edit">
                 <div style="${S.section}">
                     <label style="${S.label}">メニュー</label>
-                    <select id="new-menu" style="${S.input}">
-                        ${Object.keys(MENU_DURATION).map(m => `<option value="${m}" ${res.menus.trim() === m ? 'selected' : ''}>${m}</option>`).join('')}
-                    </select>
+                    <div id="admin-menu-container">
+                        ${res.menus.split(',').map(m => m.trim()).filter(m => m).map((m, i) => `
+                        <div style="display:flex; gap:6px; margin-bottom:6px; align-items:center;">
+                            <select class="admin-menu-select" style="${S.input}; margin-top:0;">
+                                <option value="">メニューを選択</option>
+                                ${Object.keys(MENU_DURATION).map(menu => `<option value="${menu}" ${menu === m ? 'selected' : ''}>${menu}</option>`).join('')}
+                            </select>
+                            ${i > 0 ? `<button onclick="this.parentElement.remove()" style="flex-shrink:0; background:none; border:none; color:#ff3b30; font-size:20px; cursor:pointer; padding:0 6px;">×</button>` : '<div style="width:32px;"></div>'}
+                        </div>`).join('')}
+                    </div>
+                    <div onclick="addAdminMenuRow()" style="color:#007aff; font-size:13px; cursor:pointer; text-align:right; margin-top:4px; font-weight:500;">＋ メニューを追加</div>
                 </div>
                 <div style="${S.section}">
                     <label style="${S.label}">日付・時間</label>
@@ -822,12 +830,34 @@ function setupTouchEvents(div, exactRes, date, time) {
         }
     };
 }
+window.addAdminMenuRow = function() {
+    const container = document.getElementById('admin-menu-container');
+    if (!container) return;
+    const selects = container.querySelectorAll('.admin-menu-select');
+    if (selects.length >= 3) { alert("メニューは最大3つまでです"); return; }
+    const div = document.createElement('div');
+    div.style.cssText = 'display:flex; gap:6px; margin-bottom:6px; align-items:center;';
+    div.innerHTML = `
+        <select class="admin-menu-select" style="font-size:16px; padding:12px; border:1px solid #ddd; border-radius:10px; width:100%; box-sizing:border-box; margin-top:0;">
+            <option value="">メニューを選択</option>
+            ${Object.keys(MENU_DURATION).map(m => `<option value="${m}">${m}</option>`).join('')}
+        </select>
+        <button onclick="this.parentElement.remove()" style="flex-shrink:0; background:none; border:none; color:#ff3b30; font-size:20px; cursor:pointer; padding:0 6px;">×</button>
+    `;
+    container.appendChild(div);
+};
+
 window.saveAllChanges = async function(id) {
     const dur = document.getElementById('new-duration').value;
-    const newMenu = document.getElementById('new-menu').value;
     const newDate = document.getElementById('new-date').value;
     const newTime = document.getElementById('new-time').value;
     const password = localStorage.getItem('admin_password');
+
+    // 複数メニューを取得
+    const menuSelects = document.querySelectorAll('.admin-menu-select');
+    const newMenus = Array.from(menuSelects).map(s => s.value).filter(v => v !== "");
+    if (newMenus.length === 0) return alert("メニューを選択してください");
+    const newMenu = newMenus.join(", ");
 
     if (!newDate || !newTime) return alert("日付・時間を入力してください");
 
