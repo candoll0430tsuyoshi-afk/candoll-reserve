@@ -803,6 +803,8 @@ headers: {
 }
 function setupTouchEvents(div, exactRes, date, time) {
     let touchTimer; 
+    let lastTarget = null;
+
     div.ontouchstart = () => {
       touchTimer = setTimeout(() => {
         // バイブレーション（対応機種のみ）
@@ -814,12 +816,31 @@ function setupTouchEvents(div, exactRes, date, time) {
         window.draggingId = exactRes.id;
       }, 800); // 500ms → 800msに延長
     };
+
+    div.addEventListener('touchmove', (e) => {
+        if (!window.draggingId) return;
+        // ドラッグ中は画面スクロールを止める（横画面での横移動を可能にする）
+        e.preventDefault();
+
+        const touch = e.touches[0];
+        const target = document.elementFromPoint(touch.clientX, touch.clientY)?.closest('.slot');
+
+        // ハイライトを更新
+        if (target !== lastTarget) {
+            if (lastTarget) lastTarget.style.outline = "";
+            if (target) target.style.outline = "2px dashed #007aff";
+            lastTarget = target;
+        }
+    }, { passive: false });
+
     div.ontouchend = (e) => {
         clearTimeout(touchTimer);
         if (window.draggingId) {
             div.style.opacity = "1";
             div.style.outline = "";
             div.style.boxShadow = "";
+            if (lastTarget) lastTarget.style.outline = "";
+
             const touch = e.changedTouches[0];
             const target = document.elementFromPoint(touch.clientX, touch.clientY)?.closest('.slot');
             if (target && window.draggingId) {
@@ -827,6 +848,7 @@ function setupTouchEvents(div, exactRes, date, time) {
                 if (d && t) handleTouchDrop(window.draggingId, d, t);
             }
             window.draggingId = null;
+            lastTarget = null;
         }
     };
 }
@@ -1067,12 +1089,49 @@ function updateNowLine() {
     document.querySelectorAll('.now-line').forEach(el => el.remove());
     const now = new Date(), dateStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`, col = document.getElementById(`col-${dateStr}`);
     if (!col) return;
-    const currentMins = now.getHours()*60 + now.getMinutes(), startMins = 10*60;
+    const currentMins = now.getHours()*60 + now.getMinutes();
     const slots = col.querySelectorAll('.slot');
-    if (slots.length > 0) {
+    if (slots.length === 0) return;
+
+    // 各スロットの実際の時間とoffsetTopから、現在時刻の位置を線形補間で計算
+    let topPosition = null;
+    for (let i = 0; i < slots.length; i++) {
+        const slot = slots[i];
+        const slotTime = slot.dataset.time; // "10:00" のような形式
+        if (!slotTime) continue;
+        const [sh, sm] = slotTime.split(':').map(Number);
+        const slotMins = sh * 60 + sm;
+        const slotEndMins = slotMins + 30; // 各スロットは30分単位
+
+        if (currentMins >= slotMins && currentMins < slotEndMins) {
+            // このスロット内に現在時刻がある → 比例配分で位置を計算
+            const ratio = (currentMins - slotMins) / 30;
+            topPosition = slot.offsetTop + slot.offsetHeight * ratio;
+            break;
+        } else if (currentMins < slotMins && i === 0) {
+            // 最初のスロットより前
+            topPosition = slot.offsetTop;
+            break;
+        }
+    }
+
+    // 現在時刻が最後のスロットより後の場合
+    if (topPosition === null && slots.length > 0) {
+        const lastSlot = slots[slots.length - 1];
+        const lastTime = lastSlot.dataset.time;
+        if (lastTime) {
+            const [lh, lm] = lastTime.split(':').map(Number);
+            const lastMins = lh * 60 + lm;
+            if (currentMins >= lastMins + 30) {
+                topPosition = lastSlot.offsetTop + lastSlot.offsetHeight;
+            }
+        }
+    }
+
+    if (topPosition !== null) {
         const line = document.createElement('div');
         line.className = 'now-line';
-        line.style.top = `${((currentMins - startMins) / 30) * slots[0].offsetHeight + slots[0].offsetTop}px`;
+        line.style.top = `${topPosition}px`;
         col.appendChild(line);
     }
 }
