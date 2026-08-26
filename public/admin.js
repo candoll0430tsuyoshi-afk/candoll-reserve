@@ -732,7 +732,7 @@ async function openSlotModal(date, time, res, isOff) {
             <div style="${S.section}; display:flex; flex-direction:column; gap:10px;">
                 <label style="${S.label}">新規予約の追加</label>
                 <div style="position:relative;">
-                    <input type="text" id="manual-name" placeholder="お客様名" style="${S.input}" autocomplete="off" oninput="suggestCustomer(this.value)">
+                    <input type="text" id="manual-name" placeholder="お客様名" style="${S.input}" autocomplete="off" oninput="suggestCustomer(this.value)" onblur="setTimeout(() => { const l = document.getElementById('suggest-list'); if(l) l.style.display='none'; }, 150)">
                     <div id="suggest-list" style="position:absolute; top:50px; left:0; right:0; background:#fff; border:1px solid #ddd; border-radius:10px; z-index:100; display:none; max-height:180px; overflow-y:auto; box-shadow:0 4px 12px rgba(0,0,0,0.1);"></div>
                 </div>
                 <input type="hidden" id="manual-customer-id">
