@@ -612,11 +612,13 @@ async function openSlotModal(date, time, res, isOff) {
     };
 
     if (res) {
-        const currentDur = res.manual_duration || (() => {
+        const rawDur = res.manual_duration || (() => {
             let d = 0;
             res.menus.split(',').map(m => m.trim()).forEach(m => d += MENU_DURATION[m] || 60);
             return d;
         })();
+        // 30分刻みに切り上げ（例：119→120, 50→60）
+        const currentDur = Math.ceil(rawDur / 30) * 30;
 
         // タブUI
         let html = `
