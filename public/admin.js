@@ -655,8 +655,8 @@ async function openSlotModal(date, time, res, isOff) {
                 <div style="${S.section}">
                     <label style="${S.label}">日付・時間</label>
                     <div style="display:flex; gap:8px;">
-                        <input type="date" id="new-date" value="${date}" style="${S.input}">
-                        <select id="new-time" style="${S.input}">
+                        <input type="date" id="new-date" value="${date}" style="${S.input}; flex:1 1 60%; width:auto; min-width:0;">
+                        <select id="new-time" style="${S.input}; flex:1 1 40%; width:auto; min-width:0;">
                             ${['10:00','10:30','11:00','11:30','12:00','12:30','13:00','13:30','14:00','14:30','15:00','15:30','16:00','16:30','17:00','17:30','18:00'].map(t =>
                                 `<option value="${t}" ${time === t ? 'selected' : ''}>${t}</option>`
                             ).join('')}
