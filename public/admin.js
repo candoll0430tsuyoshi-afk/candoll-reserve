@@ -643,11 +643,11 @@ async function openSlotModal(date, time, res, isOff) {
                     <div id="admin-menu-container">
                         ${res.menus.split(',').map(m => m.trim()).filter(m => m).map((m, i) => `
                         <div style="display:flex; gap:6px; margin-bottom:6px; align-items:center;">
-                            <select class="admin-menu-select" style="${S.input}; margin-top:0;">
+                            <select class="admin-menu-select" onchange="updateAdminDuration()" style="${S.input}; margin-top:0;">
                                 <option value="">メニューを選択</option>
                                 ${Object.keys(MENU_DURATION).map(menu => `<option value="${menu}" ${menu === m ? 'selected' : ''}>${menu}</option>`).join('')}
                             </select>
-                            ${i > 0 ? `<button onclick="this.parentElement.remove()" style="flex-shrink:0; background:none; border:none; color:#ff3b30; font-size:20px; cursor:pointer; padding:0 6px;">×</button>` : '<div style="width:32px;"></div>'}
+                            ${i > 0 ? `<button onclick="this.parentElement.remove(); updateAdminDuration();" style="flex-shrink:0; background:none; border:none; color:#ff3b30; font-size:20px; cursor:pointer; padding:0 6px;">×</button>` : '<div style="width:32px;"></div>'}
                         </div>`).join('')}
                     </div>
                     <div onclick="addAdminMenuRow()" style="color:#007aff; font-size:13px; cursor:pointer; text-align:right; margin-top:4px; font-weight:500;">＋ メニューを追加</div>
@@ -862,13 +862,39 @@ window.addAdminMenuRow = function() {
     const div = document.createElement('div');
     div.style.cssText = 'display:flex; gap:6px; margin-bottom:6px; align-items:center;';
     div.innerHTML = `
-        <select class="admin-menu-select" style="font-size:16px; padding:12px; border:1px solid #ddd; border-radius:10px; width:100%; box-sizing:border-box; margin-top:0;">
+        <select class="admin-menu-select" onchange="updateAdminDuration()" style="font-size:16px; padding:12px; border:1px solid #ddd; border-radius:10px; width:100%; box-sizing:border-box; margin-top:0;">
             <option value="">メニューを選択</option>
             ${Object.keys(MENU_DURATION).map(m => `<option value="${m}">${m}</option>`).join('')}
         </select>
-        <button onclick="this.parentElement.remove()" style="flex-shrink:0; background:none; border:none; color:#ff3b30; font-size:20px; cursor:pointer; padding:0 6px;">×</button>
+        <button onclick="this.parentElement.remove(); updateAdminDuration();" style="flex-shrink:0; background:none; border:none; color:#ff3b30; font-size:20px; cursor:pointer; padding:0 6px;">×</button>
     `;
     container.appendChild(div);
+    updateAdminDuration();
+};
+
+// メニュー選択に応じてduration(所要時間)を30分刻みで自動計算・反映
+window.updateAdminDuration = function() {
+    const durationSelect = document.getElementById('new-duration');
+    if (!durationSelect) return;
+
+    const selects = document.querySelectorAll('.admin-menu-select');
+    const menus = Array.from(selects).map(s => s.value).filter(v => v !== "");
+    if (menus.length === 0) return;
+
+    let total = 0;
+    menus.forEach(m => total += MENU_DURATION[m] || 0);
+    if (total === 0) return;
+
+    // 30分刻みに切り上げ
+    const rounded = Math.ceil(total / 30) * 30;
+
+    // セレクトの選択肢にあればそれを選択、なければ最も近い上位の値を選択
+    const options = Array.from(durationSelect.options).map(o => Number(o.value));
+    let target = options.find(v => v === rounded);
+    if (!target) {
+        target = options.find(v => v >= rounded) || options[options.length - 1];
+    }
+    durationSelect.value = target;
 };
 
 window.saveAllChanges = async function(id) {
