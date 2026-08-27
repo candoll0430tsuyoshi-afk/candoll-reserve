@@ -655,8 +655,10 @@ async function openSlotModal(date, time, res, isOff) {
                 <div style="${S.section}">
                     <label style="${S.label}">日付・時間</label>
                     <div style="display:flex; gap:8px; align-items:center;">
-                        <input type="date" id="new-date" value="${date}" onchange="updateAdminDateDow()" style="${S.input}; flex:1 1 55%; width:auto; min-width:0;">
-                        <span id="new-date-dow" style="flex:0 0 auto; font-size:14px; font-weight:bold; color:#666; white-space:nowrap;">(${['日','月','火','水','木','金','土'][new Date(date.replace(/-/g,'/')).getDay()]})</span>
+                        <div style="position:relative; flex:1 1 60%;">
+                            <div id="new-date-display" style="${S.input}; margin-top:0; display:flex; align-items:center; box-sizing:border-box;">${date.replace(/-/g,'/')} (${['日','月','火','水','木','金','土'][new Date(date.replace(/-/g,'/')).getDay()]})</div>
+                            <input type="date" id="new-date" value="${date}" onchange="updateAdminDateDow()" style="position:absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer; margin:0; padding:0; border:none;">
+                        </div>
                         <select id="new-time" style="${S.input}; flex:1 1 40%; width:auto; min-width:0;">
                             ${['10:00','10:30','11:00','11:30','12:00','12:30','13:00','13:30','14:00','14:30','15:00','15:30','16:00','16:30','17:00','17:30','18:00'].map(t =>
                                 `<option value="${t}" ${time === t ? 'selected' : ''}>${t}</option>`
@@ -873,13 +875,13 @@ window.addAdminMenuRow = function() {
     updateAdminDuration();
 };
 
-// 日付inputが変更されたら曜日表示を更新
+// 日付inputが変更されたら表示用divを更新
 window.updateAdminDateDow = function() {
     const dateInput = document.getElementById('new-date');
-    const dowSpan = document.getElementById('new-date-dow');
-    if (!dateInput || !dowSpan || !dateInput.value) return;
+    const display = document.getElementById('new-date-display');
+    if (!dateInput || !display || !dateInput.value) return;
     const d = new Date(dateInput.value.replace(/-/g, '/'));
-    dowSpan.textContent = `(${['日','月','火','水','木','金','土'][d.getDay()]})`;
+    display.textContent = `${dateInput.value.replace(/-/g,'/')} (${['日','月','火','水','木','金','土'][d.getDay()]})`;
 };
 
 // メニュー選択に応じてduration(所要時間)を30分刻みで自動計算・反映
