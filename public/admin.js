@@ -550,8 +550,8 @@ async function toggleOffTime(date, time) {
             method: "POST",
 headers: { 
     "Content-Type": "application/json",
-    "apikey": "__SUPABASE_KEY__",
-    "Authorization": "Bearer __SUPABASE_KEY__"
+    "apikey": window.CONFIG?.SUPABASE_KEY,
+    "Authorization": `Bearer ${window.CONFIG?.SUPABASE_KEY}`
 },
             body: JSON.stringify({ 
                 mode: mode, 
