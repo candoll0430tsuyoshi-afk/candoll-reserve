@@ -546,7 +546,7 @@ async function toggleOffTime(date, time) {
     const end_t = `${String(endD.getHours()).padStart(2,'0')}:${String(endD.getMinutes()).padStart(2,'0')}`;
 
     try {
-        await fetch("https://bcahztzetpfuklipjmxx.supabase.co/functions/v1/admin-service", {
+        const res = await fetch("https://bcahztzetpfuklipjmxx.supabase.co/functions/v1/admin-service", {
             method: "POST",
 headers: { 
     "Content-Type": "application/json",
@@ -561,6 +561,14 @@ headers: {
                 password: password 
             })
         });
+
+        // ★レスポンスの成否を確認（無言の失敗を検知）
+        if (!res.ok) {
+            const errText = await res.text();
+            console.error("予約不可設定エラー:", res.status, errText);
+            alert(`設定の保存に失敗しました（エラー${res.status}）。もう一度お試しください。`);
+            return;
+        }
 
         // --- ここから追加 ---
         if (window.closeModal) {
