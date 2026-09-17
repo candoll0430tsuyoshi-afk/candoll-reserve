@@ -171,7 +171,7 @@ function render() {
 
     // ★ lastDateをリセット（render = baseDateが変わった時）
     lastDate = new Date(baseDate);
-    lastDate.setDate(lastDate.getDate() + 3); // 初期表示の4日目
+    lastDate.setDate(lastDate.getDate() + (isMobile ? 3 : 5)); // 初期表示の最終日（PC:6日目/モバイル:4日目）
 
     wrap.style.display = "flex";
     wrap.style.flexDirection = isMobile ? "column" : "row";
@@ -197,8 +197,8 @@ function render() {
         headerRow.style.marginBottom = "10px";
         headerRow.style.whiteSpace = "nowrap";
 
-        // ★ 最初の4日分のヘッダー
-        for (let i = 0; i < 4; i++) {
+        // ★ 最初の6日分のヘッダー（コンパクト化により画面に収まってスクロールが発生しなくなるのを防ぐ）
+        for (let i = 0; i < 6; i++) {
             const d = new Date(baseDate);
             d.setDate(d.getDate() + i);
             const w = d.getDay();
@@ -235,8 +235,9 @@ function render() {
             `${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')} (${['日','月','火','水','木','金','土'][w]})`;
     }
 
-    // ★ カラム生成（最初の4日）
-    for (let i = 0; i < 4; i++) {
+    // ★ カラム生成（PC:6日 / モバイル:4日。コンパクト化で画面に収まりスクロール不可になるのを防ぐ）
+    const initialDays = isMobile ? 4 : 6;
+    for (let i = 0; i < initialDays; i++) {
         const d = new Date(baseDate);
         d.setDate(d.getDate() + i);
         const dateStr =
