@@ -175,7 +175,7 @@ function render() {
 
     wrap.style.display = "flex";
     wrap.style.flexDirection = isMobile ? "column" : "row";
-    wrap.style.gap = "15px";
+    wrap.style.gap = "10px";
 
     const navCurrent = document.getElementById('nav-current');
 
@@ -193,7 +193,7 @@ function render() {
         const headerRow = document.createElement('div');
         headerRow.id = 'date-header-row';
         headerRow.style.display = "flex";
-        headerRow.style.gap = "15px";
+        headerRow.style.gap = "10px";
         headerRow.style.marginBottom = "10px";
         headerRow.style.whiteSpace = "nowrap";
 
@@ -204,8 +204,8 @@ function render() {
             const w = d.getDay();
 
             const headerCell = document.createElement('div');
-            headerCell.style.minWidth = "320px";
-            headerCell.style.maxWidth = "320px";
+            headerCell.style.minWidth = "260px";
+            headerCell.style.maxWidth = "260px";
             headerCell.style.flex = "none";
             headerCell.style.textAlign = "center";
             headerCell.style.fontWeight = "bold";
@@ -257,9 +257,9 @@ function render() {
             col.style.flex = "0 0 auto";
         } else {
             // PC/iPad横向き時は320px固定
-            col.style.minWidth = "320px";
-            col.style.maxWidth = "320px";
-            col.style.width = "320px";
+            col.style.minWidth = "260px";
+            col.style.maxWidth = "260px";
+            col.style.width = "260px";
             col.style.flex = "0 0 auto";
         }
         col.style.padding = "0";
@@ -313,7 +313,7 @@ function render() {
 // スマホ用：スクロールで日付バナーを更新 + 次の日を自動追加
 function setupMobileScroll() {
     const wrap = document.getElementById('days-wrapper');
-    wrap.style.gap = "15px";
+    wrap.style.gap = "10px";
     const navCurrent = document.getElementById('nav-current');
     
     let lastIndex = -1;
@@ -1236,9 +1236,9 @@ function addPrevDayColumn() {
     col.className = 'day-column';
     col.id = `col-${dateStr}`;
     col.dataset.date = dateStr;
-    col.style.minWidth = "320px";
-    col.style.maxWidth = "320px";
-    col.style.width = "320px";
+    col.style.minWidth = "260px";
+    col.style.maxWidth = "260px";
+    col.style.width = "260px";
     col.style.flex = "0 0 auto";
     col.style.padding = "0";
     col.style.margin = "0";
@@ -1266,14 +1266,14 @@ function addPrevDayColumn() {
 
     // ★ スクロール位置を維持（挿入した分だけ右にずらす）
     const container = document.getElementById("days-wrapper");
-    container.scrollLeft += 320 + 15; // カラム幅 + gap
+    container.scrollLeft += 260 + 10; // カラム幅 + gap
 
     // ★ ヘッダーも先頭に追加
     const headerRow = document.getElementById('date-header-row');
     if (headerRow && !isMobile) {
         const headerCell = document.createElement('div');
-        headerCell.style.minWidth = "320px";
-        headerCell.style.maxWidth = "320px";
+        headerCell.style.minWidth = "260px";
+        headerCell.style.maxWidth = "260px";
         headerCell.style.flex = "none";
         headerCell.style.textAlign = "center";
         headerCell.style.fontWeight = "bold";
@@ -1290,7 +1290,7 @@ function addPrevDayColumn() {
 function addNextDayColumn() {
     const wrap = document.getElementById('days-wrapper');
     if (!wrap) return;
-    wrap.style.gap = "15px";
+    wrap.style.gap = "10px";
 
     // ★ 次に追加する日付 = lastDate + 1日
     const d = new Date(lastDate);
@@ -1316,9 +1316,9 @@ function addNextDayColumn() {
     col.dataset.date = dateStr;
 
     // ★ iPhone Safari対策：スタイルを明示的に設定
-    col.style.minWidth = "320px";
-    col.style.maxWidth = "320px";
-    col.style.width = "320px";
+    col.style.minWidth = "260px";
+    col.style.maxWidth = "260px";
+    col.style.width = "260px";
     col.style.flex = "0 0 auto";
     col.style.padding = "0";
     col.style.margin = "0";
@@ -1358,8 +1358,8 @@ function addNextDayColumn() {
         if (headerRow) {
             const headerCell = document.createElement('div');
 
-            headerCell.style.minWidth = "320px";
-            headerCell.style.maxWidth = "320px";
+            headerCell.style.minWidth = "260px";
+            headerCell.style.maxWidth = "260px";
             headerCell.style.flex = "none";
             headerCell.style.textAlign = "center";
             headerCell.style.fontWeight = "bold";
