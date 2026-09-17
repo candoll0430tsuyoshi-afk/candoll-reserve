@@ -214,9 +214,28 @@
             flex-direction: row;
             align-items: center;
             padding: 7px 10px;
+            height: 46px;
             min-height: 46px;
+            max-height: 46px;
             box-sizing: border-box;
             background-clip: padding-box;
+            overflow: hidden;
+        }
+
+        /* ★ テキストが折り返して高さがズレるのを防ぐ */
+        .slot-info {
+            overflow: hidden;
+        }
+        .slot-info b {
+            display: block;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .menu-label {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         /* ★ 中の白背景を完全に消す（白い線の原因） */
