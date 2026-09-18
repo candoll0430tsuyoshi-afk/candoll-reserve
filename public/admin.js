@@ -435,8 +435,17 @@ function renderSlot(col, date, time, isClosed) {
 
     const isOff = offTimes.some(o => o.date === date && o.time === time);
 
+    // ★ outer(div)は常に固定52pxの「行」。marginは一切使わない。
+    //    これにより、pillの有無・連結状態に関わらず全カラムで行位置が完全に一致する。
     const div = document.createElement('div');
     div.className = 'slot';
+    div.style.position = 'relative';
+    div.style.height = '52px';
+    div.style.minHeight = '52px';
+    div.style.maxHeight = '52px';
+    div.style.boxSizing = 'border-box';
+    div.style.margin = '0';
+    div.style.padding = '0';
 
     div.dataset.date = date;
     div.dataset.time = time;
@@ -444,17 +453,24 @@ function renderSlot(col, date, time, isClosed) {
     div.ondragover = (e) => e.preventDefault();
     div.ondrop = (e) => handleDrop(e, date, time);
 
-    // ★ デフォルト（空き枠・不可枠） → 黒い四角い枠
-    div.style.margin = "0";
-    div.style.marginBottom = "6px";
-    div.style.boxSizing = "border-box";
-    div.style.border = "1px solid #000";   // ← 黒枠復活
-    div.style.borderRadius = "12px";
-    div.style.background = (isOff || isClosed) ? "#f2f2f7" : "#ffffff";
+    // ★ 見た目（枠線・背景・文字）はこの内側の box だけが担当する
+    const box = document.createElement('div');
+    box.className = 'slot-box';
+    box.style.position = 'absolute';
+    box.style.top = '0';
+    box.style.left = '0';
+    box.style.right = '0';
+    box.style.boxSizing = 'border-box';
+
+    // ★ デフォルト（空き枠・不可枠） → 黒い四角い枠、高さ46px（下に6pxの隙間）
+    box.style.height = '46px';
+    box.style.border = '1px solid #000';
+    box.style.borderRadius = '12px';
+    box.style.background = (isOff || isClosed) ? '#f2f2f7' : '#ffffff';
 
     // ★ 予約枠（pill）
     if (overlappingRes) {
-        div.style.background = "#e5e5ea";
+        box.style.background = '#e5e5ea';
 
         const start = toMin(overlappingRes.time);
         let dur = 0;
@@ -470,31 +486,29 @@ function renderSlot(col, date, time, isClosed) {
         const isStart = timeMins === start;
         const isEnd = timeMins + 30 >= end;
 
-        // ★ pill の正しい仕様
+        // ★ pill の正しい仕様（高さを伸ばして次のスロットと連結させる）
         if (isStart) {
-            // 開始 slot
-            div.style.borderTop = "1px solid #000";
-            div.style.borderBottom = isEnd ? "1px solid #000" : "none";
-            div.style.borderLeft = "1px solid #000";
-            div.style.borderRight = "1px solid #000";
-            div.style.borderRadius = isEnd ? "15px" : "15px 15px 0 0";
-            div.style.marginBottom = isEnd ? "6px" : "0";
+            box.style.borderTop = '1px solid #000';
+            box.style.borderBottom = isEnd ? '1px solid #000' : 'none';
+            box.style.borderLeft = '1px solid #000';
+            box.style.borderRight = '1px solid #000';
+            box.style.borderRadius = isEnd ? '15px' : '15px 15px 0 0';
+            box.style.height = isEnd ? '46px' : '52px'; // 連結する場合は隙間まで埋める
         } else if (isEnd) {
-            // 終了 slot
-            div.style.borderTop = "none";
-            div.style.borderBottom = "1px solid #000";
-            div.style.borderLeft = "1px solid #000";
-            div.style.borderRight = "1px solid #000";
-            div.style.borderRadius = "0 0 15px 15px";
-            div.style.marginBottom = "6px";
+            box.style.borderTop = 'none';
+            box.style.borderBottom = '1px solid #000';
+            box.style.borderLeft = '1px solid #000';
+            box.style.borderRight = '1px solid #000';
+            box.style.borderRadius = '0 0 15px 15px';
+            box.style.height = '46px';
         } else {
-            // 途中 slot（左右だけ黒線）
-            div.style.borderTop = "none";
-            div.style.borderBottom = "none";
-            div.style.borderLeft = "1px solid #000";
-            div.style.borderRight = "1px solid #000";
-            div.style.borderRadius = "0";
-            div.style.marginBottom = "0";
+            // 途中 slot（左右だけ黒線、隙間まで埋めて連結）
+            box.style.borderTop = 'none';
+            box.style.borderBottom = 'none';
+            box.style.borderLeft = '1px solid #000';
+            box.style.borderRight = '1px solid #000';
+            box.style.borderRadius = '0';
+            box.style.height = '52px';
         }
 
         // ★ 開始 slot のみドラッグ可能
@@ -518,7 +532,8 @@ function renderSlot(col, date, time, isClosed) {
         content += `<span style="color:#666; font-size:13px;">${(isOff || isClosed) ? '不可' : '空き'}</span>`;
     }
     content += `</div>`;
-    div.innerHTML = content;
+    box.innerHTML = content;
+    div.appendChild(box);
 
     div.onclick = (e) => {
         if (div.style.opacity === "0.4") return;
