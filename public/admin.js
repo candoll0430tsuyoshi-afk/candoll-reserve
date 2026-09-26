@@ -209,7 +209,7 @@ function render() {
             headerCell.style.flex = "none";
             headerCell.style.textAlign = "center";
             headerCell.style.fontWeight = "bold";
-            headerCell.style.fontSize = "16px";
+            headerCell.style.fontSize = "18px";
             headerCell.style.padding = "0";
             headerCell.style.background = "#f2f2f7";
             headerCell.style.borderRadius = "8px";
@@ -1293,7 +1293,7 @@ function addPrevDayColumn() {
         headerCell.style.flex = "none";
         headerCell.style.textAlign = "center";
         headerCell.style.fontWeight = "bold";
-        headerCell.style.fontSize = "16px";
+        headerCell.style.fontSize = "18px";
         headerCell.style.padding = "0";
         headerCell.style.background = "#f2f2f7";
         headerCell.style.borderRadius = "8px";
@@ -1379,7 +1379,7 @@ function addNextDayColumn() {
             headerCell.style.flex = "none";
             headerCell.style.textAlign = "center";
             headerCell.style.fontWeight = "bold";
-            headerCell.style.fontSize = "16px";
+            headerCell.style.fontSize = "18px";
             headerCell.style.padding = "0";
             headerCell.style.background = "#f2f2f7";
             headerCell.style.borderRadius = "8px";
