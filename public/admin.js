@@ -993,7 +993,7 @@ async function addManual(date, time) {
     const endD = new Date(2000, 0, 1, h, m + duration);
     const end_time = `${String(endD.getHours()).padStart(2, '0')}:${String(endD.getMinutes()).padStart(2, '0')}`;
     
-    await fetch("https://bcahztzetpfuklipjmxx.supabase.co/functions/v1/admin-service", {
+    const response = await fetch("https://bcahztzetpfuklipjmxx.supabase.co/functions/v1/admin-service", {
         method: "POST",
         headers: { 
             "Content-Type": "application/json",
@@ -1011,8 +1011,24 @@ async function addManual(date, time) {
             password: password 
         })
     });
+
+    let result = null;
+    try { result = await response.json(); } catch (e) {}
+
+    // 追加自体に失敗した場合は、閉じずにお知らせしてやり直せるようにする
+    if (!response.ok) {
+        alert("予約の追加に失敗しました。もう一度お試しください。");
+        if (addBtn) { addBtn.disabled = false; addBtn.innerText = "予約を追加"; }
+        return;
+    }
+
     closeModal(); 
     await reloadWithPosition();
+
+    // 予約は追加済み。お客様へのLINE通知だけ失敗した時にお知らせする
+    if (result && result.notify === "failed") {
+        alert("予約は追加しましたが、お客様へのLINE通知に失敗しました。");
+    }
 }
 
 // お客様名サジェスト
