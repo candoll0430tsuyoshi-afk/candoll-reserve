@@ -373,6 +373,9 @@ async function updateTimeOptions() {
   const gridContainer = document.getElementById("timeGrid");
   if (!timeSelect || !gridContainer) return;
   
+  // ★ この再描画の「順番札」。あとから別の再描画が始まったら、こちらは描画せず終了する
+  const renderId = (window._timeRenderId = (window._timeRenderId || 0) + 1);
+
   gridContainer.innerHTML = ""; 
   timeSelect.innerHTML = '<option value="">選択</option>';
   if (!date) return;
@@ -380,7 +383,18 @@ async function updateTimeOptions() {
   const menus = Array.from(document.querySelectorAll(".menu-select")).map(s => s.value).filter(v => v !== "");
   const required = menus.map(m => MENU_DATA[m] || 0).reduce((a, b) => a + b, 0);
 
-  const { data } = await supabaseClient.from("reservations").select("time,end_time").eq("date", date);
+  const { data, error } = await supabaseClient.from("reservations").select("time,end_time").eq("date", date);
+
+  // ★ 待っている間に、もっと新しい再描画が始まっていたら、古い結果では描画しない
+  if (renderId !== window._timeRenderId) return;
+
+  // ★ 取得に失敗した時に「予約なし」として全枠を空きにしてしまわない
+  if (error) {
+    console.error("予約取得エラー:", error);
+    gridContainer.innerHTML = '<div style="grid-column:1/-1; padding:20px; text-align:center; color:#ff3b30; font-size:14px;">空き状況を読み込めませんでした。もう一度日付を選び直してください。</div>';
+    return;
+  }
+
   const reserved = (data || []).map(r => ({ 
     start: (r.time || "").trim(), 
     end: (r.end_time || "").trim() 
@@ -448,7 +462,7 @@ async function updateTimeOptions() {
   }); // slots.forEach の閉じ
 } // updateTimeOptions の閉じ
 // 最新の予約状況（全日休み・個別休み・重複予約）をすべて確認する関数
-async function checkFinalAvailability(date, time) {
+async function checkFinalAvailability(date, time, requiredMin = 0) {
   try {
     // 1. 全日休みの確認
     const { data: holiday } = await supabaseClient
@@ -475,17 +489,26 @@ async function checkFinalAvailability(date, time) {
       return false;
     }
 
-    // 3. 他の予約との重複確認
-    const { data: reservation } = await supabaseClient
+    // 3. 他の予約との「時間の重なり」確認（開始時刻が同じかどうかだけでなく、終了時刻まで見る）
+    const toMin = t => { const [h, m] = String(t || "0:0").trim().split(":").map(Number); return h * 60 + m; };
+    const { data: dayRes, error: dayErr } = await supabaseClient
       .from("reservations")
-      .select("id")
-      .eq("date", date)
-      .eq("time", time)
-      .maybeSingle();
-    
-    if (reservation) {
-      console.log("Check: Existing reservation found");
-      return false;
+      .select("time,end_time")
+      .eq("date", date);
+
+    if (dayErr) {
+      console.error("Check: reservation fetch error", dayErr);
+      return false; // 確認できない時は安全のため不可とする
+    }
+
+    const myStart = toMin(time);
+    const myEnd = myStart + (requiredMin > 0 ? requiredMin : 1);
+    for (const r of (dayRes || [])) {
+      if (!r.time || !r.end_time) continue;
+      if (myStart < toMin(r.end_time) && toMin(r.time) < myEnd) {
+        console.log("Check: Overlapping reservation found");
+        return false;
+      }
     }
 
     return true; // すべて問題なければOK
@@ -508,7 +531,8 @@ document.getElementById("reserveForm").onsubmit = async e => {
   }
   
   // --- 【追加】確認画面に進む前の空き状況ダブルチェック ---
-  const isAvailable = await checkFinalAvailability(dateValue, time);
+  const requiredForCheck = menus.map(m => MENU_DATA[m] || 0).reduce((a, b) => a + b, 0);
+  const isAvailable = await checkFinalAvailability(dateValue, time, requiredForCheck);
   if (!isAvailable) {
     alert("申し訳ございません。別の日時を選択してください。");
     location.reload();
@@ -541,7 +565,7 @@ document.getElementById("reserveForm").onsubmit = async e => {
 
     try {
       // --- 【追加】送信直前の最終トリプルチェック ---
-      const finalCheck = await checkFinalAvailability(dateValue, time);
+      const finalCheck = await checkFinalAvailability(dateValue, time, required);
       if (!finalCheck) {
         alert("申し訳ございません。タッチの差で予約が埋まってしまいました。");
         location.reload();
@@ -1036,6 +1060,8 @@ function showChangeScreen(res) {
 async function renderChangeTimeGrid(date, res) {
   const grid = document.getElementById("change-time-grid");
   if (!grid) return;
+  // ★ この再描画の「順番札」。あとから別の再描画が始まったら、こちらは描画せず終了する
+  const renderId = (window._changeRenderId = (window._changeRenderId || 0) + 1);
   grid.innerHTML = "<div style='color:#999; font-size:14px; grid-column:1/-1; text-align:center;'>読み込み中...</div>";
 
   const menuSelects = document.querySelectorAll(".change-menu-select");
@@ -1045,7 +1071,18 @@ async function renderChangeTimeGrid(date, res) {
     : res.menus.split(",").map(m => m.trim()).reduce((sum, m) => sum + (MENU_DATA[m] || 0), 0) || 60;
 
   // idも取得して自分の予約を正確に除外
-  const { data } = await supabaseClient.from("reservations").select("id,time,end_time").eq("date", date);
+  const { data, error } = await supabaseClient.from("reservations").select("id,time,end_time").eq("date", date);
+
+  // ★ 待っている間に、もっと新しい再描画が始まっていたら、古い結果では描画しない
+  if (renderId !== window._changeRenderId) return;
+
+  // ★ 取得に失敗した時に「予約なし」として全枠を空きにしてしまわない
+  if (error) {
+    console.error("予約取得エラー:", error);
+    grid.innerHTML = "<div style='grid-column:1/-1; padding:20px; text-align:center; color:#ff3b30; font-size:14px;'>空き状況を読み込めませんでした。もう一度日付を選び直してください。</div>";
+    return;
+  }
+
   const reserved = (data || [])
     .filter(r => String(r.id) !== String(res.id))
     .map(r => ({ start: r.time.trim(), end: r.end_time.trim() }));
