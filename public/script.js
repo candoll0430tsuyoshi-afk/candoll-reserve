@@ -298,6 +298,16 @@ function updateDateOptions() {
       ${isHoliday ? '<span class="status-text">定休日</span>' : ''}
     `;
 
+    // 定休日は、日にち・曜日・「定休日」を黒にして見やすくする。
+    // 月だけは営業日の月と同じグレー(#8e8e93)にする。
+    // （CSS側で定休日の文字が薄いグレーの !important になっているため、ここで上書きしている）
+    if (isHoliday) {
+      chip.style.setProperty("color", "#000", "important");
+      chip.style.opacity = "1";
+      const monthEl = chip.querySelector(".month-label");
+      if (monthEl) monthEl.style.color = "#8e8e93";
+    }
+
     if (!isHoliday) {
       chip.onclick = () => {
         const selectedMenus = Array.from(document.querySelectorAll(".menu-select"))
