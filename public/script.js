@@ -411,10 +411,13 @@ async function updateTimeOptions() {
   })).filter(r => r.start !== "" && r.end !== "");
 
   const slots = ["10:00","10:30","11:00","11:30","12:00","12:30","13:00","13:30","14:00","14:30","15:00","15:30","16:00","16:30","17:00","17:30","18:00"];
+  let availableCount = 0; // 選べる枠の数（0件なら「空き時間がございません」を出す）
 
-  slots.forEach(start => {
+  // ★ 「この開始時刻に、この所要時間の予約が入るか」の判定（1か所にまとめて、グリッドと満席判定の両方で使う）
+  //   戻り値: true = 選べない / false = 選べる
+  const isSlotBlocked = (start, requiredMin) => {
     const [sh, sm] = start.split(":").map(Number);
-    const endD = new Date(2000,0,1,sh,sm + required);
+    const endD = new Date(2000,0,1,sh,sm + requiredMin);
     const end = `${String(endD.getHours()).padStart(2,"0")}:${String(endD.getMinutes()).padStart(2,"0")}`;
     
     let isDisabled = (end > "19:00");
@@ -449,6 +452,11 @@ async function updateTimeOptions() {
         }
       }
     }
+    return isDisabled;
+  };
+
+  slots.forEach(start => {
+    const isDisabled = isSlotBlocked(start, required);
 
     // ドロップダウンへの追加
     const op = document.createElement("option");
@@ -461,6 +469,7 @@ async function updateTimeOptions() {
     const slot = document.createElement("div");
     slot.className = "time-slot" + (isDisabled ? " disabled" : "");
     slot.textContent = start;
+    if (!isDisabled) availableCount++;
     if (!isDisabled) {
       slot.onclick = () => {
         timeSelect.value = start;
@@ -470,6 +479,39 @@ async function updateTimeOptions() {
     }
     gridContainer.appendChild(slot);
   }); // slots.forEach の閉じ
+
+  // ★ 選べる枠が1つもない時だけ、選択中のメニュー名（所要時間）の案内を枠の上に出す
+  //   （予約状況の取得に失敗した時は、上で処理を終えているので、ここには来ない）
+  if (availableCount === 0) {
+    // 「この時間（分）の連続した空きがなければ、満席と表示する」の基準。
+    // 例: 30分の空きしかなく、1時間の空きがない日は「満席」。変えたい時はこの数字を変える。
+    // 判定は、グリッドと同じ isSlotBlocked を使う。
+    const FULLY_BOOKED_MIN = 60;
+    const isFullyBooked = slots.every(start => isSlotBlocked(start, FULLY_BOOKED_MIN));
+
+    let message;
+    if (isFullyBooked) {
+      message = "この日は満席です";
+    } else {
+      const durationLabel = formatDurationText(required).replace("施術時間：", "");
+      const menuNames = menus.join("、");
+      if (!menuNames) {
+        message = "空き時間がございません";
+      } else if (!durationLabel) {
+        message = `${menuNames}は空き時間がございません`;
+      } else if (/[（(]/.test(menuNames)) {
+        // メニュー名に括弧がある時は、括弧が重ならないよう「・」でつなぐ
+        message = `${menuNames}・${durationLabel}は空き時間がございません`;
+      } else {
+        message = `${menuNames}（${durationLabel}）は空き時間がございません`;
+      }
+    }
+
+    const notice = document.createElement("div");
+    notice.style.cssText = "grid-column:1/-1; padding:14px 12px; background:#f5f5f7; border-radius:12px; text-align:center; font-size:14px; line-height:1.7; color:#333;";
+    notice.textContent = message;
+    gridContainer.insertBefore(notice, gridContainer.firstChild);
+  }
 } // updateTimeOptions の閉じ
 // 最新の予約状況（全日休み・個別休み・重複予約）をすべて確認する関数
 async function checkFinalAvailability(date, time, requiredMin = 0) {
