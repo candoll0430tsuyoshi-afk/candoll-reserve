@@ -508,7 +508,7 @@ async function updateTimeOptions() {
     }
 
     const notice = document.createElement("div");
-    notice.style.cssText = "grid-column:1/-1; padding:14px 12px; background:#f5f5f7; border-radius:12px; text-align:center; font-size:14px; line-height:1.7; color:#333;";
+    notice.style.cssText = "grid-column:1/-1; padding:14px 12px; background:#f5f5f7; border-radius:12px; text-align:center; font-size:14px; line-height:1.7; color:#ff3b30;";
     notice.textContent = message;
     gridContainer.insertBefore(notice, gridContainer.firstChild);
   }
